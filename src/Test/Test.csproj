@@ -75,7 +75,6 @@
     <Compile Include="NorthwindTestHarness.cs" />
     <Compile Include="NorthwindTranslationTests.cs" />
     <Compile Include="NorthwindPerfTests.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestHarness.cs" />
     <Compile Include="NorthwindExecutionTests.cs" />

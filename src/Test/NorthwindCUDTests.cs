@@ -10,26 +10,23 @@ using IQToolkit.Data;
 
 namespace Test
 {
-    public class NorthwindCUDTests : NorthwindTestHarness
+    public abstract class NorthwindCUDTests : NorthwindTestBase
     {
-        public static void Run(Northwind db)
-        {
-            new NorthwindCUDTests().RunTests(db, null, null, true);
-        }
-
-        public static void Run(Northwind db, string testName)
-        {
-            new NorthwindCUDTests().RunTest(db, null, true, testName);
-        }
-
-        protected override void SetupTest()
+        public override void RunTest(Action testAction)
         {
             this.CleaupDatabase();
+            base.RunTest(testAction);
         }
 
-        protected override void TeardownTest()
+        public override void Setup(string[] args)
+        {
+            base.Setup(args);
+        }
+
+        public override void Teardown()
         {
             this.CleaupDatabase();
+            base.Teardown();
         }
 
         private void CleaupDatabase()
@@ -49,7 +46,7 @@ namespace Test
                 Country = "USA"
             };
             var result = db.Customers.Insert(cust);
-            this.AssertValue(1, result);  // returns 1 for success
+            Assert.Equal(1, result);  // returns 1 for success
         }
 
         public void TestInsertCustomerWithResult()
@@ -63,7 +60,7 @@ namespace Test
                 Country = "USA"
             };
             var result = db.Customers.Insert(cust, c => c.City);
-            this.AssertValue(result, "Seattle");  // should be value we asked for
+            Assert.Equal(result, "Seattle");  // should be value we asked for
         }
 
         public void TestBatchInsertCustomersNoResult()
@@ -79,8 +76,8 @@ namespace Test
                         Country = "USA"
                     });
             var results = db.Customers.Batch(custs, (u, c) => u.Insert(c));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchInsertCustomersWithResult()
@@ -96,8 +93,8 @@ namespace Test
                     Country = "USA"
                 });
             var results = db.Customers.Batch(custs, (u, c) => u.Insert(c, d => d.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, "Seattle")));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, "Seattle")));
         }
 
         public void TestInsertOrderWithNoResult()
@@ -109,7 +106,7 @@ namespace Test
                 OrderDate = DateTime.Today,
             };
             var result = db.Orders.Insert(order);
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestInsertOrderWithGeneratedIDResult()
@@ -121,7 +118,7 @@ namespace Test
                 OrderDate = DateTime.Today,
             };
             var result = db.Orders.Insert(order, o => o.OrderID);
-            this.AssertNotValue(1, result);
+            Assert.NotEqual(1, result);
         }
 
         public void TestUpdateCustomerNoResult()
@@ -138,7 +135,7 @@ namespace Test
             };
 
             var result = db.Customers.Update(cust);
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestUpdateCustomerWithResult()
@@ -155,7 +152,7 @@ namespace Test
             };
 
             var result = db.Customers.Update(cust, null, c => c.City);
-            this.AssertValue("Portland", result);
+            Assert.Equal("Portland", result);
         }
 
         public void TestUpdateCustomerWithUpdateCheckThatDoesNotSucceed()
@@ -172,7 +169,7 @@ namespace Test
             };
 
             var result = db.Customers.Update(cust, d => d.City == "Detroit");
-            this.AssertValue(0, result); // 0 for failure
+            Assert.Equal(0, result); // 0 for failure
         }
 
         public void TestUpdateCustomerWithUpdateCheckThatSucceeds()
@@ -189,7 +186,7 @@ namespace Test
             };
 
             var result = db.Customers.Update(cust, d => d.City == "Seattle");
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestBatchUpdateCustomer()
@@ -208,8 +205,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.Update(c));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchUpdateCustomerWithUpdateCheck()
@@ -239,8 +236,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(pairs, (u, x) => u.Update(x.current, d => d.City == x.original.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchUpdateCustomerWithResult()
@@ -259,8 +256,8 @@ namespace Test
                     });
 
             var results = db.Customers.Batch(custs, (u, c) => u.Update(c, null, d => d.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, "Portland")));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, "Portland")));
         }
 
         public void TestBatchUpdateCustomerWithUpdateCheckAndResult()
@@ -290,8 +287,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(pairs, (u, x) => u.Update(x.current, d => d.City == x.original.City, d => d.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, "Portland")));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, "Portland")));
         }
 
         public void TestUpsertNewCustomerNoResult()
@@ -306,7 +303,7 @@ namespace Test
             };
 
             var result = db.Customers.InsertOrUpdate(cust);
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestUpsertExistingCustomerNoResult()
@@ -323,7 +320,7 @@ namespace Test
             };
 
             var result = db.Customers.InsertOrUpdate(cust);
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestUpsertNewCustomerWithResult()
@@ -338,7 +335,7 @@ namespace Test
             };
 
             var result = db.Customers.InsertOrUpdate(cust, null, d => d.City);
-            this.AssertValue("Seattle", result);
+            Assert.Equal("Seattle", result);
         }
 
         public void TestUpsertExistingCustomerWithResult()
@@ -355,7 +352,7 @@ namespace Test
             };
 
             var result = db.Customers.InsertOrUpdate(cust, null, d => d.City);
-            this.AssertValue("Portland", result);
+            Assert.Equal("Portland", result);
         }
 
         public void TestUpsertNewCustomerWithUpdateCheck()
@@ -370,7 +367,7 @@ namespace Test
             };
 
             var result = db.Customers.InsertOrUpdate(cust, d => d.City == "Portland");
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestUpsertExistingCustomerWithUpdateCheck()
@@ -387,7 +384,7 @@ namespace Test
             };
 
             var result = db.Customers.InsertOrUpdate(cust, d => d.City == "Seattle");
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestBatchUpsertNewCustomersNoResult()
@@ -404,8 +401,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.InsertOrUpdate(c));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchUpsertExistingCustomersNoResult()
@@ -424,8 +421,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.InsertOrUpdate(c));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchUpsertNewCustomersWithResult()
@@ -442,8 +439,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.InsertOrUpdate(c, null, d => d.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, "Portland")));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, "Portland")));
         }
 
         public void TestBatchUpsertExistingCustomersWithResult()
@@ -462,8 +459,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.InsertOrUpdate(c, null, d => d.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, "Portland")));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, "Portland")));
         }
 
         public void TestBatchUpsertNewCustomersWithUpdateCheck()
@@ -491,8 +488,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(pairs, (u, x) => u.InsertOrUpdate(x.current, d => d.City == x.original.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchUpsertExistingCustomersWithUpdateCheck()
@@ -522,8 +519,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(pairs, (u, x) => u.InsertOrUpdate(x.current, d => d.City == x.original.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestDeleteCustomer()
@@ -540,7 +537,7 @@ namespace Test
             };
 
             var result = db.Customers.Delete(cust);
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestDeleteCustomerForNonExistingCustomer()
@@ -557,7 +554,7 @@ namespace Test
             };
 
             var result = db.Customers.Delete(cust);
-            this.AssertValue(0, result);
+            Assert.Equal(0, result);
         }
 
         public void TestDeleteCustomerWithDeleteCheckThatSucceeds()
@@ -574,7 +571,7 @@ namespace Test
             };
 
             var result = db.Customers.Delete(cust, d => d.City == "Seattle");
-            this.AssertValue(1, result);
+            Assert.Equal(1, result);
         }
 
         public void TestDeleteCustomerWithDeleteCheckThatDoesNotSucceed()
@@ -591,7 +588,7 @@ namespace Test
             };
 
             var result = db.Customers.Delete(cust, d => d.City == "Portland");
-            this.AssertValue(0, result);
+            Assert.Equal(0, result);
         }
 
         public void TestBatchDeleteCustomers()
@@ -610,8 +607,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.Delete(c));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchDeleteCustomersWithDeleteCheck()
@@ -630,8 +627,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.Delete(c, d => d.City == c.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 1)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
         }
 
         public void TestBatchDeleteCustomersWithDeleteCheckThatDoesNotSucceed()
@@ -650,8 +647,8 @@ namespace Test
                 });
 
             var results = db.Customers.Batch(custs, (u, c) => u.Delete(c, d => d.City == c.City));
-            this.AssertValue(n, results.Count());
-            this.AssertTrue(results.All(r => object.Equals(r, 0)));
+            Assert.Equal(n, results.Count());
+            Assert.Equal(true, results.All(r => object.Equals(r, 0)));
         }
 
         public void TestDeleteWhere()
@@ -659,35 +656,35 @@ namespace Test
             this.TestBatchInsertCustomersNoResult();
 
             var result = db.Customers.Delete(c => c.CustomerID.StartsWith("XX"));
-            this.AssertValue(10, result);
+            Assert.Equal(10, result);
         }
 
         public void TestSessionIdentityCache()
         {
-            NorthwindSession ns = new NorthwindSession(this.provider);
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
 
             // both objects should be the same instance
             var cust = ns.Customers.Single(c => c.CustomerID == "ALFKI");
             var cust2 = ns.Customers.Single(c => c.CustomerID == "ALFKI");
 
-            AssertNotValue(null, cust);
-            AssertNotValue(null, cust2);
-            AssertValue(cust, cust2);
+            Assert.NotEqual(null, cust);
+            Assert.NotEqual(null, cust2);
+            Assert.Equal(cust, cust2);
         }
 
         public void TestSessionProviderNotIdentityCached()
         {
-            NorthwindSession ns = new NorthwindSession(this.provider);
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
             Northwind db2 = new Northwind(ns.Session.Provider);
 
             // both objects should be different instances
             var cust = ns.Customers.Single(c => c.CustomerID == "ALFKI");
             var cust2 = ns.Customers.ProviderTable.Single(c => c.CustomerID == "ALFKI");
 
-            AssertNotValue(null, cust);
-            AssertNotValue(null, cust2);
-            AssertValue(cust.CustomerID, cust2.CustomerID);
-            AssertNotValue(cust, cust2);
+            Assert.NotEqual(null, cust);
+            Assert.NotEqual(null, cust2);
+            Assert.Equal(cust.CustomerID, cust2.CustomerID);
+            Assert.NotEqual(cust, cust2);
         }
 
         public void TestSessionSubmitActionOnModify()
@@ -703,31 +700,31 @@ namespace Test
 
             this.db.Customers.Insert(cust);
 
-            var ns = new NorthwindSession(this.provider);
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            var ns = new NorthwindSession(this.GetProvider());
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             // fetch the previously inserted customer
             cust = ns.Customers.Single(c => c.CustomerID == "XX1");
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             cust.ContactName = "Contact Modified";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             // prove actually modified by fetching through provider
             var cust2 = this.db.Customers.Single(c => c.CustomerID == "XX1");
-            AssertValue("Contact Modified", cust2.ContactName);
+            Assert.Equal("Contact Modified", cust2.ContactName);
 
             // ready to be submitted again!
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
         }
 
         public void TestSessionSubmitActionOnInsert()
         {
-            NorthwindSession ns = new NorthwindSession(this.provider);
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
             var cust = new Customer
                 {
                     CustomerID = "XX1",
@@ -736,21 +733,21 @@ namespace Test
                     City = "Seattle",
                     Country = "USA"
                 };
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             ns.Customers.InsertOnSubmit(cust);
-            AssertValue(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
         }
 
         public void TestSessionSubmitActionOnInsertOrUpdate()
         {
-            NorthwindSession ns = new NorthwindSession(this.provider);
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
             var cust = new Customer
             {
                 CustomerID = "XX1",
@@ -759,16 +756,16 @@ namespace Test
                 City = "Seattle",
                 Country = "USA"
             };
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             ns.Customers.InsertOrUpdateOnSubmit(cust);
-            AssertValue(SubmitAction.InsertOrUpdate, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.InsertOrUpdate, ns.Customers.GetSubmitAction(cust));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
         }
 
         public void TestSessionSubmitActionOnUpdate()
@@ -783,17 +780,17 @@ namespace Test
             };
             this.db.Customers.Insert(cust);
 
-            NorthwindSession ns = new NorthwindSession(this.provider);
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             ns.Customers.UpdateOnSubmit(cust);
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
         }
 
         public void TestSessionSubmitActionOnDelete()
@@ -808,18 +805,18 @@ namespace Test
             };
             this.db.Customers.Insert(cust);
 
-            NorthwindSession ns = new NorthwindSession(this.provider);
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             ns.Customers.DeleteOnSubmit(cust);
-            AssertValue(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             // modifications after delete don't trigger updates
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
         }
 
         public void TestDeleteThenInsertSamePK()
@@ -844,29 +841,29 @@ namespace Test
 
             this.db.Customers.Insert(cust);
 
-            NorthwindSession ns = new NorthwindSession(this.provider);
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
 
             ns.Customers.DeleteOnSubmit(cust);
-            AssertValue(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
 
             ns.Customers.InsertOnSubmit(cust2);
-            AssertValue(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust2));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
 
             // modifications after delete don't trigger updates
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             // modifications after insert do trigger updates
             cust2.City = "ChicagoX";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
         }
 
         public void TestInsertThenDeleteSamePK()
@@ -891,29 +888,29 @@ namespace Test
 
             this.db.Customers.Insert(cust);
 
-            NorthwindSession ns = new NorthwindSession(this.provider);
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
 
             ns.Customers.InsertOnSubmit(cust2);
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust2));
 
             ns.Customers.DeleteOnSubmit(cust);
-            AssertValue(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.Delete, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust2));
 
             ns.SubmitChanges();
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust2));
 
             // modifications after delete don't trigger updates
             cust.City = "SeattleX";
-            AssertValue(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
 
             // modifications after insert do trigger updates
             cust2.City = "ChicagoX";
-            AssertValue(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
         }
     }
 }

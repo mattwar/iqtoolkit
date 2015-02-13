@@ -12,23 +12,39 @@ using IQToolkit.Data.Mapping;
 
 namespace Test
 {
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
-            var provider = DbEntityProvider.From(@"Northwind.mdb", "Test.NorthwindWithAttributes");
+            new TestRunner(args, System.Reflection.Assembly.GetEntryAssembly()).RunTests();
+        }
 
-            //provider.Log = Console.Out;
-            provider.Connection.Open();
+        private static DbEntityProvider CreateNorthwindProvider()
+        {
+            return DbEntityProvider.From(@"Northwind.mdb", "Test.NorthwindWithAttributes");
+        }
 
-            try
+        public class NorthwindTranslationTests : Test.NorthwindTranslationTests
+        {
+            protected override DbEntityProvider CreateProvider()
             {
-                var db = new Northwind(provider);
-                NorthwindExecutionTests.Run(db);
+                return CreateNorthwindProvider();
             }
-            finally
+        }
+
+        public class NorthwindExecutionTests : Test.NorthwindExecutionTests
+        {
+            protected override DbEntityProvider CreateProvider()
             {
-                provider.Connection.Close();
+                return CreateNorthwindProvider();
+            }
+        }
+
+        public class NorthwindCUDTests : Test.NorthwindCUDTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
             }
         }
     }

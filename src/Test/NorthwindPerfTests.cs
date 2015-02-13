@@ -16,16 +16,22 @@ namespace Test
     using IQToolkit;
     using IQToolkit.Data;
 
-    public class NorthwindPerfTests : NorthwindTestHarness
+    public abstract class NorthwindPerfTests : NorthwindTestBase
     {
-        public static void Run(Northwind db)
+        private double RunTimedTest(int iterations, Action<int> action)
         {
-            new NorthwindPerfTests().RunTests(db, null, null, true);
-        }
+            action(0); // throw out the first one  (makes sure code is loaded)
 
-        public static void Run(Northwind db, string testName)
-        {
-            new NorthwindPerfTests().RunTest(db, null, true, testName);
+            var timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
+
+            for (int i = 1; i <= iterations; i++)
+            {
+                action(i);
+            }
+
+            timer.Stop();
+            return timer.Elapsed.TotalSeconds / iterations;
         }
 
         public void TestCompiledQuery()
@@ -43,18 +49,23 @@ namespace Test
 
             var adoTime = RunTimedTest(iterations, i =>
             {
-                var cmd = provider.Connection.CreateCommand();
-                //cmd.CommandText = "SELECT TOP (@p0) OrderID, ProductID FROM [Order Details] WHERE OrderID > @p1";
-                cmd.CommandText = "PARAMETERS p1 int; SELECT TOP 50 OrderID, ProductID FROM [Order Details] WHERE OrderID > p1";
-                //var p0 = cmd.CreateParameter();
-                //p0.ParameterName = "p0";
-                //p0.Value = n;
-                //cmd.Parameters.Add(p);
+                var cmd = this.GetProvider().Connection.CreateCommand();
+                
+                cmd.CommandText = "SELECT TOP (@p0) OrderID, ProductID FROM [Order Details] WHERE OrderID > @p1";
+                //cmd.CommandText = "PARAMETERS p1 int; SELECT TOP 50 OrderID, ProductID FROM [Order Details] WHERE OrderID > p1";
+                
+                var p0 = cmd.CreateParameter();
+                p0.ParameterName = "p0";
+                p0.Value = n;
+                cmd.Parameters.Add(p0);
+
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "p1";
                 p1.Value = i;
                 cmd.Parameters.Add(p1);
+
                 var reader = cmd.ExecuteReader();
+                
                 var list = new List<object>();
                 while (reader.Read())
                 {
@@ -62,6 +73,7 @@ namespace Test
                     var productId = reader.IsDBNull(1) ? default(int) : reader.GetInt32(1);
                     list.Add(new OrderDetail { OrderID = orderId, ProductID = productId });
                 }
+
                 reader.Close();
             });
 
@@ -81,13 +93,13 @@ namespace Test
                 System.Diagnostics.Debug.Assert(results.Count == n);
             });
 
-            this.provider.Cache = cache;
+            this.GetProvider().Cache = cache;
             var autoCached = RunTimedTest(iterations, i =>
             {
                 var results = db.OrderDetails.Where(d => d.OrderID > i).Take(n).ToList();
                 System.Diagnostics.Debug.Assert(results.Count == n);
             });
-            this.provider.Cache = null;
+            this.GetProvider().Cache = null;
 
             var check = RunTimedTest(iterations, i =>
             {
@@ -117,16 +129,15 @@ namespace Test
             Console.WriteLine("not cached : {0}  {1:#.##}x vs compiled", notCached, notCached / compiled);
         }
 
-
         public void TestStandardQuery()
         {
             int iterations = 100;
 
             var query = db.OrderDetails.Where(d => d.OrderID > 10).Take(n);
-            var qtran = new IQToolkit.Data.Common.QueryTranslator(this.provider.Language, this.provider.Mapping, this.provider.Policy);
+            var qtran = new IQToolkit.Data.Common.QueryTranslator(this.GetProvider().Language, this.GetProvider().Mapping, this.GetProvider().Policy);
             var expr = ((IQueryable)query).Expression;
             var tran = qtran.Translate(expr);
-            var plan = this.provider.GetExecutionPlan(query.Expression);
+            var plan = this.GetProvider().GetExecutionPlan(query.Expression);
             var exec = Expression.Lambda<Func<IEnumerable<OrderDetail>>>(plan).Compile();
 
             var overall = RunTimedTest(iterations, i =>
@@ -136,14 +147,14 @@ namespace Test
 
             var tranTime = RunTimedTest(iterations, i =>
             {
-                var qt = new IQToolkit.Data.Common.QueryTranslator(this.provider.Language, this.provider.Mapping, this.provider.Policy);
+                var qt = new IQToolkit.Data.Common.QueryTranslator(this.GetProvider().Language, this.GetProvider().Mapping, this.GetProvider().Policy);
                 var tr = qt.Translate(expr);
             });
 
             var buildTime = RunTimedTest(iterations, i =>
             {
-                var qt = new IQToolkit.Data.Common.QueryTranslator(this.provider.Language, this.provider.Mapping, this.provider.Policy);
-                var result = qt.Police.BuildExecutionPlan(query.Expression, Expression.Constant(this.provider, typeof(IQueryProvider)));
+                var qt = new IQToolkit.Data.Common.QueryTranslator(this.GetProvider().Language, this.GetProvider().Mapping, this.GetProvider().Policy);
+                var result = qt.Police.BuildExecutionPlan(query.Expression, Expression.Constant(this.GetProvider(), typeof(IQueryProvider)));
             });
 
             var compileTime = RunTimedTest(iterations, i =>

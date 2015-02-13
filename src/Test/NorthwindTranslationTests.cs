@@ -14,27 +14,15 @@ namespace Test
     using IQToolkit.Data;
     using IQToolkit.Data.Mapping;
 
-    public class NorthwindTranslationTests : NorthwindTestHarness
+    public abstract class NorthwindTranslationTests : NorthwindTestBase
     {
-        public static void Run(Northwind db, bool executeQueries)
+        public NorthwindTranslationTests()
         {
-            string prefix = GetBaselinePrefix(db);
-            string baselineFile = prefix + ".base";
-            string newBase = prefix + ".new";
-
-            new NorthwindTranslationTests().RunTests(db, @"..\..\" + baselineFile, newBase, executeQueries);
         }
 
-        public static void Run(Northwind db, bool executeQueries, string testName)
+        public override string GetBaseLineFilePath()
         {
-            string prefix = GetBaselinePrefix(db);
-            string baselineFile = prefix + ".base";
-            new NorthwindTranslationTests().RunTest(db, @"..\..\" + baselineFile, executeQueries, testName);
-        }
-
-        protected static string GetBaselinePrefix(Northwind db)
-        {
-            return "NorthwindTranslation_" + db.Provider.GetType().Name;
+            return "NorthwindTranslation_" + this.GetProvider().GetType().Name;
         }
 
         public void TestWhere()
@@ -1551,7 +1539,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
-            Northwind nw = new Northwind(this.provider.New(policy));
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
 
             TestQuery(
                 nw.Customers
@@ -1562,7 +1550,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders, true);
-            Northwind nw = new Northwind(this.provider.New(policy));
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
 
             TestQuery(
                 nw.Customers
@@ -1574,7 +1562,7 @@ namespace Test
             var mapping = new AttributeMapping(typeof(NorthwindX));
             var policy = new EntityPolicy();
             policy.IncludeWith<CustomerX>(c => c.Orders);
-            NorthwindX nw = new NorthwindX(this.provider.New(policy).New(mapping));
+            NorthwindX nw = new NorthwindX(this.GetProvider().New(policy).New(mapping));
 
             TestQuery(
                 nw.Customers
@@ -1585,7 +1573,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
-            Northwind nw = new Northwind(this.provider.New(policy));
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
 
             TestQuery(
                 from c in nw.Customers
@@ -1599,7 +1587,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
             policy.IncludeWith<Order>(o => o.Details);
-            Northwind nw = new Northwind(this.provider.New(policy));
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
 
             TestQuery(
                 nw.Customers
@@ -1611,7 +1599,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
             policy.IncludeWith<Order>(o => o.Details);
-            Northwind nw = new Northwind(this.provider.New(policy));
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
 
             TestQuery(
                 from c in nw.Customers
@@ -1634,7 +1622,7 @@ namespace Test
 
         public void TestXmlMappingSelectCustomers()
         {
-            var nw = new Northwind(this.provider.New(XmlMapping.FromXml(File.ReadAllText(@"Northwind.xml"))));
+            var nw = new Northwind(this.GetProvider().New(XmlMapping.FromXml(File.ReadAllText(@"Northwind.xml"))));
 
             TestQuery(
                 from c in db.Customers

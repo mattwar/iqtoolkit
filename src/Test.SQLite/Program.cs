@@ -17,19 +17,6 @@ namespace Test
         static void Main(string[] args)
         {
             var provider = DbEntityProvider.From("IQToolkit.Data.SQLite", @"Northwind.db3", "Test.NorthwindWithAttributes");
-
-            //provider.Log = Console.Out;
-            provider.Connection.Open();
-
-            try
-            {
-                var db = new Northwind(provider);
-                NorthwindExecutionTests.Run(db);
-            }
-            finally
-            {
-                provider.Connection.Close();
-            }
         }
     }
 }

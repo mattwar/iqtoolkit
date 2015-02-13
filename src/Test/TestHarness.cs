@@ -17,6 +17,7 @@ namespace Test
     using IQToolkit.Data;
     using IQToolkit.Data.Common;
 
+#if false
     [AttributeUsage(AttributeTargets.Method, AllowMultiple=true, Inherited=true)]
     public class ExcludeProvider : Attribute
     {
@@ -514,4 +515,5 @@ namespace Test
             }
         }
     }
+#endif
 }

@@ -191,20 +191,6 @@ namespace Test
         }
     }
 
-    public class MySqlNorthwind : NorthwindWithAttributes
-    {
-        public MySqlNorthwind(IEntityProvider provider)
-            : base(provider)
-        {
-        }
-
-        [Table(Name = "Order_Details")]
-        public override IEntityTable<OrderDetail> OrderDetails
-        {
-            get { return base.OrderDetails; }
-        }
-    }
-
     public interface INorthwindSession
     {
         void SubmitChanges();
@@ -252,7 +238,6 @@ namespace Test
             get { return this.session.GetTable<OrderDetail>("OrderDetails"); }
         }
     }
-
 
     public class CustomerX
     {

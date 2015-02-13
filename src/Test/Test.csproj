@@ -68,16 +68,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExcludeProviderAttribute.cs" />
+    <Compile Include="Harness\Assert.cs" />
+    <Compile Include="Harness\TestFailureException.cs" />
     <Compile Include="MultiTableContext.cs" />
     <Compile Include="MultiTableTests.cs" />
     <Compile Include="Northwind.cs" />
     <Compile Include="NorthwindCUDTests.cs" />
-    <Compile Include="NorthwindTestHarness.cs" />
+    <Compile Include="NorthwindTestBase.cs" />
     <Compile Include="NorthwindTranslationTests.cs" />
     <Compile Include="NorthwindPerfTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QueryTestBase.cs" />
     <Compile Include="TestHarness.cs" />
     <Compile Include="NorthwindExecutionTests.cs" />
+    <Compile Include="Harness\TestRunner.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IQToolkit.Data\IQToolkit.Data.csproj">

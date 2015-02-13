@@ -11,19 +11,20 @@ namespace Test
         static void Main(string[] args)
         {
             var provider = DbEntityProvider.From("IQToolkit.Data.MySqlClient", "Northwind", "Test.MySqlNorthwind");
+        }
+    }
 
-            //provider.Log = Console.Out;
-            provider.Connection.Open();
+    public class MySqlNorthwind : NorthwindWithAttributes
+    {
+        public MySqlNorthwind(IEntityProvider provider)
+            : base(provider)
+        {
+        }
 
-            try
-            {
-                var db = new Northwind(provider);
-                NorthwindExecutionTests.Run(db);
-            }
-            finally
-            {
-                provider.Connection.Close();
-            }
+        [Table(Name = "Order_Details")]
+        public override IEntityTable<OrderDetail> OrderDetails
+        {
+            get { return base.OrderDetails; }
         }
     }
 }

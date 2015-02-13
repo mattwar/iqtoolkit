@@ -10,20 +10,54 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            var provider = DbEntityProvider.From(@"Northwind.mdf", "Test.NorthwindWithAttributes");
+            new TestRunner(args, System.Reflection.Assembly.GetEntryAssembly()).RunTests();
+        }
 
-            //provider.Log = Console.Out;
-            provider.Connection.Open();
+        private static DbEntityProvider CreateNorthwindProvider(string mapping = "Test.NorthwindWithAttributes")
+        {
+            return DbEntityProvider.From(@"Northwind.mdf", mapping);
+        }
 
-            try
+        public class NorthwindTranslationTests : Test.NorthwindTranslationTests
+        {
+            protected override DbEntityProvider CreateProvider()
             {
-                var db = new Northwind(provider);
-                NorthwindExecutionTests.Run(db);
-            }
-            finally
-            {
-                provider.Connection.Close();
+                return CreateNorthwindProvider();
             }
         }
+
+        public class NorthwindExecutionTests : Test.NorthwindExecutionTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
+        public class NorthwindCUDTests : Test.NorthwindCUDTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
+        public class MultiTableTests : Test.MultiTableTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider("Test.MultiTableContext");
+            }
+        }
+
+#if !DEBUG
+        public class NorthwindPerfTests : Test.NorthwindPerfTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+#endif
     }
 }

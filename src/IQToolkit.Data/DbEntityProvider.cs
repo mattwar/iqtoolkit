@@ -164,7 +164,8 @@ namespace IQToolkit.Data
                 MethodInfo gcs = providerType.GetMethod("GetConnectionString", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string) }, null);
                 if (gcs != null)
                 {
-                    connectionString = (string)gcs.Invoke(null, new object[] { connectionString });
+                    var getConnectionString = (Func<string, string>)Delegate.CreateDelegate(typeof(Func<string, string>), gcs);
+                    connectionString = getConnectionString(connectionString);
                 }
             }
 

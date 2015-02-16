@@ -80,17 +80,27 @@ namespace IQToolkit.Data.SqlClient
             {
                 DbQueryType sqlType = (DbQueryType)parameter.QueryType;
                 if (sqlType == null)
+                {
                     sqlType = (DbQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                }
+
                 int len = sqlType.Length;
                 if (len == 0 && DbTypeSystem.IsVariableLength(sqlType.SqlDbType))
                 {
                     len = Int32.MaxValue;
                 }
+
                 var p = ((SqlCommand)command).Parameters.Add("@" + parameter.Name, sqlType.SqlDbType, len);
                 if (sqlType.Precision != 0)
+                {
                     p.Precision = (byte)sqlType.Precision;
+                }
+
                 if (sqlType.Scale != 0)
+                {
                     p.Scale = (byte)sqlType.Scale;
+                }
+
                 p.Value = value ?? DBNull.Value;
             }
 
@@ -119,12 +129,14 @@ namespace IQToolkit.Data.SqlClient
             {
                 SqlCommand cmd = (SqlCommand)this.GetCommand(query, null);
                 DataTable dataTable = new DataTable();
+
                 for (int i = 0, n = query.Parameters.Count; i < n; i++)
                 {
                     var qp = query.Parameters[i];
                     cmd.Parameters[i].SourceColumn = qp.Name;
                     dataTable.Columns.Add(qp.Name, TypeHelper.GetNonNullableType(qp.Type));
                 }
+
                 SqlDataAdapter dataAdapter = new SqlDataAdapter();
                 dataAdapter.InsertCommand = cmd;
                 dataAdapter.InsertCommand.UpdatedRowSource = UpdateRowSource.None;
@@ -148,6 +160,7 @@ namespace IQToolkit.Data.SqlClient
                             this.LogParameters(query, paramValues);
                             this.LogMessage("");
                         }
+
                         if (count > 0)
                         {
                             int n = dataAdapter.Update(dataTable);
@@ -155,6 +168,7 @@ namespace IQToolkit.Data.SqlClient
                             {
                                 yield return (i < n) ? 1 : 0;
                             }
+
                             dataTable.Rows.Clear();
                         }
                     }

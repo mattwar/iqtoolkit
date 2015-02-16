@@ -30,11 +30,6 @@ namespace IQToolkit.Data.MySqlClient
             return new MySqlQueryProvider((MySqlConnection)connection, mapping, policy);
         }
 
-        public static string GetConnectionString(string databaseName)
-        {
-            return string.Format(@"Server=127.0.0.1;Database={0}", databaseName);
-        }
-
         protected override QueryExecutor CreateExecutor()
         {
             return new Executor(this);
@@ -59,12 +54,21 @@ namespace IQToolkit.Data.MySqlClient
             {
                 DbQueryType sqlType = (DbQueryType)parameter.QueryType;
                 if (sqlType == null)
+                {
                     sqlType = (DbQueryType)this.provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                }
+
                 var p = ((MySqlCommand)command).Parameters.Add(parameter.Name, ToMySqlDbType(sqlType.SqlDbType), sqlType.Length);
                 if (sqlType.Precision != 0)
+                {
                     p.Precision = (byte)sqlType.Precision;
+                }
+
                 if (sqlType.Scale != 0)
+                {
                     p.Scale = (byte)sqlType.Scale;
+                }
+
                 p.Value = value ?? DBNull.Value;
             }
         }

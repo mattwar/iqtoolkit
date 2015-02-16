@@ -358,6 +358,7 @@ namespace IQToolkit.Data
                 if (found != null)
                     return found;
             }
+
             return TypedSubtreeFinder.Find(expression, type);
         }
            
@@ -370,11 +371,13 @@ namespace IQToolkit.Data
                 {
                     return new AttributeMapping(type);
                 }
+
                 if (File.Exists(mappingId))
                 {
                     return XmlMapping.FromXml(File.ReadAllText(mappingId));
                 }
             }
+
             return new ImplicitMapping();
         }
 
@@ -434,7 +437,8 @@ namespace IQToolkit.Data
             // try to load it.
             try
             {
-                return Assembly.LoadFrom(name);
+                var fullName = Path.GetFullPath(name);
+                return Assembly.LoadFrom(fullName);
             }
             catch
             {

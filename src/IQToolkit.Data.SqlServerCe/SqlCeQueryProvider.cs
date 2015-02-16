@@ -52,12 +52,21 @@ namespace IQToolkit.Data.SqlServerCe
             {
                 DbQueryType sqlType = (DbQueryType)parameter.QueryType;
                 if (sqlType == null)
+                {
                     sqlType = (DbQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                }
+
                 var p = ((SqlCeCommand)command).Parameters.Add("@" + parameter.Name, sqlType.SqlDbType, sqlType.Length);
                 if (sqlType.Precision != 0)
+                {
                     p.Precision = (byte)sqlType.Precision;
+                }
+
                 if (sqlType.Scale != 0)
+                {
                     p.Scale = (byte)sqlType.Scale;
+                }
+
                 p.Value = value ?? DBNull.Value;
             }
         }

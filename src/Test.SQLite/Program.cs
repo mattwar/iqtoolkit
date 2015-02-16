@@ -16,7 +16,36 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            var provider = DbEntityProvider.From("IQToolkit.Data.SQLite", @"Northwind.db3", "Test.NorthwindWithAttributes");
+            new TestRunner(args, System.Reflection.Assembly.GetEntryAssembly()).RunTests();
+        }
+
+        private static DbEntityProvider CreateNorthwindProvider()
+        {
+            return DbEntityProvider.From("IQToolkit.Data.SQLite", @"Northwind.db3", "Test.NorthwindWithAttributes");
+        }
+
+        public class NorthwindTranslationTests : Test.NorthwindTranslationTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
+        public class NorthwindExecutionTests : Test.NorthwindExecutionTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
+        public class NorthwindCUDTests : Test.NorthwindCUDTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
         }
     }
 }

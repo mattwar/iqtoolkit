@@ -39,7 +39,7 @@ namespace IQToolkit.Data.MySqlClient
 
         public override string Quote(string name)
         {
-            return name;
+            return "`" + name + "`";
         }
 
         private static readonly char[] splitChars = new char[] { '.' };

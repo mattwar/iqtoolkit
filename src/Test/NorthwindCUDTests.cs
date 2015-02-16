@@ -97,6 +97,7 @@ namespace Test
             Assert.Equal(true, results.All(r => object.Equals(r, "Seattle")));
         }
 
+        [ExcludeProvider("Access")] // problem with generating OrderID
         public void TestInsertOrderWithNoResult()
         {
             this.TestInsertCustomerNoResult(); // create customer "XX1"
@@ -109,6 +110,7 @@ namespace Test
             Assert.Equal(1, result);
         }
 
+        [ExcludeProvider("Access")] // problem with generating OrderID
         public void TestInsertOrderWithGeneratedIDResult()
         {
             this.TestInsertCustomerNoResult(); // create customer "XX1"

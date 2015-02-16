@@ -21,8 +21,6 @@ namespace IQToolkit.Data.Access
 
     public class AccessQueryProvider : OleDb.OleDbQueryProvider
     {
-        Dictionary<QueryCommand, OleDbCommand> commandCache = new Dictionary<QueryCommand, OleDbCommand>();
-
         public AccessQueryProvider(OleDbConnection connection, QueryMapping mapping, QueryPolicy policy)
             : base(connection, AccessLanguage.Default, mapping, policy)
         {
@@ -76,33 +74,16 @@ namespace IQToolkit.Data.Access
 
             protected override DbCommand GetCommand(QueryCommand query, object[] paramValues)
             {
-#if false
-                OleDbCommand cmd;
-                if (!this.provider.commandCache.TryGetValue(query, out cmd))
-                {
-                    cmd = (OleDbCommand)this.provider.Connection.CreateCommand();
-                    cmd.CommandText = query.CommandText;
-                    this.SetParameterValues(query, cmd, paramValues);
-                    if (this.provider.Transaction != null)
-                        cmd.Transaction = (OleDbTransaction)this.provider.Transaction;
-                    cmd.Prepare();
-                    this.provider.commandCache.Add(query, cmd);
-                }
-                else
-                {
-                    cmd = (OleDbCommand)cmd.Clone();
-                    if (this.provider.Transaction != null)
-                        cmd.Transaction = (OleDbTransaction)this.provider.Transaction;
-                    this.SetParameterValues(query, cmd, paramValues);
-                }
-#else
                 var cmd = (OleDbCommand)this.provider.Connection.CreateCommand();
                 cmd.CommandText = query.CommandText;
+                
                 this.SetParameterValues(query, cmd, paramValues);
+                
                 if (this.provider.Transaction != null)
+                {
                     cmd.Transaction = (OleDbTransaction)this.provider.Transaction;
+                }
 
-#endif
                 return cmd;
             }
 
@@ -113,6 +94,7 @@ namespace IQToolkit.Data.Access
                 {
                     return ToOleDbType(sqlType.SqlDbType);
                 }
+
                 return base.GetOleDbType(type);
             }
         }

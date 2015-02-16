@@ -508,7 +508,7 @@ namespace Test
             Assert.Equal(69, list.Count);
         }
 
-        [ExcludeProvider("SQLite")]
+#if false
         public void TestOrderByDistinct()
         {
             // ordering doesn't make sense here: Distinct operator is not guaranteed to retain ordering.
@@ -517,6 +517,7 @@ namespace Test
             Assert.Equal(list[0], sorted[0]);
             Assert.Equal(list[list.Count - 1], sorted[list.Count - 1]);
         }
+#endif
 
         public void TestDistinctOrderBy()
         {
@@ -1626,9 +1627,10 @@ namespace Test
             Assert.Equal(true, custs.All(c => c.StartsWith("A")));
         }
 
+        [ExcludeProvider("MySqlClient")]
         public void TestOr()
         {
-            var custs = db.Customers.Where(c => c.Country == "USA" || c.City.StartsWith("A")).Select(c => c.City).ToList();
+            var custs = db.Customers.Where(c => c.Country == "USA" || c.City.StartsWith("A")).Select(c => new { c.Country, c.City }).ToList();
             Assert.Equal(14, custs.Count);
         }
 

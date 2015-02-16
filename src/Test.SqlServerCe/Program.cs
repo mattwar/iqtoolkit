@@ -47,15 +47,5 @@ namespace Test
                 return CreateNorthwindProvider();
             }
         }
-
-#if false
-        public class MultiTableTests : Test.MultiTableTests
-        {
-            protected override DbEntityProvider CreateProvider()
-            {
-                return CreateNorthwindProvider("Test.MultiTableContext");
-            }
-        }
-#endif
     }
 }

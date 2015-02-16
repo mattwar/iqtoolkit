@@ -38,12 +38,21 @@ namespace IQToolkit.Data.OleDb
             {
                 QueryType qt = parameter.QueryType;
                 if (qt == null)
+                {
                     qt = this.provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                }
+
                 var p = ((OleDbCommand)command).Parameters.Add(parameter.Name, this.GetOleDbType(qt), qt.Length);
                 if (qt.Precision != 0)
+                {
                     p.Precision = (byte)qt.Precision;
+                }
+
                 if (qt.Scale != 0)
+                {
                     p.Scale = (byte)qt.Scale;
+                }
+
                 p.Value = value ?? DBNull.Value;
             }
 

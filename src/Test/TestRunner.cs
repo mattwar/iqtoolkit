@@ -16,15 +16,15 @@ namespace Test
 {
     public class TestRunner
     {
-        private Assembly testAssembly;
         private string[] commandLineArgs;
+        private List<Assembly> testAssemblies;
         private List<string> testNames;
         private bool verbose;
 
-        public TestRunner(string[] commandLineArgs, Assembly testAssembly)
+        public TestRunner(string[] commandLineArgs, params Assembly[] testAssemblies)
         {
             this.commandLineArgs = commandLineArgs;
-            this.testAssembly = testAssembly;
+            this.testAssemblies = new List<Assembly>(testAssemblies);
             this.testNames = new List<string>();
             this.ParseCommandLineArgs();
         }
@@ -104,9 +104,10 @@ namespace Test
 
         private Type[] GetTestTypes()
         {
-            return this.testAssembly.GetTypes()
-                .Where(t => t.Name.EndsWith("Tests") && (t.IsPublic || t.IsNestedPublic) && t.IsClass && !t.IsAbstract && HasDefaultConstructor(t))
-                .ToArray();
+            return this.testAssemblies.SelectMany(
+                a => a.GetTypes()
+                    .Where(t => t.Name.EndsWith("Tests") && (t.IsPublic || t.IsNestedPublic) && t.IsClass && !t.IsAbstract && HasDefaultConstructor(t))
+                ).ToArray();
         }
 
         private static bool HasDefaultConstructor(Type type)

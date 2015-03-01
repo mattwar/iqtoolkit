@@ -14,9 +14,6 @@ using System.Xml.Linq;
 
 namespace Test
 {
-    using IQToolkit.Data;
-    using IQToolkit.Data.Common;
-
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
     public class ExcludeProvider : Attribute
     {

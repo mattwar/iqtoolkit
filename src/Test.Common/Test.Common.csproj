@@ -4,18 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{26FC2D14-F42F-4DAB-82D9-FE4739187391}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{3010DB9D-56B4-4328-96CA-49DBB0354743}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Test.MySql</RootNamespace>
-    <AssemblyName>Test.MySql</AssemblyName>
+    <RootNamespace>Test.Common</RootNamespace>
+    <AssemblyName>Test.Common</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -26,7 +23,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\bin\Release\</OutputPath>
@@ -36,27 +32,33 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MySql.Data">
-      <HintPath>..\packages\MySql.Data.6.9.5\lib\net45\MySql.Data.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="ExcludeProviderAttribute.cs" />
+    <Compile Include="MultiTableContext.cs" />
+    <Compile Include="MultiTableTests.cs" />
+    <Compile Include="Northwind.cs" />
+    <Compile Include="NorthwindCUDTests.cs" />
+    <Compile Include="NorthwindExecutionTests.cs" />
+    <Compile Include="NorthwindPerfTests.cs" />
+    <Compile Include="NorthwindTestBase.cs" />
+    <Compile Include="NorthwindTranslationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QueryTestBase.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <Content Include="Northwind.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\IQToolkit.Data.MySqlClient\IQToolkit.Data.MySqlClient.csproj">
-      <Project>{5450ee6f-92f0-4f1f-b99f-5649a4e445fd}</Project>
-      <Name>IQToolkit.Data.MySqlClient</Name>
-    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data\IQToolkit.Data.csproj">
       <Project>{3a356510-9c25-4a94-87b9-eeb31b6a1303}</Project>
       <Name>IQToolkit.Data</Name>

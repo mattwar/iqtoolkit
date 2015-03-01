@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -62,6 +65,10 @@
     <ProjectReference Include="..\IQToolkit\IQToolkit.csproj">
       <Project>{0da62a7c-3b40-456f-a4b2-b3e19ed4080e}</Project>
       <Name>IQToolkit</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Test.Common\Test.Common.csproj">
+      <Project>{3010db9d-56b4-4328-96ca-49dbb0354743}</Project>
+      <Name>Test.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\Test\Test.csproj">
       <Project>{2adfcebe-90ba-4841-9f5b-7321f65a4d13}</Project>

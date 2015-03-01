@@ -12,9 +12,9 @@ using IQToolkit.Data.Mapping;
 
 namespace Test
 {
-    public class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             new TestRunner(args, System.Reflection.Assembly.GetEntryAssembly()).RunTests();
         }

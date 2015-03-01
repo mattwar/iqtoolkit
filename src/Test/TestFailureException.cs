@@ -7,7 +7,7 @@ namespace Test
 {
     public class TestFailureException : Exception
     {
-        internal TestFailureException(string message)
+        public TestFailureException(string message)
             : base(message)
         {
         }

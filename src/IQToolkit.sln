@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.22528.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IQToolkit", "IQToolkit\IQToolkit.csproj", "{0DA62A7C-3B40-456F-A4B2-B3E19ED4080E}"
 EndProject
@@ -20,14 +20,29 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IQToolkit.Data", "IQToolkit.Data\IQToolkit.Data.csproj", "{3A356510-9C25-4A94-87B9-EEB31B6A1303}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.SQLite", "Test.SQLite\Test.SQLite.csproj", "{144539D3-A4E1-4BB4-9782-0EEA838D547D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3010DB9D-56B4-4328-96CA-49DBB0354743} = {3010DB9D-56B4-4328-96CA-49DBB0354743}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Access", "Test.Access\Test.Access.csproj", "{E0F7C8FB-C4C3-48D5-B8A3-E10EFD02C0A3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3010DB9D-56B4-4328-96CA-49DBB0354743} = {3010DB9D-56B4-4328-96CA-49DBB0354743}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.SqlServerCe", "Test.SqlServerCe\Test.SqlServerCe.csproj", "{57F2F9BD-0192-4A58-9091-EE92C8809352}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3010DB9D-56B4-4328-96CA-49DBB0354743} = {3010DB9D-56B4-4328-96CA-49DBB0354743}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.SqlClient", "Test.SqlClient\Test.SqlClient.csproj", "{076FDFB9-EDD6-49E8-9550-F9D1C29A1F68}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3010DB9D-56B4-4328-96CA-49DBB0354743} = {3010DB9D-56B4-4328-96CA-49DBB0354743}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.MySqlClient", "Test.MySql\Test.MySqlClient.csproj", "{26FC2D14-F42F-4DAB-82D9-FE4739187391}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3010DB9D-56B4-4328-96CA-49DBB0354743} = {3010DB9D-56B4-4328-96CA-49DBB0354743}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Access", "Access", "{3FA89C1C-99BE-47A4-A738-D765B96D84AD}"
 EndProject

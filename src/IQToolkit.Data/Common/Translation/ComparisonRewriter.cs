@@ -53,9 +53,27 @@ namespace IQToolkit.Data.Common
         {
             var e1 = this.SkipConvert(bop.Left);
             var e2 = this.SkipConvert(bop.Right);
-            EntityExpression entity1 = e1 as EntityExpression;
-            EntityExpression entity2 = e2 as EntityExpression;
+
+            OuterJoinedExpression oj1 = e1 as OuterJoinedExpression;
+            OuterJoinedExpression oj2 = e2 as OuterJoinedExpression;
+
+            EntityExpression entity1 = oj1 != null ? oj1.Expression as EntityExpression : e1 as EntityExpression;
+            EntityExpression entity2 = oj2 != null ? oj2.Expression as EntityExpression : e2 as EntityExpression;
+
             bool negate = bop.NodeType == ExpressionType.NotEqual;
+
+            // check for outer-joined entity comparing against null. These are special because outer joins have 
+            // a test expression specifically desgined to be tested against null to determine if the joined side exists.
+            if (oj1 != null && e2.NodeType == ExpressionType.Constant && ((ConstantExpression)e2).Value == null)
+            {
+                return MakeIsNull(oj1.Test, negate);
+            }
+            else if (oj2 != null && e1.NodeType == ExpressionType.Constant && ((ConstantExpression)e1).Value == null)
+            {
+                return MakeIsNull(oj2.Test, negate);
+            }
+
+            // if either side is an entity construction expression then compare using its primary key members
             if (entity1 != null)
             {
                 return this.MakePredicate(e1, e2, this.mapping.GetPrimaryKeyMembers(entity1.Entity), negate);
@@ -64,6 +82,8 @@ namespace IQToolkit.Data.Common
             {
                 return this.MakePredicate(e1, e2, this.mapping.GetPrimaryKeyMembers(entity2.Entity), negate);
             }
+
+            // check for comparison of user constructed type projections
             var dm1 = this.GetDefinedMembers(e1);
             var dm2 = this.GetDefinedMembers(e2);
 
@@ -93,6 +113,12 @@ namespace IQToolkit.Data.Common
             }
 
             throw new InvalidOperationException("Cannot compare two constructed types with different sets of members assigned.");
+        }
+
+        protected Expression MakeIsNull(Expression expression, bool negate)
+        {
+            Expression isnull = new IsNullExpression(expression);
+            return negate ? Expression.Not(isnull) : isnull;
         }
 
         protected Expression MakePredicate(Expression e1, Expression e2, IEnumerable<MemberInfo> members, bool negate)

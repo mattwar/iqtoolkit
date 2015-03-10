@@ -421,7 +421,7 @@ namespace IQToolkit.Data.Common
             }
             else
             {
-                throw new NotSupportedException(string.Format("The construtor for '{0}' is not supported", nex.Constructor.DeclaringType));
+                throw new NotSupportedException(string.Format("The constructor for '{0}' is not supported", nex.Constructor.DeclaringType));
             }
         }
 
@@ -431,7 +431,12 @@ namespace IQToolkit.Data.Common
             switch (u.NodeType)
             {
                 case ExpressionType.Not:
-                    if (IsBoolean(u.Operand.Type) || op.Length > 1)
+                    if (u.Operand is IsNullExpression)
+                    {
+                        this.Visit(((IsNullExpression)u.Operand).Expression);
+                        this.Write(" IS NOT NULL");
+                    }
+                    else if (IsBoolean(u.Operand.Type) || op.Length > 1)
                     {
                         this.Write(op);
                         this.Write(" ");

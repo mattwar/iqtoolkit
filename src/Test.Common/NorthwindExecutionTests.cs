@@ -1672,6 +1672,38 @@ namespace Test
             Assert.Equal(90, n);
         }
 
+        public void TestRelationshipEqualNull()
+        {
+            var q = db.Orders.Where(o => o.Customer == null);
+            Assert.Equal(true, this.GetProvider().GetQueryText(q.Expression).Contains("IS NULL"));
+            var n = q.Count();
+            Assert.Equal(0, n);
+        }
+
+        public void TestRelationshipEqualNullReversed()
+        {
+            var q = db.Orders.Where(o => null == o.Customer);
+            Assert.Equal(true, this.GetProvider().GetQueryText(q.Expression).Contains("IS NULL"));
+            var n = q.Count();
+            Assert.Equal(0, n);
+        }
+
+        public void TestRelationshipNotEqualNull()
+        {
+            var q = db.Orders.Where(o => o.Customer != null);
+            Assert.Equal(true, this.GetProvider().GetQueryText(q.Expression).Contains("IS NOT NULL"));
+            var n = q.Count();
+            Assert.Equal(830, n);
+        }
+
+        public void TestRelationshipNotEqualNullReversed()
+        {
+            var q = db.Orders.Where(o => null != o.Customer);
+            Assert.Equal(true, this.GetProvider().GetQueryText(q.Expression).Contains("IS NOT NULL"));
+            var n = q.Count();
+            Assert.Equal(830, n);
+        }
+
         public void TestConditionalResultsArePredicates()
         {
             bool value = db.Orders.Where(c => c.CustomerID == "ALFKI").Max(c => (c.CustomerID == "ALFKI" ? string.Compare(c.CustomerID, "POTATO") < 0 : string.Compare(c.CustomerID, "POTATO") > 0));

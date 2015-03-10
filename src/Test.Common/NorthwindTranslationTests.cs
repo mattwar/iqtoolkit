@@ -84,6 +84,34 @@ namespace Test
                 );
         }
 
+        public void TestCompareRelationshipEqualNull()
+        {
+            TestQuery(
+                db.Orders.Where(o => o.Customer == null)
+                );
+        }
+
+        public void TestCompareRelationshipEqualNullReversed()
+        {
+            TestQuery(
+                db.Orders.Where(o => null == o.Customer)
+                );
+        }
+
+        public void TestCompareRelationshipNotEqualNull()
+        {
+            TestQuery(
+                db.Orders.Where(o => o.Customer != null)
+                );
+        }
+
+        public void TestCompareRelationshipNotEqualNullReversed()
+        {
+            TestQuery(
+                db.Orders.Where(o => null != o.Customer)
+                );
+        }
+
         public void TestSelectScalar()
         {
             TestQuery(db.Customers.Select(c => c.City));

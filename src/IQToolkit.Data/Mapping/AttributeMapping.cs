@@ -53,6 +53,7 @@ namespace IQToolkit.Data.Mapping
         public bool IsComputed { get; set; }
         public bool IsPrimaryKey { get; set; }
         public bool IsGenerated { get; set; }
+        public bool IsReadOnly { get; set; }  
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]

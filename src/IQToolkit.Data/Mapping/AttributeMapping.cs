@@ -249,6 +249,12 @@ namespace IQToolkit.Data.Mapping
             AttributeMappingMember mm = ((AttributeMappingEntity)entity).GetMappingMember(member.Name);
             return mm != null && mm.Column != null && mm.Column.IsGenerated;
         }
+        
+        public override bool IsReadOnly(MappingEntity entity, MemberInfo member)
+        {
+            AttributeMappingMember mm = ((AttributeMappingEntity)entity).GetMappingMember(member.Name);
+            return mm != null && mm.Column != null && mm.Column.IsReadOnly;
+        }
 
         public override bool IsPrimaryKey(MappingEntity entity, MemberInfo member)
         {

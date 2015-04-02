@@ -67,8 +67,8 @@ namespace IQToolkit.Data.Common
                 ColumnExpression c = (ColumnExpression)right;
                 left = new NamedValueExpression(nv.Name, c.QueryType, nv.Value);
             }
-            else if (b.Right.NodeType == (ExpressionType)DbExpressionType.NamedValue
-             && b.Left.NodeType == (ExpressionType)DbExpressionType.Column)
+            else if (right.NodeType == (ExpressionType)DbExpressionType.NamedValue
+             && left.NodeType == (ExpressionType)DbExpressionType.Column)
             {
                 NamedValueExpression nv = (NamedValueExpression)right;
                 ColumnExpression c = (ColumnExpression)left;

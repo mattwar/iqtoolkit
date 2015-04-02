@@ -124,6 +124,16 @@ namespace IQToolkit.Data.Common
         {
             return false;
         }
+        
+        /// <summary>
+        /// Determines if a property should not be written back to database
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        public virtual bool IsReadOnly(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
 
         /// <summary>
         /// Determines if a property can be part of an update operation
@@ -133,7 +143,7 @@ namespace IQToolkit.Data.Common
         /// <returns></returns>
         public virtual bool IsUpdatable(MappingEntity entity, MemberInfo member)
         {
-            return !this.IsPrimaryKey(entity, member);
+            return !this.IsPrimaryKey(entity, member) && !this.IsReadOnly(entity, member);   
         }
 
         /// <summary>
@@ -691,7 +701,7 @@ namespace IQToolkit.Data.Common
         {
             var tableAlias = new TableAlias();
             var table = new TableExpression(tableAlias, entity, this.mapping.GetTableName(entity));
-            var assignments = this.GetColumnAssignments(table, instance, entity, (e, m) => !this.mapping.IsGenerated(e, m));
+            var assignments = this.GetColumnAssignments(table, instance, entity, (e, m) => !(mapping.IsGenerated(e, m) || mapping.IsReadOnly(e,m)));   // #MLCHANGE
 
             if (selector != null)
             {

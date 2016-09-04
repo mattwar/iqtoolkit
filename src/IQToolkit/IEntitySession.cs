@@ -6,6 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace IQToolkit
 {
@@ -15,6 +17,7 @@ namespace IQToolkit
         ISessionTable<T> GetTable<T>(string tableId);
         ISessionTable GetTable(Type elementType, string tableId);
         void SubmitChanges();
+        Task SubmitChangesAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface ISessionTable : IQueryable
@@ -26,7 +29,7 @@ namespace IQToolkit
         SubmitAction GetSubmitAction(object instance);
     }
 
-    public interface ISessionTable<T> : IQueryable<T>, ISessionTable
+    public interface ISessionTable<T> : IQueryable<T>, ISessionTable, IAsyncEnumerable<T>
     {
         new IEntityTable<T> ProviderTable { get; }
         new T GetById(object id);

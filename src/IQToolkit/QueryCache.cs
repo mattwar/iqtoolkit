@@ -9,7 +9,8 @@ namespace IQToolkit
 {
     public class QueryCache
     {
-        MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
+        private readonly MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
+
         static readonly Func<QueryCompiler.CompiledQuery, QueryCompiler.CompiledQuery, bool> fnCompareQueries = CompareQueries;
         static readonly Func<object, object, bool> fnCompareValues = CompareConstantValues;
 
@@ -73,8 +74,17 @@ namespace IQToolkit
         {
             var pq = this.Parameterize(query, out args);
             var cq = new QueryCompiler.CompiledQuery(pq);
+
             QueryCompiler.CompiledQuery cached;
-            this.cache.Lookup(cq, add, out cached);
+            if (add)
+            {
+                cached = this.cache.GetOrAdd(cq);
+            }
+            else
+            {
+                this.cache.TryGet(cq, out cached);
+            }
+
             return cached;
         }
 
@@ -116,7 +126,7 @@ namespace IQToolkit
             else
             {
                 arguments = new object[] { arguments };
-                return ExplicitToObjectArray.Rewrite(body, parameters);
+                return ParameterToObjectArrayAccessorRewriter.Rewrite(body, parameters);
             }
         }
 
@@ -143,21 +153,26 @@ namespace IQToolkit
             return null;
         }
 
-
-        class ExplicitToObjectArray : ExpressionVisitor
+        /// <summary>
+        /// Converts parameter references in an expression to array accesses from a 
+        /// single lambda expression parameter.
+        /// 
+        /// Returns as a new lambda expression
+        /// </summary>
+        private class ParameterToObjectArrayAccessorRewriter : ExpressionVisitor
         {
-            IList<ParameterExpression> parameters;
-            ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
+            private readonly IReadOnlyList<ParameterExpression> parameters;
+            private readonly ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
 
-            private ExplicitToObjectArray(IList<ParameterExpression> parameters)
+            private ParameterToObjectArrayAccessorRewriter(IReadOnlyList<ParameterExpression> parameters)
             {
                 this.parameters = parameters;
             }
 
-            internal static LambdaExpression Rewrite(Expression body, IList<ParameterExpression> parameters)
+            public static LambdaExpression Rewrite(Expression body, IReadOnlyList<ParameterExpression> parameters)
             {
-                var visitor = new ExplicitToObjectArray(parameters);
-                return Expression.Lambda(visitor.Visit(body), visitor.array);                  
+                var visitor = new ParameterToObjectArrayAccessorRewriter(parameters);
+                return Expression.Lambda(visitor.Visit(body), visitor.array);
             }
 
             protected override Expression VisitParameter(ParameterExpression p)
@@ -169,6 +184,7 @@ namespace IQToolkit
                         return Expression.Convert(Expression.ArrayIndex(this.array, Expression.Constant(i)), p.Type);
                     }
                 }
+
                 return p;
             }
         }

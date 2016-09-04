@@ -41,7 +41,7 @@ namespace IQToolkit.Data.SqlServerCe
             return new Executor(this);
         }
 
-        new class Executor : DbEntityProvider.Executor
+        class Executor : DbEntityProvider.DbQueryExecutor
         {
             public Executor(SqlCeQueryProvider provider)
                 : base(provider)

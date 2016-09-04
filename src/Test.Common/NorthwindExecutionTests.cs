@@ -2,23 +2,18 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Xml;
+using System.Threading.Tasks;
+using IQToolkit;
+using IQToolkit.Data;
+using IQToolkit.Data.Mapping;
 
 namespace Test 
 {
-    using IQToolkit;
-    using IQToolkit.Data;
-    using IQToolkit.Data.Mapping;
-
-    public abstract class NorthwindExecutionTests : NorthwindTestBase
+    public abstract partial class NorthwindExecutionTests : NorthwindTestBase
     {
+        #region Compiled Queries
         public void TestCompiledQuery()
         {
             var fn = QueryCompiler.Compile((string id) => db.Customers.Where(c => c.CustomerID == id));
@@ -47,7 +42,9 @@ namespace Test
             var fn = QueryCompiler.Compile((Northwind n, string id) => n.Customers.Where(c => c.CustomerID == id).Select(c => n.Orders.Where(o => o.CustomerID == c.CustomerID)));
             var items = fn(this.db, "ALFKI").ToList();
         }
+        #endregion
 
+        #region LINQ operators
         public void TestWhere()
         {
             var list = db.Customers.Where(c => c.City == "London").ToList();
@@ -892,25 +889,33 @@ namespace Test
             Assert.Equal(10, hs.Count);
         }
 
-        public void TestCoalesce()
+        public void TestConditionalResultsArePredicates()
         {
-            var list = db.Customers.Select(c => new { City = (c.City == "London" ? null : c.City), Country = (c.CustomerID == "EASTC" ? null : c.Country) })
-                         .Where(x => (x.City ?? "NoCity") == "NoCity").ToList();
-            Assert.Equal(6, list.Count);
-            Assert.Equal(null, list[0].City);
+            bool value = db.Orders.Where(c => c.CustomerID == "ALFKI").Max(c => (c.CustomerID == "ALFKI" ? string.Compare(c.CustomerID, "POTATO") < 0 : string.Compare(c.CustomerID, "POTATO") > 0));
+            Assert.Equal(true, value);
         }
 
-        public void TestCoalesce2()
+        public void TestSelectManyJoined()
         {
-            var list = db.Customers.Select(c => new { City = (c.City == "London" ? null : c.City), Country = (c.CustomerID == "EASTC" ? null : c.Country) })
-                         .Where(x => (x.City ?? x.Country ?? "NoCityOrCountry") == "NoCityOrCountry").ToList();
-            Assert.Equal(1, list.Count);
-            Assert.Equal(null, list[0].City);
-            Assert.Equal(null, list[0].Country);
+            var cods =
+                (from c in db.Customers
+                 from o in db.Orders.Where(o => o.CustomerID == c.CustomerID)
+                 select new { c.ContactName, o.OrderDate }).ToList();
+            Assert.Equal(830, cods.Count);
         }
 
-        // framework function tests
+        public void TestSelectManyJoinedDefaultIfEmpty()
+        {
+            var cods = (
+                from c in db.Customers
+                from o in db.Orders.Where(o => o.CustomerID == c.CustomerID).DefaultIfEmpty()
+                select new { c.ContactName, o.OrderDate }
+                ).ToList();
+            Assert.Equal(832, cods.Count);
+        }
+        #endregion
 
+        #region Functions and Scalar Operators
         public void TestStringLength()
         {
             var list = db.Customers.Where(c => c.City.Length == 7).ToList();
@@ -1672,6 +1677,25 @@ namespace Test
             Assert.Equal(90, n);
         }
 
+        public void TestCoalesce()
+        {
+            var list = db.Customers.Select(c => new { City = (c.City == "London" ? null : c.City), Country = (c.CustomerID == "EASTC" ? null : c.Country) })
+                         .Where(x => (x.City ?? "NoCity") == "NoCity").ToList();
+            Assert.Equal(6, list.Count);
+            Assert.Equal(null, list[0].City);
+        }
+
+        public void TestCoalesce2()
+        {
+            var list = db.Customers.Select(c => new { City = (c.City == "London" ? null : c.City), Country = (c.CustomerID == "EASTC" ? null : c.Country) })
+                         .Where(x => (x.City ?? x.Country ?? "NoCityOrCountry") == "NoCityOrCountry").ToList();
+            Assert.Equal(1, list.Count);
+            Assert.Equal(null, list[0].City);
+            Assert.Equal(null, list[0].Country);
+        }
+        #endregion
+
+        #region Relationships
         public void TestRelationshipEqualNull()
         {
             var q = db.Orders.Where(o => o.Customer == null);
@@ -1702,31 +1726,6 @@ namespace Test
             Assert.Equal(true, this.GetProvider().GetQueryText(q.Expression).Contains("IS NOT NULL"));
             var n = q.Count();
             Assert.Equal(830, n);
-        }
-
-        public void TestConditionalResultsArePredicates()
-        {
-            bool value = db.Orders.Where(c => c.CustomerID == "ALFKI").Max(c => (c.CustomerID == "ALFKI" ? string.Compare(c.CustomerID, "POTATO") < 0 : string.Compare(c.CustomerID, "POTATO") > 0));
-            Assert.Equal(true, value);
-        }
-
-        public void TestSelectManyJoined()
-        {
-            var cods = 
-                (from c in db.Customers
-                from o in db.Orders.Where(o => o.CustomerID == c.CustomerID)
-                select new { c.ContactName, o.OrderDate }).ToList();
-            Assert.Equal(830, cods.Count);
-        }
-
-        public void TestSelectManyJoinedDefaultIfEmpty()
-        {
-            var cods = (
-                from c in db.Customers
-                from o in db.Orders.Where(o => o.CustomerID == c.CustomerID).DefaultIfEmpty()
-                select new { c.ContactName, o.OrderDate }
-                ).ToList();
-            Assert.Equal(832, cods.Count);
         }
 
         public void TestSelectWhereAssociation()
@@ -1783,7 +1782,9 @@ namespace Test
                 ).ToList();
             Assert.Equal(108, stuff.Count);
         }
+        #endregion
 
+        #region Policies
         public void TestCustomersIncludeOrders()
         {
             var policy = new EntityPolicy();
@@ -1975,5 +1976,126 @@ namespace Test
             Order fo = q.First();
             Assert.Equal(3, fo.Details.Count);
         }
+        #endregion
+
+        #region Async
+        public void TestTableIsIAsyncEnumerable()
+        {
+            Assert.NotNull(db.Customers as IAsyncEnumerable<Test.Customer>);
+        }
+
+        public void TestTableEnumeratorIsAsync()
+        {
+            var enumerator = db.Customers.GetEnumerator();
+            Assert.NotNull(enumerator as IAsyncEnumerator<Test.Customer>);
+        }
+
+        public void TestToAsyncOnTablesGivesSameInstance()
+        {
+            var customers = db.Customers.ToAsync();
+            Assert.Same(db.Customers, customers);
+        }
+
+        public async Task TestTableAsyncEnumeration()
+        {
+            var list = new List<Test.Customer>();
+
+            using (var enumerator = await db.Customers.GetEnumeratorAsync())
+            {
+                while (await enumerator.MoveNextAsync())
+                {
+                    list.Add(enumerator.Current);
+                }
+            }
+
+            Assert.Equal(91, list.Count);
+        }
+
+        public async Task TestTableToListAsync()
+        {
+            var list = await db.Customers.ToListAsync();
+            Assert.Equal(91, list.Count);
+        }
+
+        public void TestQueryIsIAsyncEnumerable()
+        {
+            Assert.NotNull(db.Customers.Where(c => c.CustomerID == "ALFKI") as IAsyncEnumerable<Test.Customer>);
+        }
+
+        public void TestQueryEnumeratorIsAsync()
+        {
+            var enumerator = db.Customers.Where(c => c.CustomerID == "ALFKI").GetEnumerator();
+            Assert.NotNull(enumerator as IAsyncEnumerator<Test.Customer>);
+        }
+
+        public void TestToAsyncOnQueryGivesSameInstance()
+        {
+            var query = db.Customers.Where(c => c.CustomerID == "ALFKI");
+            var async = query.ToAsync();
+            Assert.Same(query, async);
+        }
+
+        public async Task TestQueryAsyncEnumeration()
+        {
+            var list = new List<Test.Customer>();
+
+            var query = db.Customers.Where(c => c.CustomerID == "ALFKI");
+            using (var enumerator = await query.GetEnumeratorAsync())
+            {
+                while (await enumerator.MoveNextAsync())
+                {
+                    list.Add(enumerator.Current);
+                }
+            }
+
+            Assert.Equal(1, list.Count);
+            Assert.Equal("ALFKI", list[0].CustomerID);
+        }
+
+        public async Task TestQueryToListAsync()
+        {
+            var list = await db.Customers.Where(c => c.CustomerID == "ALFKI").ToListAsync();
+            Assert.Equal(1, list.Count);
+            Assert.Equal("ALFKI", list[0].CustomerID);
+        }
+
+        public async Task TestAsyncCustomersIncludeOrdersSucceeds()
+        {
+            var policy = new EntityPolicy();
+            policy.IncludeWith<Customer>(c => c.Orders);
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
+
+            var custs = await nw.Customers.Where(c => c.CustomerID == "ALFKI").ToListAsync();
+            Assert.Equal(1, custs.Count);
+            Assert.NotEqual(null, custs[0].Orders);
+            Assert.Equal(6, custs[0].Orders.Count);
+        }
+
+        public async Task TestAsyncQueryWithDeferLoadedRelationshipSucceeds()
+        {
+            var policy = new EntityPolicy();
+            policy.IncludeWith<Customer>(c => c.Orders, deferLoad: true);
+            Northwind nw = new Northwind(this.GetProvider().New(policy));
+
+            var custs = await nw.Customers.Where(c => c.CustomerID == "ALFKI").ToListAsync();
+            Assert.Equal(1, custs.Count);
+            Assert.NotEqual(null, custs[0].Orders);
+            var deferredOrders = custs[0].Orders as DeferredList<Test.Order>;
+            Assert.NotNull(deferredOrders);
+            Assert.Equal(false, deferredOrders.IsLoaded);
+            Assert.Equal(6, custs[0].Orders.Count);
+            Assert.Equal(true, deferredOrders.IsLoaded);
+        }
+
+        public async Task TestAsyncCompiledQuery()
+        {
+            var cq = QueryCompiler.Compile((string id) => db.Customers.Where(c => c.CustomerID == id));
+            var query = cq("ALFKI");
+            var asyncQuery = query as IAsyncEnumerable<Test.Customer>;
+            Assert.NotNull(asyncQuery);
+            var result = await asyncQuery.ToListAsync();
+            Assert.Equals(91, result.Count);
+        }
+        #endregion
     }
 }

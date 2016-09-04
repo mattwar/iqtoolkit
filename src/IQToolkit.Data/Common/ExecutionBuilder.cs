@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace IQToolkit.Data.Common
 {
@@ -18,16 +19,16 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ExecutionBuilder : DbExpressionVisitor
     {
-        QueryPolicy policy;
-        QueryLinguist linguist;
-        Expression executor;
-        Scope scope;
-        bool isTop = true;
-        MemberInfo receivingMember;
-        int nReaders = 0;
-        List<ParameterExpression> variables = new List<ParameterExpression>();
-        List<Expression> initializers = new List<Expression>();
-        Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
+        private QueryPolicy policy;
+        private QueryLinguist linguist;
+        private Expression executor;
+        private Scope scope;
+        private bool isTop = true;
+        private MemberInfo receivingMember;
+        private int nReaders = 0;
+        private List<ParameterExpression> variables = new List<ParameterExpression>();
+        private List<Expression> initializers = new List<Expression>();
+        private Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
 
         private ExecutionBuilder(QueryLinguist linguist, QueryPolicy policy, Expression executor)
         {
@@ -41,7 +42,7 @@ namespace IQToolkit.Data.Common
             var executor = Expression.Parameter(typeof(QueryExecutor), "executor");
             var builder = new ExecutionBuilder(linguist, policy, executor);
             builder.variables.Add(executor);
-            builder.initializers.Add(Expression.Call(Expression.Convert(provider, typeof(ICreateExecutor)), "CreateExecutor", null, null));
+            builder.initializers.Add(Expression.Call(Expression.Convert(provider, typeof(ICreateExecutor)), nameof(ICreateExecutor.CreateExecutor), null, null));
             var result = builder.Build(expression);
             return result;
         }
@@ -78,10 +79,10 @@ namespace IQToolkit.Data.Common
         {
             Expression last = expressions[expressions.Count - 1];
             expressions = expressions.Select(e => e.Type.IsValueType ? Expression.Convert(e, typeof(object)) : e).ToList();
-            return Expression.Convert(Expression.Call(typeof(ExecutionBuilder), "Sequence", null, Expression.NewArrayInit(typeof(object), expressions)), last.Type);
+            return Expression.Convert(Expression.Call(typeof(ExecutionBuilder), nameof(ExecutionBuilder.Sequence), null, Expression.NewArrayInit(typeof(object), expressions)), last.Type);
         }
 
-        public static object Sequence(params object[] values) 
+        public static object Sequence(params object[] values)
         {
             return values[values.Length - 1];
         }
@@ -101,7 +102,7 @@ namespace IQToolkit.Data.Common
 
         private static Expression MakeAssign(ParameterExpression variable, Expression value)
         {
-            return Expression.Call(typeof(ExecutionBuilder), "Assign", new Type[] { variable.Type }, variable, value);
+            return Expression.Call(typeof(ExecutionBuilder), nameof(ExecutionBuilder.Assign), new Type[] { variable.Type }, variable, value);
         }
 
         public static T Assign<T>(ref T variable, T value)
@@ -160,7 +161,7 @@ namespace IQToolkit.Data.Common
             ProjectionExpression newProjection = new ProjectionExpression(join.Projection.Select, constructKVPair);
 
             int iLookup = ++nLookup;
-            Expression execution = this.ExecuteProjection(newProjection, false);
+            Expression execution = this.ExecuteProjection(newProjection, okayToDefer: false, isTopLevel: false);
 
             ParameterExpression kvp = Expression.Parameter(constructKVPair.Type, "kvp");
 
@@ -171,13 +172,13 @@ namespace IQToolkit.Data.Common
                     Expression.PropertyOrField(kvp, "Value").NotEqual(TypeHelper.GetNullConstant(join.Projection.Projector.Type)),
                     kvp
                     );
-                execution = Expression.Call(typeof(Enumerable), "Where", new Type[] { kvp.Type }, execution, pred);
+                execution = Expression.Call(typeof(Enumerable), nameof(Enumerable.Where), new Type[] { kvp.Type }, execution, pred);
             }
 
             // make lookup
             LambdaExpression keySelector = Expression.Lambda(Expression.PropertyOrField(kvp, "Key"), kvp);
             LambdaExpression elementSelector = Expression.Lambda(Expression.PropertyOrField(kvp, "Value"), kvp);
-            Expression toLookup = Expression.Call(typeof(Enumerable), "ToLookup", new Type[] { kvp.Type, outerKey.Type, join.Projection.Projector.Type }, execution, keySelector, elementSelector);
+            Expression toLookup = Expression.Call(typeof(Enumerable), nameof(Enumerable.ToLookup), new Type[] { kvp.Type, outerKey.Type, join.Projection.Projector.Type }, execution, keySelector, elementSelector);
 
             // 2) agg(lookup[outer])
             ParameterExpression lookup = Expression.Parameter(toLookup.Type, "lookup" + iLookup);
@@ -200,7 +201,7 @@ namespace IQToolkit.Data.Common
             if (this.isTop)
             {
                 this.isTop = false;
-                return this.ExecuteProjection(projection, this.scope != null);
+                return this.ExecuteProjection(projection, okayToDefer: this.scope != null, isTopLevel: true);
             }
             else
             {
@@ -217,7 +218,7 @@ namespace IQToolkit.Data.Common
             return this.linguist.Parameterize(expression);
         }
 
-        private Expression ExecuteProjection(ProjectionExpression projection, bool okayToDefer)
+        private Expression ExecuteProjection(ProjectionExpression projection, bool okayToDefer, bool isTopLevel)
         {
             // parameterize query
             projection = (ProjectionExpression)this.Parameterize(projection);
@@ -233,10 +234,10 @@ namespace IQToolkit.Data.Common
             QueryCommand command = new QueryCommand(commandText, namedValues.Select(v => new QueryParameter(v.Name, v.Type, v.QueryType)));
             Expression[] values = namedValues.Select(v => Expression.Convert(this.Visit(v.Value), typeof(object))).ToArray();
 
-            return this.ExecuteProjection(projection, okayToDefer, command, values);
+            return this.ExecuteProjection(projection, okayToDefer, command, values, isTopLevel);
         }
 
-        private Expression ExecuteProjection(ProjectionExpression projection, bool okayToDefer, QueryCommand command, Expression[] values)
+        private Expression ExecuteProjection(ProjectionExpression projection, bool okayToDefer, QueryCommand command, Expression[] values, bool isTopLevel)
         {
             okayToDefer &= (this.receivingMember != null && this.policy.IsDeferLoaded(this.receivingMember));
 
@@ -248,9 +249,9 @@ namespace IQToolkit.Data.Common
 
             var entity = EntityFinder.Find(projection.Projector);
 
-            string methExecute = okayToDefer 
-                ? "ExecuteDeferred" 
-                : "Execute";
+            string methExecute = okayToDefer
+                ? nameof(QueryExecutor.ExecuteDeferred)
+                : nameof(QueryExecutor.Execute);
 
             // call low-level execute directly on supplied DbQueryProvider
             Expression result = Expression.Call(this.executor, methExecute, new Type[] { projector.Body.Type },
@@ -265,6 +266,7 @@ namespace IQToolkit.Data.Common
                 // apply aggregator
                 result = DbExpressionReplacer.Replace(projection.Aggregator.Body, projection.Aggregator.Parameters[0], result);
             }
+
             return result;
         }
 
@@ -279,7 +281,7 @@ namespace IQToolkit.Data.Common
                 var source = this.Visit(batch.Input);
                 var op = this.Visit(batch.Operation.Body);
                 var fn = Expression.Lambda(op, batch.Operation.Parameters[1]);
-                return Expression.Call(this.GetType(), "Batch", new Type[] {TypeHelper.GetElementType(source.Type), batch.Operation.Body.Type}, source, fn, batch.Stream);
+                return Expression.Call(typeof(ExecutionBuilder), nameof(ExecutionBuilder.Batch), new Type[] {TypeHelper.GetElementType(source.Type), batch.Operation.Body.Type}, source, fn, batch.Stream);
             }
         }
 
@@ -293,7 +295,7 @@ namespace IQToolkit.Data.Common
             QueryCommand command = new QueryCommand(commandText, namedValues.Select(v => new QueryParameter(v.Name, v.Type, v.QueryType)));
             Expression[] values = namedValues.Select(v => Expression.Convert(this.Visit(v.Value), typeof(object))).ToArray();
 
-            Expression paramSets = Expression.Call(typeof(Enumerable), "Select", new Type[] { batch.Operation.Parameters[1].Type, typeof(object[]) },
+            Expression paramSets = Expression.Call(typeof(Enumerable), nameof(Enumerable.Select), new Type[] { batch.Operation.Parameters[1].Type, typeof(object[]) },
                 batch.Input,
                 Expression.Lambda(Expression.NewArrayInit(typeof(object), values), new[] { batch.Operation.Parameters[1] })
                 );
@@ -312,7 +314,7 @@ namespace IQToolkit.Data.Common
                 var entity = EntityFinder.Find(projection.Projector);
                 command = new QueryCommand(command.CommandText, command.Parameters);
 
-                plan = Expression.Call(this.executor, "ExecuteBatch", new Type[] { projector.Body.Type },
+                plan = Expression.Call(this.executor, nameof(QueryExecutor.ExecuteBatch), new Type[] { projector.Body.Type },
                     Expression.Constant(command),
                     paramSets,
                     projector,
@@ -323,7 +325,7 @@ namespace IQToolkit.Data.Common
             }
             else
             {
-                plan = Expression.Call(this.executor, "ExecuteBatch", null,
+                plan = Expression.Call(this.executor, nameof(QueryExecutor.ExecuteBatch), null,
                     Expression.Constant(command),
                     paramSets,
                     batch.BatchSize,
@@ -390,7 +392,7 @@ namespace IQToolkit.Data.Common
                     ifx.IfFalse != null 
                         ? ifx.IfFalse 
                         : ifx.IfTrue.Type == typeof(int) 
-                            ? (Expression)Expression.Property(this.executor, "RowsAffected") 
+                            ? (Expression)Expression.Property(this.executor, nameof(QueryExecutor.RowsAffected)) 
                             : (Expression)Expression.Constant(TypeHelper.GetDefault(ifx.IfTrue.Type), ifx.IfTrue.Type)
                             );
             return this.Visit(test);
@@ -400,7 +402,7 @@ namespace IQToolkit.Data.Common
         {
             if (this.linguist.Language.IsRowsAffectedExpressions(func))
             {
-                return Expression.Property(this.executor, "RowsAffected");
+                return Expression.Property(this.executor, nameof(QueryExecutor.RowsAffected));
             }
             return base.VisitFunction(func);
         }
@@ -478,10 +480,10 @@ namespace IQToolkit.Data.Common
             ProjectionExpression projection = ProjectionFinder.FindProjection(expression);
             if (projection != null)
             {
-                return this.ExecuteProjection(projection, false, qc, values);
+                return this.ExecuteProjection(projection, false, qc, values, isTopLevel: true);
             }
 
-            Expression plan = Expression.Call(this.executor, "ExecuteCommand", null,
+            var plan = Expression.Call(this.executor, nameof(QueryExecutor.ExecuteCommand), null,
                 Expression.Constant(qc),
                 Expression.NewArrayInit(typeof(object), values)
                 );

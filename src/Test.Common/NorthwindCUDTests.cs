@@ -7,6 +7,7 @@ using System.Data.SqlClient;
 using System.Text;
 using IQToolkit;
 using IQToolkit.Data;
+using System.Threading.Tasks;
 
 namespace Test
 {
@@ -35,6 +36,7 @@ namespace Test
             this.ExecSilent("DELETE FROM Customers WHERE CustomerID LIKE 'XX%'");
         }
 
+        #region Insert, Update, InsertOrUpdate, Delete, Batch
         public void TestInsertCustomerNoResult()
         {
             var cust = new Customer
@@ -660,7 +662,9 @@ namespace Test
             var result = db.Customers.Delete(c => c.CustomerID.StartsWith("XX"));
             Assert.Equal(10, result);
         }
+#endregion
 
+        #region Sessions
         public void TestSessionIdentityCache()
         {
             NorthwindSession ns = new NorthwindSession(this.GetProvider());
@@ -671,7 +675,7 @@ namespace Test
 
             Assert.NotEqual(null, cust);
             Assert.NotEqual(null, cust2);
-            Assert.Equal(cust, cust2);
+            Assert.Same(cust, cust2);
         }
 
         public void TestSessionProviderNotIdentityCached()
@@ -686,7 +690,7 @@ namespace Test
             Assert.NotEqual(null, cust);
             Assert.NotEqual(null, cust2);
             Assert.Equal(cust.CustomerID, cust2.CustomerID);
-            Assert.NotEqual(cust, cust2);
+            Assert.NotSame(cust, cust2);
         }
 
         public void TestSessionSubmitActionOnModify()
@@ -914,5 +918,168 @@ namespace Test
             cust2.City = "ChicagoX";
             Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
         }
+
+        #endregion
+
+        #region Async Insert, Update, InsertOrUpdate, Delete, Batch
+        public async Task TestInsertCustomerNoResultAsync()
+        {
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Seattle",
+                Country = "USA"
+            };
+
+            var result = await db.Customers.InsertAsync(cust);
+            Assert.Equal(1, result);  // returns 1 for success
+        }
+
+        public async Task TestBatchInsertCustomersNoResultAsync()
+        {
+            int n = 10;
+            var custs = Enumerable.Range(1, n).Select(
+                i => new Customer
+                {
+                    CustomerID = "XX" + i,
+                    CompanyName = "Company" + i,
+                    ContactName = "Contact" + i,
+                    City = "Seattle",
+                    Country = "USA"
+                });
+            var results = await db.Customers.AsyncBatch(custs, (u, c) => u.Insert(c)).ToListAsync();
+            Assert.Equal(n, results.Count);
+            Assert.Equal(true, results.All(r => object.Equals(r, 1)));
+        }
+
+        public async Task TestBatchInsertCustomersWithResultAsync()
+        {
+            int n = 10;
+            var custs = Enumerable.Range(1, n).Select(
+                i => new Customer
+                {
+                    CustomerID = "XX" + i,
+                    CompanyName = "Company" + i,
+                    ContactName = "Contact" + i,
+                    City = "Seattle",
+                    Country = "USA"
+                });
+            var results = await db.Customers.AsyncBatch(custs, (u, c) => u.Insert(c, d => d.City)).ToListAsync();
+            Assert.Equal(n, results.Count);
+            Assert.Equal(true, results.All(r => object.Equals(r, "Seattle")));
+        }
+
+        public async Task TestUpdateCustomerNoResultAsync()
+        {
+            this.TestInsertCustomerNoResult(); // create customer "XX1"
+
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Portland", // moved to Portland!
+                Country = "USA"
+            };
+
+            var result = await db.Customers.UpdateAsync(cust);
+            Assert.Equal(1, result);
+        }
+
+        public async Task TestUpdateCustomerWithResultAsync()
+        {
+            this.TestInsertCustomerNoResult(); // create customer "XX1"
+
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Portland", // moved to Portland!
+                Country = "USA"
+            };
+
+            var result = await db.Customers.UpdateAsync(cust, null, c => c.City);
+            Assert.Equal("Portland", result);
+        }
+
+        public async Task TestUpsertNewCustomerNoResultAsync()
+        {
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Seattle", // moved to Portland!
+                Country = "USA"
+            };
+
+            var result = await db.Customers.InsertOrUpdateAsync(cust);
+            Assert.Equal(1, result);
+        }
+
+        public async Task TestUpsertExistingCustomerNoResultAsync()
+        {
+            this.TestInsertCustomerNoResult();
+
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Portland", // moved to Portland!
+                Country = "USA"
+            };
+
+            var result = await db.Customers.InsertOrUpdateAsync(cust);
+            Assert.Equal(1, result);
+        }
+
+        public async Task TestDeleteCustomerAsync()
+        {
+            this.TestInsertCustomerNoResult();
+
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Seattle",
+                Country = "USA"
+            };
+
+            var result = await db.Customers.DeleteAsync(cust);
+            Assert.Equal(1, result);
+        }
+
+        #endregion
+
+        #region Async Sessions
+
+        public async Task TestSessionSubmitChangesAsync()
+        {
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
+            var cust = new Customer
+            {
+                CustomerID = "XX1",
+                CompanyName = "Company1",
+                ContactName = "Contact1",
+                City = "Seattle",
+                Country = "USA"
+            };
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+
+            ns.Customers.InsertOnSubmit(cust);
+            Assert.Equal(SubmitAction.Insert, ns.Customers.GetSubmitAction(cust));
+
+            await ns.SubmitChangesAsync();
+            Assert.Equal(SubmitAction.None, ns.Customers.GetSubmitAction(cust));
+
+            cust.City = "SeattleX";
+            Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust));
+        }
+        #endregion
     }
 }

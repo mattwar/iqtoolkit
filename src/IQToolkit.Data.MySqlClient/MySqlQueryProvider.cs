@@ -35,7 +35,7 @@ namespace IQToolkit.Data.MySqlClient
             return new Executor(this);
         }
 
-        new class Executor : DbEntityProvider.Executor
+        class Executor : DbEntityProvider.DbQueryExecutor
         {
             MySqlQueryProvider provider;
 
@@ -45,7 +45,7 @@ namespace IQToolkit.Data.MySqlClient
                 this.provider = provider;
             }
 
-            protected override bool BufferResultRows
+            public override bool BufferResultRows
             {
                 get { return true; }
             }

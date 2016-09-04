@@ -2,15 +2,6 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Xml;
-using System.Xml.Linq;
 
 namespace Test
 {
@@ -37,6 +28,38 @@ namespace Test
             if (object.Equals(notExpected, actual))
             {
                 throw new TestFailureException(string.Format("Assert failure - value not expected: {0}", actual));
+            }
+        }
+
+        public static void Same(object expected, object actual)
+        {
+            if (!object.ReferenceEquals(expected, actual))
+            {
+                throw new TestFailureException("Assert failure - values are not same instance.");
+            }
+        }
+
+        public static void NotSame(object expected, object actual)
+        {
+            if (object.ReferenceEquals(expected, actual))
+            {
+                throw new TestFailureException("Assert failure - values are same instance.");
+            }
+        }
+
+        public static void Null(object actual)
+        {
+            if (actual != null)
+            {
+                throw new TestFailureException(string.Format("Assert failure - null value expected: {0}", actual));
+            }
+        }
+
+        public static void NotNull(object actual)
+        {
+            if (actual == null)
+            {
+                throw new TestFailureException("Assert failure - non-null value expected.");
             }
         }
 

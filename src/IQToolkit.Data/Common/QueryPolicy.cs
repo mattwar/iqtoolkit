@@ -13,7 +13,7 @@ using System.Text;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Defines query execution & materialization policies. 
+    /// Defines query execution & materialization policies.
     /// </summary>
     public class QueryPolicy
     {

@@ -131,7 +131,7 @@ namespace IQToolkit
         public static bool IsInteger(Type type)
         {
             Type nnType = GetNonNullableType(type);
-            switch (Type.GetTypeCode(type))
+            switch (Type.GetTypeCode(nnType))
             {
                 case TypeCode.SByte:
                 case TypeCode.Int16:
@@ -143,7 +143,7 @@ namespace IQToolkit
                 case TypeCode.UInt64:
                     return true;
                 default:
-                    return false;        
+                    return false;
             }
         }
     }

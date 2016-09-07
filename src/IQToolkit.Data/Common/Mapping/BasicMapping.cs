@@ -12,6 +12,10 @@ using System.Text;
 
 namespace IQToolkit.Data.Common
 {
+    /// <summary>
+    /// A base class for a <see cref="QueryMapping"/> that is limited to 1-to-1 mapping between
+    /// database tables and entity types.
+    /// </summary>
     public abstract class BasicMapping : QueryMapping
     {
         protected BasicMapping()
@@ -103,47 +107,6 @@ namespace IQToolkit.Data.Common
         public override bool IsPrimaryKey(MappingEntity entity, MemberInfo member)
         {
             return false;
-        }
-
-        /// <summary>
-        /// Determines if a property is computed after insert or update
-        /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        public virtual bool IsComputed(MappingEntity entity, MemberInfo member)
-        {
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if a property is generated on the server during insert
-        /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        public virtual bool IsGenerated(MappingEntity entity, MemberInfo member)
-        {
-            return false;
-        }
-        
-        /// <summary>
-        /// Determines if a property should not be written back to database
-        /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        public virtual bool IsReadOnly(MappingEntity entity, MemberInfo member)
-        {
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if a property can be part of an update operation
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        public virtual bool IsUpdatable(MappingEntity entity, MemberInfo member)
-        {
-            return !this.IsPrimaryKey(entity, member) && !this.IsReadOnly(entity, member);   
         }
 
         /// <summary>

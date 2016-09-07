@@ -919,6 +919,28 @@ namespace Test
             Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
         }
 
+
+        [ExcludeProvider("Access")] // problem with generating OrderID
+        public void TestSessionGeneratedId()
+        {
+            this.TestInsertCustomerNoResult(); // create customer "XX1"
+
+            NorthwindSession ns = new NorthwindSession(this.GetProvider());
+
+            var order = new Order
+            {
+                CustomerID = "XX1",
+                OrderDate = DateTime.Today,
+            };
+
+            ns.Orders.InsertOnSubmit(order);
+
+            Assert.Equal(0, order.OrderID);
+            ns.SubmitChanges();
+
+            Assert.NotEqual(0, order.OrderID);
+        }
+
         #endregion
 
         #region Async Insert, Update, InsertOrUpdate, Delete, Batch

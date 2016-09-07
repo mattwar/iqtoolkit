@@ -87,28 +87,32 @@ namespace IQToolkit.Data.Common
         /// <returns></returns>
         public abstract MappingEntity GetEntity(MemberInfo contextMember);
 
+        /// <summary>
+        /// Gets the entity members that are mapped to the database as either columns or foreign key relationships.
+        /// </summary>
         public abstract IEnumerable<MemberInfo> GetMappedMembers(MappingEntity entity);
 
+        /// <summary>
+        /// True if the entity member is mapped to part of the table's primary key.
+        /// </summary>
         public abstract bool IsPrimaryKey(MappingEntity entity, MemberInfo member);
 
+        /// <summary>
+        /// Gets all the entity members that make up the primary key.
+        /// </summary>
         public virtual IEnumerable<MemberInfo> GetPrimaryKeyMembers(MappingEntity entity)
         {
             return this.GetMappedMembers(entity).Where(m => this.IsPrimaryKey(entity, m));
         }
 
         /// <summary>
-        /// Determines if a property is mapped as a relationship
+        /// True if a property is mapped as a relationship
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public abstract bool IsRelationship(MappingEntity entity, MemberInfo member);
 
         /// <summary>
-        /// Determines if a relationship property refers to a single entity (as opposed to a collection.)
+        /// True if a relationship property refers to a single entity (as opposed to a collection.)
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsSingletonRelationship(MappingEntity entity, MemberInfo member)
         {
             if (!this.IsRelationship(entity, member))
@@ -121,8 +125,6 @@ namespace IQToolkit.Data.Common
         /// Determines whether a given expression can be executed locally. 
         /// (It contains no parts that should be translated to the target environment.)
         /// </summary>
-        /// <param name="expression"></param>
-        /// <returns></returns>
         public virtual bool CanBeEvaluatedLocally(Expression expression)
         {
             // any operation on a query can't be done locally
@@ -149,6 +151,38 @@ namespace IQToolkit.Data.Common
                    expression.NodeType != ExpressionType.Lambda;
         }
 
+        /// <summary>
+        /// True if an entity member is computed after insert or update
+        /// </summary>
+        public virtual bool IsComputed(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// True if an entity member is generated on the server during insert
+        /// </summary>
+        public virtual bool IsGenerated(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// True if an entity member should not be updated in the database
+        /// </summary>
+        public virtual bool IsReadOnly(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// true if an entity member can be part of an update operation
+        /// </summary>
+        public virtual bool IsUpdatable(MappingEntity entity, MemberInfo member)
+        {
+            return !this.IsPrimaryKey(entity, member) && !this.IsReadOnly(entity, member);
+        }
+
         public abstract object GetPrimaryKey(MappingEntity entity, object instance);
         public abstract Expression GetPrimaryKeyQuery(MappingEntity entity, Expression source, Expression[] keys);
         public abstract IEnumerable<EntityInfo> GetDependentEntities(MappingEntity entity, object instance);
@@ -165,10 +199,8 @@ namespace IQToolkit.Data.Common
         public abstract QueryTranslator Translator { get; }
 
         /// <summary>
-        /// Get a query expression that selects all entities from a table
+        /// Gets a query expression that produces all of a particular entity from the database.
         /// </summary>
-        /// <param name="rowType"></param>
-        /// <returns></returns>
         public abstract ProjectionExpression GetQueryExpression(MappingEntity entity);
 
         /// <summary>
@@ -176,19 +208,12 @@ namespace IQToolkit.Data.Common
         /// The root is most often a TableExpression, but may be any other experssion such as
         /// a ConstantExpression.
         /// </summary>
-        /// <param name="root"></param>
-        /// <param name="entity"></param>
-        /// <returns></returns>
         public abstract EntityExpression GetEntityExpression(Expression root, MappingEntity entity);
 
         /// <summary>
         /// Get an expression for a mapped property relative to a root expression. 
         /// The root is either a TableExpression or an expression defining an entity instance.
         /// </summary>
-        /// <param name="root"></param>
-        /// <param name="entity"></param>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public abstract Expression GetMemberExpression(Expression root, MappingEntity entity, MemberInfo member);
 
         /// <summary>
@@ -203,39 +228,21 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Get an expression that represents the update operation for the specified instance.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="instance"></param>
-        /// <param name="updateCheck"></param>
-        /// <param name="selector"></param>
-        /// <param name="else"></param>
-        /// <returns></returns>
         public abstract Expression GetUpdateExpression(MappingEntity entity, Expression instance, LambdaExpression updateCheck, LambdaExpression selector, Expression @else);
 
         /// <summary>
         /// Get an expression that represents the insert-or-update operation for the specified instance.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="instance"></param>
-        /// <param name="updateCheck"></param>
-        /// <param name="resultSelector"></param>
-        /// <returns></returns>
         public abstract Expression GetInsertOrUpdateExpression(MappingEntity entity, Expression instance, LambdaExpression updateCheck, LambdaExpression resultSelector);
 
         /// <summary>
         /// Get an expression that represents the delete operation for the specified instance.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="instance"></param>
-        /// <param name="deleteCheck"></param>
-        /// <returns></returns>
         public abstract Expression GetDeleteExpression(MappingEntity entity, Expression instance, LambdaExpression deleteCheck);
 
         /// <summary>
         /// Recreate the type projection with the additional members included
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="fnIsIncluded"></param>
-        /// <returns></returns>
         public abstract EntityExpression IncludeMembers(EntityExpression entity, Func<MemberInfo, bool> fnIsIncluded);
 
         /// <summary>
@@ -256,8 +263,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Apply mapping translations to this expression
         /// </summary>
-        /// <param name="expression"></param>
-        /// <returns></returns>
         public virtual Expression Translate(Expression expression)
         {
             // convert references to LINQ operators into query specific nodes

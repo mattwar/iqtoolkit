@@ -16,6 +16,10 @@ namespace IQToolkit.Data.Mapping
 {
     using Common;
 
+    /// <summary>
+    /// A <see cref="QueryMapping"/> that is declared as an XML document.
+    /// This mapping uses the same information structure as the <see cref="AttributeMapping"/> mapping attributes.
+    /// </summary>
     public class XmlMapping : AttributeMapping
     {
         Dictionary<string, XElement> entities;

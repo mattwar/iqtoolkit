@@ -16,7 +16,7 @@ namespace IQToolkit.Data.Mapping
     using Common;
 
     /// <summary>
-    /// A simple query mapping that attempts to infer mapping from naming conventions
+    /// A <see cref="QueryMapping"/> that infers mapping using naming conventions and static types.
     /// </summary>
     public class ImplicitMapping : BasicMapping
     {

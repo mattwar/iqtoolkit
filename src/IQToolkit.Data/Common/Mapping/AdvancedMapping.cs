@@ -17,6 +17,11 @@ namespace IQToolkit.Data.Common
     {
     }
 
+    /// <summary>
+    /// A base class for a <see cref="QueryMapper"/> that includes more advanced mapping types,
+    /// such as nested entities (where a single table holds information for more than one entity type)
+    /// and multi-table entities (where a single entity is spread across multiple tables.)
+    /// </summary>
     public abstract class AdvancedMapping : BasicMapping
     {
         public abstract bool IsNestedEntity(MappingEntity entity, MemberInfo member);

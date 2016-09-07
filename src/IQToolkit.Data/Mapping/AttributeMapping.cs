@@ -21,52 +21,151 @@ namespace IQToolkit.Data.Mapping
 
     public abstract class TableBaseAttribute : MappingAttribute
     {
+        /// <summary>
+        /// The name of the table in the database.
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// The alias to use when referring to the table in a query.
+        /// This is typically only supplied when the entity is split across multiple tables, and the 
+        /// column mappings need to be declared corresponding to specific tables.
+        /// </summary>
         public string Alias { get; set; }
     }
 
+    /// <summary>
+    /// Declares the primary table that an entity corresponds to in the database.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property|AttributeTargets.Field, AllowMultiple = false)]
     public class TableAttribute : TableBaseAttribute
     {
+        /// <summary>
+        /// The type of the entity.
+        /// This is only supplied when the table mapping is not declared as part of the entity type declaration.
+        /// </summary>
         public Type EntityType { get; set; }
     }
 
+    /// <summary>
+    /// Declares an additional table that an entity corresponds to in the database.
+    /// If an entity is mapped to more than one database table, it will have one primary <see cref="TableAttribute"/>
+    /// and one or more additional <see cref="ExtensionTableAttribute"/>'s.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
     public class ExtensionTableAttribute : TableBaseAttribute
     {
+        /// <summary>
+        /// The columns in the primary table that are used to match with the extension table's key columns.
+        /// </summary>
         public string KeyColumns { get; set; }
+
+        /// <summary>
+        /// The alias used when referring to the extension table in a query.
+        /// </summary>
         public string RelatedAlias { get; set; }
+
+        /// <summary>
+        /// The columns in the extension table that are used to match with the primary table's key columns.
+        /// </summary>
         public string RelatedKeyColumns { get; set; }
     }
 
     public abstract class MemberAttribute : MappingAttribute
     {
+        /// <summary>
+        /// The name of the member in the entity type.
+        /// This is typically only specified if the member mapping is not declared as part of the entity member declaration.
+        /// </summary>
         public string Member { get; set; }
     }
 
+    /// <summary>
+    /// Declares the column that a entity member corresponds to in the database.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
     public class ColumnAttribute : MemberAttribute
     {
+        /// <summary>
+        /// The name of the column.
+        /// This is typically the name of the column in the database.
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// The alias of the column's table used in the database query.
+        /// This is typically only supplied when the entity mapping is split over multiple tables.
+        /// </summary>
         public string Alias { get; set; }
+
+        /// <summary>
+        /// The type of the column in the database. (Otherwise determined by the member's type)
+        /// </summary>
         public string DbType { get; set; }
+
+        /// <summary>
+        /// True if the corresponding column in the database is computed on insert or update.
+        /// </summary>
         public bool IsComputed { get; set; }
+
+        /// <summary>
+        /// True if the corresponding column in the database is part of the table's primary key.
+        /// </summary>
         public bool IsPrimaryKey { get; set; }
+
+        /// <summary>
+        /// True if the value of the column in the database is generated automatically when the row in inserted.
+        /// </summary>
         public bool IsGenerated { get; set; }
-        public bool IsReadOnly { get; set; }  
+
+        /// <summary>
+        /// True if the column in the database cannot be updated directly.
+        /// </summary>
+        public bool IsReadOnly { get; set; }
     }
 
+    /// <summary>
+    /// Declares that an entity member corresponds to a foreign key relationship in the database.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
     public class AssociationAttribute : MemberAttribute
     {
+        /// <summary>
+        /// The name of the association.
+        /// This is typically the name of the foreign key relationship in the database.
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// The members of the entity type that make up the key
+        /// </summary>
         public string KeyMembers { get; set; }
+
+        /// <summary>
+        /// The entity ID of the related entity (if it cannot be determined from the related entity type)
+        /// This is typically the table name in the database of the related entity
+        /// </summary>
         public string RelatedEntityID { get; set; }
+
+        /// <summary>
+        /// The type of the related entity (otherwise determined by the association member's static type)
+        /// </summary>
         public Type RelatedEntityType { get; set; }
+
+        /// <summary>
+        /// The members in the related entity type that make up the corresponding key
+        /// </summary>
         public string RelatedKeyMembers { get; set; }
+
+        /// <summary>
+        /// True if the key in this entity is a foreign key referencing key values in the related entity.
+        /// </summary>
         public bool IsForeignKey { get; set; }
     }
 
+    /// <summary>
+    /// A <see cref="QueryMapping"/> that uses mapping attributes to describe the mapping.
+    /// </summary>
     public class AttributeMapping : AdvancedMapping
     {
         Type contextType;

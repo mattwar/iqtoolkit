@@ -15,7 +15,7 @@ namespace IQToolkit.Data.Common
 {
     public abstract class FieldReader
     {
-        TypeCode[] typeCodes;
+        private TypeCode[] typeCodes;
 
         public FieldReader()
         {
@@ -775,14 +775,6 @@ namespace IQToolkit.Data.Common
 
         public static MethodInfo GetReaderMethod(Type type)
         {
-            if (_readerMethods == null)
-            {
-                var meths = typeof(FieldReader).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name.StartsWith("Read")).ToList();
-                _readerMethods = meths.ToDictionary(m => m.ReturnType);
-                _miReadValue = meths.Single(m => m.Name == "ReadValue");
-                _miReadNullableValue = meths.Single(m => m.Name == "ReadNullableValue");
-            }
-
             MethodInfo mi;
             _readerMethods.TryGetValue(type, out mi);
             if (mi == null)
@@ -796,12 +788,21 @@ namespace IQToolkit.Data.Common
                     mi = _miReadValue.MakeGenericMethod(type);
                 }
             }
+
             return mi;
         }
 
-        static Dictionary<Type, MethodInfo> _readerMethods;
-        static MethodInfo _miReadValue;
-        static MethodInfo _miReadNullableValue;
+        static FieldReader()
+        {
+            var meths = typeof(FieldReader).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name.StartsWith("Read")).ToList();
+            _readerMethods = meths.ToDictionary(m => m.ReturnType);
+            _miReadValue = meths.Single(m => m.Name == "ReadValue");
+            _miReadNullableValue = meths.Single(m => m.Name == "ReadNullableValue");
+        }
+
+        static readonly Dictionary<Type, MethodInfo> _readerMethods;
+        static readonly MethodInfo _miReadValue;
+        static readonly MethodInfo _miReadNullableValue;
     }
 }
 

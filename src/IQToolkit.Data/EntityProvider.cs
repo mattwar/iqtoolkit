@@ -15,18 +15,20 @@ namespace IQToolkit.Data
 {
     using Common;
     using Mapping;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// A LINQ IQueryable query provider that executes database queries over a DbConnection
     /// </summary>
     public abstract class EntityProvider : QueryProvider, IEntityProvider, ICreateExecutor
     {
-        QueryLanguage language;
-        QueryMapping mapping;
-        QueryPolicy policy;
-        TextWriter log;
-        Dictionary<MappingEntity, IEntityTable> tables;
-        QueryCache cache;
+        private readonly QueryLanguage language;
+        private readonly QueryMapping mapping;
+        private readonly Dictionary<MappingEntity, IEntityTable> tables;
+        private QueryCache cache;
+        private QueryPolicy policy;
+        private TextWriter log;
 
         public EntityProvider(QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
         {
@@ -197,46 +199,6 @@ namespace IQToolkit.Data
             {
                 return this.GetById(id);
             }
-
-            public int Insert(T instance)
-            {
-                return Updatable.Insert(this, instance);
-            }
-
-            int IEntityTable.Insert(object instance)
-            {
-                return this.Insert((T)instance);
-            }
-
-            public int Delete(T instance)
-            {
-                return Updatable.Delete(this, instance);
-            }
-
-            int IEntityTable.Delete(object instance)
-            {
-                return this.Delete((T)instance);
-            }
-
-            public int Update(T instance)
-            {
-                return Updatable.Update(this, instance);
-            }
-
-            int IEntityTable.Update(object instance)
-            {
-                return this.Update((T)instance);
-            }
-
-            public int InsertOrUpdate(T instance)
-            {
-                return Updatable.InsertOrUpdate(this, instance);
-            }
-
-            int IEntityTable.InsertOrUpdate(object instance)
-            {
-                return this.InsertOrUpdate((T)instance);
-            }
         }
 
         public override string GetQueryText(Expression expression)
@@ -280,8 +242,11 @@ namespace IQToolkit.Data
         }
 
         public abstract void DoTransacted(Action action);
+        public abstract Task DoTransactedAsync(Func<CancellationToken, Task> asyncAction, CancellationToken cancellationToken);
         public abstract void DoConnected(Action action);
+        public abstract Task DoConnectedAsync(Func<CancellationToken, Task> asyncAction, CancellationToken cancellationToken);
         public abstract int ExecuteCommand(string commandText);
+        public abstract Task<int> ExecuteCommandAsync(string commandText, CancellationToken cancellationToken);
 
         /// <summary>
         /// Execute the query expression (does translation, etc.)
@@ -340,14 +305,14 @@ namespace IQToolkit.Data
             Expression translation = translator.Translate(expression);
 
             var parameters = lambda != null ? lambda.Parameters : null;
-            Expression provider = this.Find(expression, parameters, typeof(EntityProvider));
-            if (provider == null)
+            Expression providerExpression = this.Find(expression, parameters, typeof(EntityProvider));
+            if (providerExpression == null)
             {
                 Expression rootQueryable = this.Find(expression, parameters, typeof(IQueryable));
-                provider = Expression.Property(rootQueryable, typeof(IQueryable).GetProperty("Provider"));
+                providerExpression = Expression.Property(rootQueryable, typeof(IQueryable).GetProperty(nameof(IQueryable.Provider)));
             }
 
-            return translator.Police.BuildExecutionPlan(translation, provider);
+            return translator.Police.BuildExecutionPlan(translation, providerExpression);
         }
 
         private Expression Find(Expression expression, IList<ParameterExpression> parameters, Type type)

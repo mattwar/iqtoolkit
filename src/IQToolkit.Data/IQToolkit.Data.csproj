@@ -58,12 +58,18 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core"/>
+    <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq"/>
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\QueryParameter.cs" />
+    <Compile Include="DbBatchCommandExecutable.cs" />
+    <Compile Include="DbBatchQueryExecutable.cs" />
+    <Compile Include="DbQueryExecutable.cs" />
+    <Compile Include="DbFieldReader.cs" />
+    <Compile Include="DbQueryExecutor.cs" />
     <Compile Include="DbEntityProvider.cs" />
     <Compile Include="Common\ExecutionBuilder.cs" />
     <Compile Include="Common\Expressions\Aggregator.cs" />

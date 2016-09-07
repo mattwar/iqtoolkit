@@ -6,8 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace IQToolkit
 {
@@ -22,13 +22,13 @@ namespace IQToolkit
     /// <summary>
     /// A default implementation of IQueryable for use with QueryProvider
     /// </summary>
-    public class Query<T> : IQueryable<T>, IQueryable, IEnumerable<T>, IEnumerable, IOrderedQueryable<T>, IOrderedQueryable
+    public class Query<T> : IQueryable<T>, IQueryable, IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable, IOrderedQueryable<T>, IOrderedQueryable
     {
         IQueryProvider provider;
         Expression expression;
 
         public Query(IQueryProvider provider)
-            : this(provider, null)
+            : this(provider, (Type)null)
         {
         }
 
@@ -38,24 +38,28 @@ namespace IQToolkit
             {
                 throw new ArgumentNullException("Provider");
             }
+
             this.provider = provider;
             this.expression = staticType != null ? Expression.Constant(this, staticType) : Expression.Constant(this);
         }
 
-        public Query(QueryProvider provider, Expression expression)
+        public Query(IQueryProvider provider, Expression expression)
         {
             if (provider == null)
             {
                 throw new ArgumentNullException("Provider");
             }
+
             if (expression == null)
             {
                 throw new ArgumentNullException("expression");
             }
+
             if (!typeof(IQueryable<T>).IsAssignableFrom(expression.Type))
             {
                 throw new ArgumentOutOfRangeException("expression");
             }
+
             this.provider = provider;
             this.expression = expression;
         }
@@ -83,6 +87,12 @@ namespace IQToolkit
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable)this.provider.Execute(this.expression)).GetEnumerator();
+        }
+
+        public Task<IAsyncEnumerator<T>> GetEnumeratorAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var result = this.provider.Execute(this.expression);
+            return ((IEnumerable<T>)result).ToAsync().GetEnumeratorAsync(cancellationToken);
         }
 
         public override string ToString()

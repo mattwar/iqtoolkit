@@ -14,6 +14,8 @@ using System.Text;
 namespace IQToolkit.Data
 {
     using Common;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     public class EntitySession : IEntitySession
     {
@@ -276,6 +278,32 @@ namespace IQToolkit.Data
             );
         }
 
+        public virtual Task SubmitChangesAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return this.provider.DoTransactedAsync(
+                async (ct) =>
+                {
+                    var submitted = new List<TrackedItem>();
+
+                    // do all submit actions
+                    foreach (var item in this.GetOrderedItems())
+                    {
+                        if (await item.Table.SubmitChangesAsync(item, ct).ConfigureAwait(false))
+                        {
+                            submitted.Add(item);
+                        }
+                    }
+
+                    // on completion, accept changes
+                    foreach (var item in submitted)
+                    {
+                        item.Table.AcceptChanges(item);
+                    }
+                },
+                cancellationToken
+            );
+        }
+
         protected virtual ISessionTable CreateTable(MappingEntity entity)
         {
             return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.ElementType), new object[] { this, entity });
@@ -287,6 +315,7 @@ namespace IQToolkit.Data
             IEnumerable<TrackedItem> TrackedItems { get; }
             TrackedItem GetTrackedItem(object instance);
             bool SubmitChanges(TrackedItem item);
+            Task<bool> SubmitChangesAsync(TrackedItem item, CancellationToken cancellationToken);
             void AcceptChanges(TrackedItem item);
         }
 
@@ -322,39 +351,66 @@ namespace IQToolkit.Data
                 return cached;
             }
 
-            private bool SubmitChanges(TrackedItem item)
+            public bool SubmitChanges(TrackedItem item)
             {
                 switch (item.State)
                 {
                     case SubmitAction.Delete:
-                        this.ProviderTable.Delete(item.Instance);
+                        this.ProviderTable.Delete((T)item.Instance);
                         return true;
                     case SubmitAction.Insert:
-                        this.ProviderTable.Insert(item.Instance);
+                        this.ProviderTable.Insert((T)item.Instance);
                         return true;
                     case SubmitAction.InsertOrUpdate:
-                        this.ProviderTable.InsertOrUpdate(item.Instance);
+                        this.ProviderTable.InsertOrUpdate((T)item.Instance);
                         return true;
                     case SubmitAction.PossibleUpdate:
                         if (item.Original != null &&
                             this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
                         {
-                            this.ProviderTable.Update(item.Instance);
+                            this.ProviderTable.Update((T)item.Instance);
                             return true;
                         }
                         break;
                     case SubmitAction.Update:
-                        this.ProviderTable.Update(item.Instance);
+                        this.ProviderTable.Update((T)item.Instance);
                         return true;
                     default:
                         break; // do nothing
                 }
+
                 return false;
             }
 
-            bool ITrackedTable.SubmitChanges(TrackedItem item)
+            public async Task<bool> SubmitChangesAsync(TrackedItem item, CancellationToken cancellationToken)
             {
-                return this.SubmitChanges(item);
+                switch (item.State)
+                {
+                    case SubmitAction.Delete:
+                        await this.ProviderTable.DeleteAsync((T)item.Instance, cancellationToken).ConfigureAwait(false);
+                        return true;
+                    case SubmitAction.Insert:
+                        await this.ProviderTable.InsertAsync((T)item.Instance, cancellationToken).ConfigureAwait(false);
+                        return true;
+                    case SubmitAction.InsertOrUpdate:
+                        await this.ProviderTable.InsertOrUpdateAsync((T)item.Instance, cancellationToken).ConfigureAwait(false);
+                        return true;
+                    case SubmitAction.PossibleUpdate:
+                        if (item.Original != null &&
+                            this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
+                        {
+                            await this.ProviderTable.UpdateAsync((T)item.Instance, cancellationToken).ConfigureAwait(false);
+                            return true;
+                        }
+                        break;
+                    case SubmitAction.Update:
+                        await this.ProviderTable.UpdateAsync((T)item.Instance, cancellationToken).ConfigureAwait(false);
+                        return true;
+                    default:
+                        break; // do nothing
+                }
+
+                return false;
             }
 
             private void AcceptChanges(TrackedItem item)

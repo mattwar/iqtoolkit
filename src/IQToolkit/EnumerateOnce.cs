@@ -6,16 +6,25 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace IQToolkit
 {
-    public class EnumerateOnce<T> : IEnumerable<T>, IEnumerable
+    public class EnumerateOnce<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
     {
         IEnumerable<T> enumerable;
 
         public EnumerateOnce(IEnumerable<T> enumerable)
         {
             this.enumerable = enumerable;
+        }
+
+        public T Current
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public IEnumerator<T> GetEnumerator()
@@ -25,12 +34,18 @@ namespace IQToolkit
             {
                 return en.GetEnumerator();
             }
+
             throw new Exception("Enumerated more than once.");
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
             return this.GetEnumerator();
+        }
+
+        public Task<IAsyncEnumerator<T>> GetEnumeratorAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return Task.FromResult(this.GetEnumerator().ToAsync());
         }
     }
 }

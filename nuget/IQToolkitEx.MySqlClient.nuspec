@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>IQToolkitEx.MySqlClient</id>
+        <version>1.0.0.1</version>
+        <title>IQueryable Toolkit MySql Client Query Provider</title>
+        <authors>Matt Warren</authors>
+        <owners>Matt Warren</owners>
+        <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>IQToolkit MySql Client Library</description>
+        <copyright />
+        <dependencies>
+            <dependency id="IQToolkitEx" />
+            <dependency id="MySql.Data" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\bin\Release\IQToolkit.Data.MySqlClient.dll" target="lib\net45\IQToolkit.Data.MySqlClient.dll" />
+    </files>
+</package>

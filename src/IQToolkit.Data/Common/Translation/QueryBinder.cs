@@ -742,7 +742,8 @@ namespace IQToolkit.Data.Common
             ProjectionExpression projection = this.VisitSequence(source);
             SelectExpression select = projection.Select;
             var alias = this.GetNextAlias();
-            ProjectedColumns pc = this.ProjectColumns(projection.Projector, alias, projection.Select.Alias);
+
+            ProjectedColumns pc = ColumnProjector.ProjectColumns(this.language, ProjectionAffinity.Server, projection.Projector, null, alias, projection.Select.Alias);
             return new ProjectionExpression(
                 new SelectExpression(alias, pc.Columns, projection.Select, null, null, null, true, null, null, false),
                 pc.Projector

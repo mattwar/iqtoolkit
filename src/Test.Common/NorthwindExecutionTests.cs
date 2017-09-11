@@ -508,6 +508,13 @@ namespace Test
             Assert.Equal(69, list.Count);
         }
 
+        public void TestDistinctWithCase()
+        {
+            var query = db.Customers.Select(c => c.CustomerID == "ALFKI" ? 1 : 0).Distinct();
+            var list = query.ToList();
+            Assert.Equal(2, list.Count);
+        }
+
 #if false
         public void TestOrderByDistinct()
         {

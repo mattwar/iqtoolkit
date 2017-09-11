@@ -234,14 +234,14 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines whether the given expression can be represented as a column in a select expressionss
         /// </summary>
-        /// <param name="expression"></param>
-        /// <returns></returns>
         public virtual bool CanBeColumn(Expression expression)
         {
-            // by default, push all work in projection to client
-            return this.MustBeColumn(expression);
+            return this.MustBeColumn(expression) || this.IsScalar(expression.Type);
         }
 
+        /// <summary>
+        /// Determines whether the given expression must be represented as a column in a SELECT column list
+        /// </summary>
         public virtual bool MustBeColumn(Expression expression)
         {
             switch (expression.NodeType)

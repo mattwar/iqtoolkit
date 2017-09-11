@@ -25,15 +25,34 @@ namespace IQToolkit.Data.Common
             this.columns = columns;
         }
 
+        /// <summary>
+        /// The expression to computed on the client.
+        /// </summary>
         public Expression Projector
         {
             get { return this.projector; }
         }
 
+        /// <summary>
+        /// The columns to be computed on the server.
+        /// </summary>
         public ReadOnlyCollection<ColumnDeclaration> Columns
         {
             get { return this.columns; }
         }
+    }
+
+    public enum ProjectionAffinity
+    {
+        /// <summary>
+        /// Prefer expression computation on the client
+        /// </summary>
+        Client,
+
+        /// <summary>
+        /// Prefer expression computation on the server
+        /// </summary>
+        Server
     }
 
     /// <summary>
@@ -52,7 +71,7 @@ namespace IQToolkit.Data.Common
         TableAlias newAlias;
         int iColumn;
 
-        private ColumnProjector(QueryLanguage language, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)
+        private ColumnProjector(QueryLanguage language, ProjectionAffinity affinity, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)
         {
             this.language = language;
             this.newAlias = newAlias;
@@ -68,14 +87,24 @@ namespace IQToolkit.Data.Common
                 this.columns = new List<ColumnDeclaration>();
                 this.columnNames = new HashSet<string>();
             }
-            this.candidates = Nominator.Nominate(language, expression);
+            this.candidates = Nominator.Nominate(language, affinity, expression);
+        }
+
+        public static ProjectedColumns ProjectColumns(QueryLanguage language, ProjectionAffinity affinity, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)
+        {
+            ColumnProjector projector = new ColumnProjector(language, affinity, expression, existingColumns, newAlias, existingAliases);
+            Expression expr = projector.Visit(expression);
+            return new ProjectedColumns(expr, projector.columns.AsReadOnly());
         }
 
         public static ProjectedColumns ProjectColumns(QueryLanguage language, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)
         {
-            ColumnProjector projector = new ColumnProjector(language, expression, existingColumns, newAlias, existingAliases);
-            Expression expr = projector.Visit(expression);
-            return new ProjectedColumns(expr, projector.columns.AsReadOnly());
+            return ProjectColumns(language, ProjectionAffinity.Client, expression, existingColumns, newAlias, existingAliases);
+        }
+
+        public static ProjectedColumns ProjectColumns(QueryLanguage language, ProjectionAffinity affinity, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, params TableAlias[] existingAliases)
+        {
+            return ProjectColumns(language, affinity, expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
         }
 
         public static ProjectedColumns ProjectColumns(QueryLanguage language, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, params TableAlias[] existingAliases)
@@ -159,20 +188,22 @@ namespace IQToolkit.Data.Common
         /// </summary>
         class Nominator : DbExpressionVisitor
         {
-            QueryLanguage language;
-            bool isBlocked;
-            HashSet<Expression> candidates;
+            private readonly QueryLanguage language;
+            private readonly HashSet<Expression> candidates;
+            private readonly ProjectionAffinity affinity;
+            private bool isBlocked;
 
-            private Nominator(QueryLanguage language)
+            private Nominator(QueryLanguage language, ProjectionAffinity affinity)
             {
                 this.language = language;
+                this.affinity = affinity;
                 this.candidates = new HashSet<Expression>();
                 this.isBlocked = false;
             }
 
-            internal static HashSet<Expression> Nominate(QueryLanguage language, Expression expression)
+            internal static HashSet<Expression> Nominate(QueryLanguage language, ProjectionAffinity affinity, Expression expression)
             {
-                Nominator nominator = new Nominator(language);
+                Nominator nominator = new Nominator(language, affinity);
                 nominator.Visit(expression);
                 return nominator.candidates;
             }
@@ -193,7 +224,8 @@ namespace IQToolkit.Data.Common
                         base.Visit(expression);
                         if (!this.isBlocked)
                         {
-                            if (this.language.CanBeColumn(expression))
+                            if (this.language.MustBeColumn(expression) 
+                                || (this.affinity == ProjectionAffinity.Server && this.language.CanBeColumn(expression)))
                             {
                                 this.candidates.Add(expression);
                             }

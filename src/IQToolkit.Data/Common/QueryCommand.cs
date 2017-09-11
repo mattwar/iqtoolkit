@@ -10,8 +10,8 @@ namespace IQToolkit.Data.Common
 {
     public class QueryCommand
     {
-        private readonly string commandText;
-        private readonly ReadOnlyCollection<QueryParameter> parameters;
+        string commandText;
+        ReadOnlyCollection<QueryParameter> parameters;
 
         public QueryCommand(string commandText, IEnumerable<QueryParameter> parameters)
         {
@@ -27,6 +27,35 @@ namespace IQToolkit.Data.Common
         public ReadOnlyCollection<QueryParameter> Parameters
         {
             get { return this.parameters; }
+        }
+    }
+
+    public class QueryParameter
+    {
+        string name;
+        Type type;
+        QueryType queryType;
+
+        public QueryParameter(string name, Type type, QueryType queryType)
+        {
+            this.name = name;
+            this.type = type;
+            this.queryType = queryType;
+        }
+
+        public string Name
+        {
+            get { return this.name; }
+        }
+
+        public Type Type
+        {
+            get { return this.type; }
+        }
+
+        public QueryType QueryType
+        {
+            get { return this.queryType; }
         }
     }
 }

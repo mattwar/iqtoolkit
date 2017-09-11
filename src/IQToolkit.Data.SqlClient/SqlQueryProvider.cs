@@ -61,7 +61,7 @@ namespace IQToolkit.Data.SqlClient
             return new Executor(this);
         }
 
-        class Executor : DbEntityProvider.DbQueryExecutor
+        new class Executor : DbEntityProvider.Executor
         {
             SqlQueryProvider provider;
 
@@ -71,7 +71,7 @@ namespace IQToolkit.Data.SqlClient
                 this.provider = provider;
             }
 
-            public override bool BufferResultRows
+            protected override bool BufferResultRows
             {
                 get { return !this.provider.AllowsMultipleActiveResultSets; }
             }
@@ -144,7 +144,7 @@ namespace IQToolkit.Data.SqlClient
 
                 this.LogMessage("-- Start SQL Batching --");
                 this.LogMessage("");
-                this.LogCommand(query);
+                this.LogCommand(query, null);
 
                 IEnumerator<object[]> en = paramSets.GetEnumerator();
                 using (en)

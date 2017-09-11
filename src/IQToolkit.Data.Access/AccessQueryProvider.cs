@@ -72,7 +72,7 @@ namespace IQToolkit.Data.Access
                 this.provider = provider;
             }
 
-            public override DbCommand GetCommand(QueryCommand query, object[] paramValues)
+            protected override DbCommand GetCommand(QueryCommand query, object[] paramValues)
             {
                 var cmd = (OleDbCommand)this.provider.Connection.CreateCommand();
                 cmd.CommandText = query.CommandText;

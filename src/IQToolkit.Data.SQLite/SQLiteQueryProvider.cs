@@ -55,7 +55,7 @@ namespace IQToolkit.Data.SQLite
             return new Executor(this);
         }
 
-        class Executor : DbEntityProvider.DbQueryExecutor
+        new class Executor : DbEntityProvider.Executor
         {
             SQLiteQueryProvider provider;
 
@@ -65,7 +65,7 @@ namespace IQToolkit.Data.SQLite
                 this.provider = provider;
             }
 
-            public override DbCommand GetCommand(QueryCommand query, object[] paramValues)
+            protected override DbCommand GetCommand(QueryCommand query, object[] paramValues)
             {
                 SQLiteCommand cmd;
 #if false

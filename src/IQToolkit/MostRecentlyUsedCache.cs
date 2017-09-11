@@ -67,19 +67,7 @@ namespace IQToolkit
             }
         }
 
-        public bool TryGet(T item, out T cached)
-        {
-            return Lookup(item, add: false, cached: out cached);
-        }
-
-        public T GetOrAdd(T item)
-        {
-            T cached;
-            Lookup(item, add: true, cached: out cached);
-            return cached;
-        }
-
-        private bool Lookup(T item, bool add, out T cached)
+        public bool Lookup(T item, bool add, out T cached)
         {
             cached = default(T);
             int cacheIndex = -1;

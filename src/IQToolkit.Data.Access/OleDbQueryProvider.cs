@@ -24,7 +24,7 @@ namespace IQToolkit.Data.OleDb
             return new Executor(this);
         }
 
-        public class Executor : DbEntityProvider.DbQueryExecutor
+        public new class Executor : DbEntityProvider.Executor
         {
             OleDbQueryProvider provider;
 

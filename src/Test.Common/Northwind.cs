@@ -17,8 +17,6 @@ namespace Test
     using IQToolkit;
     using IQToolkit.Data;
     using IQToolkit.Data.Mapping;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     public class Customer
     {
@@ -196,7 +194,6 @@ namespace Test
     public interface INorthwindSession
     {
         void SubmitChanges();
-        Task SubmitChangesAsync(CancellationToken cancellationToken = default(CancellationToken));
         ISessionTable<Customer> Customers { get; }
         ISessionTable<Order> Orders { get; }
         ISessionTable<OrderDetail> OrderDetails { get; }
@@ -224,11 +221,6 @@ namespace Test
         public void SubmitChanges()
         {
             this.session.SubmitChanges();
-        }
-
-        public Task SubmitChangesAsync(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return this.session.SubmitChangesAsync(cancellationToken);
         }
 
         public ISessionTable<Customer> Customers

@@ -9,7 +9,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -120,7 +119,7 @@ namespace Test
         private static MethodInfo[] GetTestMethods(Type testType)
         {
             return testType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-                .Where(m => m.Name.StartsWith("Test") && (m.ReturnType == typeof(void) || m.ReturnType == typeof(Task)) && m.GetParameters().Length == 0)
+                .Where(m => m.Name.StartsWith("Test") && m.ReturnType == typeof(void) && m.GetParameters().Length == 0)
                 .ToArray();
         }
 
@@ -313,51 +312,18 @@ namespace Test
 
             private Action GetTestAction(string name)
             {
-                var method = GetTestMethod(name, returnType: null);
-                if (method != null)
-                {
-                    if (method.ReturnType == typeof(Task))
-                    {
-                        var func = (Func<Task>)(object)Delegate.CreateDelegate(typeof(Func<Task>), this.testIntance, method);
-                        return () => func().Wait();
-                    }
-                    else
-                    {
-                        return (Action)(object)Delegate.CreateDelegate(typeof(Action), this.testIntance, method);
-                    }
-                }
-
-                return null;
+                return GetTestDelegate<Action>(name, typeof(void));
             }
 
             private Action<TParam> GetTestAction<TParam>(string name)
             {
-                var method = GetTestMethod(name, returnType: null, parameterTypes: typeof(TParam));
-                if (method != null)
-                {
-                    if (method.ReturnType == typeof(Task))
-                    {
-                        var func = (Func<TParam, Task>)(object)Delegate.CreateDelegate(typeof(Func<TParam, Task>), this.testIntance, method);
-                        return (p) => func(p).Wait();
-                    }
-                    else
-                    {
-                        return (Action<TParam>)(object)Delegate.CreateDelegate(typeof(Action<TParam>), this.testIntance, method);
-                    }
-                }
-
-                return null;
-            }
-
-            private MethodInfo GetTestMethod(string name, Type returnType, params Type[] parameterTypes)
-            {
-                return this.allMethods.FirstOrDefault(m => IsMatchingMethod(m, name, returnType, parameterTypes));
+                return GetTestDelegate<Action<TParam>>(name, typeof(void), typeof(TParam));
             }
 
             private TDelegate GetTestDelegate<TDelegate>(string name, Type returnType, params Type[] parameterTypes)
                 where TDelegate : class
             {
-                var method = GetTestMethod(name, returnType, parameterTypes);
+                var method = this.allMethods.FirstOrDefault(m => IsMatchingMethod(m, name, returnType, parameterTypes));
                 if (method != null)
                 {
                     return (TDelegate)(object)Delegate.CreateDelegate(typeof(TDelegate), this.testIntance, method);
@@ -370,7 +336,7 @@ namespace Test
 
             private static bool IsMatchingMethod(MethodInfo method, string name, Type returnType, Type[] parameterTypes)
             {
-                if (method.Name != name || (returnType != null && method.ReturnType != returnType))
+                if (method.Name != name || method.ReturnType != returnType)
                 {
                     return false;
                 }

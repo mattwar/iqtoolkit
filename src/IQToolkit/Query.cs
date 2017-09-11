@@ -12,7 +12,7 @@ using System.Text;
 namespace IQToolkit
 {
     /// <summary>
-    /// Optional interface for IQueryProvider to implement Query<T>'s QueryText property.
+    /// Optional interface for <see cref="IQueryProvider"/> to implement <see cref="Query{T}.QueryText"/> property.
     /// </summary>
     public interface IQueryText
     {

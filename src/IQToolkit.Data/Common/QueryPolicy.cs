@@ -13,7 +13,7 @@ using System.Text;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Defines query execution & materialization policies. 
+    /// Defines query execution and materialization policies. 
     /// </summary>
     public class QueryPolicy
     {
@@ -124,9 +124,6 @@ namespace IQToolkit.Data.Common
         /// Converts a query into an execution plan.  The plan is an function that executes the query and builds the
         /// resulting objects.
         /// </summary>
-        /// <param name="projection"></param>
-        /// <param name="provider"></param>
-        /// <returns></returns>
         public virtual Expression BuildExecutionPlan(Expression query, Expression provider)
         {
             return ExecutionBuilder.Build(this.translator.Linguist, this.policy, query, provider);

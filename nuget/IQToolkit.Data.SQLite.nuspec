@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>IQToolkit.Data.SQLite</id>
+        <version>1.0.0.0</version>
+        <title>IQueryable Toolkit SQLite Query Provider</title>
+        <authors>Matt Warren</authors>
+        <owners>Matt Warren</owners>
+        <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>IQToolkit SQLite Library</description>
+        <copyright />
+        <dependencies>
+            <dependency id="IQToolkit.Data" version="1.0.0.0" />
+            <dependency id="System.Data.SQLite.Core" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\bin\Release\SQLite\IQToolkit.Data.SQLite.dll" target="lib\net45\IQToolkit.Data.SQLite.dll" />
+    </files>
+</package>

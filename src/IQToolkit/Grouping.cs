@@ -9,10 +9,8 @@ using System.Linq;
 namespace IQToolkit
 {
     /// <summary>
-    /// Simple implementation of the IGrouping<TKey, TElement> interface
+    /// Simple implementation of the <see cref="IGrouping{TKey, TElement}"/> interface
     /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TElement"></typeparam>
     public class Grouping<TKey, TElement> : IGrouping<TKey, TElement>
     {
         TKey key;

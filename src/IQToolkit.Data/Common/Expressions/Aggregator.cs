@@ -19,9 +19,6 @@ namespace IQToolkit.Data.Common
         /// This is primarily used for aggregators stored in ProjectionExpression's, which are used to represent the 
         /// final transformation of the entire result set of a query.
         /// </summary>
-        /// <param name="expectedType"></param>
-        /// <param name="projector"></param>
-        /// <returns></returns>
         public static LambdaExpression GetAggregator(Type expectedType, Type actualType)
         {
             Type actualElementType = TypeHelper.GetElementType(actualType);

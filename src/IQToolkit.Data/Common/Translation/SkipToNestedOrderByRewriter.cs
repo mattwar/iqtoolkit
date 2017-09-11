@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Rewrites queries with skip & take to use the nested queries with inverted ordering technique
+    /// Rewrites queries with skip and take to use the nested queries with inverted ordering technique
     /// </summary>
     public class SkipToNestedOrderByRewriter : DbExpressionVisitor
     {

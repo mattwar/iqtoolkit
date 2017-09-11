@@ -47,7 +47,7 @@ namespace IQToolkit.Data.Common
     }
 
     /// <summary>
-    /// Defines mapping information & rules for the query provider
+    /// Defines mapping information and rules for the query provider
     /// </summary>
     public abstract class QueryMapping
     {
@@ -107,8 +107,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a relationship property refers to a single entity (as opposed to a collection.)
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsSingletonRelationship(MappingEntity entity, MemberInfo member)
         {
             if (!this.IsRelationship(entity, member))
@@ -167,8 +165,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Get a query expression that selects all entities from a table
         /// </summary>
-        /// <param name="rowType"></param>
-        /// <returns></returns>
         public abstract ProjectionExpression GetQueryExpression(MappingEntity entity);
 
         /// <summary>

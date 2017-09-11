@@ -11,7 +11,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Rewrites take & skip expressions into uses of TSQL row_number function
+    /// Rewrites take and skip expressions into uses of TSQL row_number function
     /// </summary>
     public class SkipToRowNumberRewriter : DbExpressionVisitor
     {

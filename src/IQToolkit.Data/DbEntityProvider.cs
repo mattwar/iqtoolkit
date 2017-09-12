@@ -547,10 +547,6 @@ namespace IQToolkit.Data
             /// <summary>
             /// Get an ADO command object initialized with the command-text and parameters
             /// </summary>
-            /// <param name="commandText"></param>
-            /// <param name="paramNames"></param>
-            /// <param name="paramValues"></param>
-            /// <returns></returns>
             protected virtual DbCommand GetCommand(QueryCommand query, object[] paramValues)
             {
                 // create command object (and fill in parameters)
@@ -619,7 +615,7 @@ namespace IQToolkit.Data
             }
 
             /// <summary>
-            /// Write a command & parameters to the log
+            /// Write a command and parameters to the log
             /// </summary>
             /// <param name="command"></param>
             /// <param name="paramValues"></param>

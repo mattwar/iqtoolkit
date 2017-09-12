@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>IQToolkit.Access</id>
+        <version>1.0.0.0</version>
+        <title>IQToolkit ORM for MS Access</title>
+        <authors>Matt Warren</authors>
+        <owners>Matt Warren</owners>
+        <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>IQToolkit ORM for MS Access</description>
+        <copyright />
+        <dependencies>
+            <dependency id="IQToolkit.Common" version="1.0.0.0" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\bin\Release\Access\IQToolkit.Data.Access.dll" target="lib\net45\IQToolkit.Data.Access.dll" />
+    </files>
+</package>

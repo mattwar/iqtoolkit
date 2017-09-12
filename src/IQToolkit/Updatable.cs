@@ -279,6 +279,7 @@ namespace IQToolkit
         /// <summary>
         /// Apply an Insert, Update, InsertOrUpdate or Delete operation over a set of items and produce a set of results per invocation.
         /// </summary>
+        /// <typeparam name="U">The type of the collection.</typeparam>
         /// <typeparam name="T">The type of the instances.</typeparam>
         /// <typeparam name="S">The type of each result</typeparam>
         /// <param name="collection">The updatable collection.</param>
@@ -304,6 +305,7 @@ namespace IQToolkit
         /// <summary>
         /// Apply an Insert, Update, InsertOrUpdate or Delete operation over a set of items and produce a set of result per invocation.
         /// </summary>
+        /// <typeparam name="U">The type of the collection.</typeparam>
         /// <typeparam name="T">The type of the items.</typeparam>
         /// <typeparam name="S">The type of each result.</typeparam>
         /// <param name="collection">The updatable collection.</param>

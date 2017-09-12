@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>IQToolkit.SQLite</id>
+        <version>1.0.0.0</version>
+        <title>IQToolkit ORM for SQLite</title>
+        <authors>Matt Warren</authors>
+        <owners>Matt Warren</owners>
+        <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>IQToolkit ORM for SQLite (System.Data.SQLite)</description>
+        <copyright />
+        <dependencies>
+            <dependency id="IQToolkit.Common" version="1.0.0.0" />
+            <dependency id="System.Data.SQLite.Core" version="1.0.95.0"/>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\bin\Release\SQLite\IQToolkit.Data.SQLite.dll" target="lib\net45\IQToolkit.Data.SQLite.dll" />
+    </files>
+</package>

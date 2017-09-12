@@ -10,7 +10,6 @@ namespace IQToolkit
     /// <summary>
     /// Implements a cache over a most recently used list
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class MostRecentlyUsedCache<T>
     {
         int maxSize;

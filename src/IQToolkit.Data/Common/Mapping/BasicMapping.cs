@@ -66,8 +66,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Deterimines is a property is mapped onto a column or relationship
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsMapped(MappingEntity entity, MemberInfo member)
         {
             return true;
@@ -76,8 +74,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a property is mapped onto a column
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsColumn(MappingEntity entity, MemberInfo member)
         {
             //return this.mapping.IsMapped(entity, member) && this.translator.Linguist.Language.IsScalar(TypeHelper.GetMemberType(member));
@@ -98,8 +94,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a property represents or is part of the entities unique identity (often primary key)
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public override bool IsPrimaryKey(MappingEntity entity, MemberInfo member)
         {
             return false;
@@ -108,8 +102,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a property is computed after insert or update
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsComputed(MappingEntity entity, MemberInfo member)
         {
             return false;
@@ -118,8 +110,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a property is generated on the server during insert
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsGenerated(MappingEntity entity, MemberInfo member)
         {
             return false;
@@ -128,8 +118,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a property should not be written back to database
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsReadOnly(MappingEntity entity, MemberInfo member)
         {
             return false;
@@ -149,8 +137,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// The type of the entity on the other side of the relationship
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual MappingEntity GetRelatedEntity(MappingEntity entity, MemberInfo member)
         {
             Type relatedType = TypeHelper.GetElementType(TypeHelper.GetMemberType(member));
@@ -197,8 +183,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// The name of the corresponding database table
         /// </summary>
-        /// <param name="rowType"></param>
-        /// <returns></returns>
         public virtual string GetTableName(MappingEntity entity)
         {
             return entity.EntityType.Name;
@@ -207,8 +191,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// The name of the corresponding table column
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual string GetColumnName(MappingEntity entity, MemberInfo member)
         {
             return member.Name;
@@ -217,8 +199,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// A sequence of all the mapped members
         /// </summary>
-        /// <param name="rowType"></param>
-        /// <returns></returns>
         public override IEnumerable<MemberInfo> GetMappedMembers(MappingEntity entity)
         {
             //Type type = entity.ElementType.IsInterface ? entity.EntityType : entity.ElementType;
@@ -397,8 +377,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// The query language specific type for the column
         /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual QueryType GetColumnType(MappingEntity entity, MemberInfo member)
         {
             string dbType = this.mapping.GetColumnDbType(entity, member);

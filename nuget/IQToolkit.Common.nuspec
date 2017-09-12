@@ -1,14 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>IQToolkit.Data</id>
+        <id>IQToolkit.Common</id>
         <version>1.0.0.0</version>
-        <title>IQToolkit for System.Data</title>
+        <title>IQToolkit ORM for System.Data database providers</title>
         <authors>Matt Warren</authors>
         <owners>Matt Warren</owners>
         <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>IQToolkit IQueryable provider shared libraries.</description>
+        <description>IQToolkit ORM for System.Data database providers (core API and shared libraries).</description>
+	<summary></summary>
         <copyright />
     </metadata>
     <files>

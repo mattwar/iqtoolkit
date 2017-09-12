@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>IQToolkit.Data.SqlClient</id>
+        <id>IQToolkit.SqlClient</id>
         <version>1.0.0.0</version>
-        <title>IQueryable Toolkit MS SQL Client Query Provider</title>
+        <title>IQToolkit ORM for MS SQL Server (SqlClient)</title>
         <authors>Matt Warren</authors>
         <owners>Matt Warren</owners>
         <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>IQToolkit MS SQL Client Library</description>
+        <description>IQToolkit ORM for MS SQL Server (SqlClient)</description>
         <copyright />
         <dependencies>
-            <dependency id="IQToolkit.Data" version="1.0.0.0" />
+            <dependency id="IQToolkit.Common" version="1.0.0.0" />
         </dependencies>
     </metadata>
     <files>

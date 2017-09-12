@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>IQToolkit.Data.SqlServerCe</id>
+        <id>IQToolkit.SqlServerCe</id>
         <version>1.0.0.0</version>
-        <title>IQueryable Toolkit MS SQL CE Query Provider</title>
+        <title>IQToolkit ORM for MS SQL Server Compact Edition</title>
         <authors>Matt Warren</authors>
         <owners>Matt Warren</owners>
         <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>IQToolkit MS SQL Server Compact Edition Library</description>
+        <description>IQToolkit ORM for MS SQL Server Compact Edition (Microsoft.SqlServer.Compact)</description>
         <copyright />
         <dependencies>
-            <dependency id="IQToolkit" version="1.0.0.0" />
-            <dependency id="Microsoft.SqlServer.Compact" />
+            <dependency id="IQToolkit.Common" version="1.0.0.0" />
+            <dependency id="Microsoft.SqlServer.Compact" version="4.0.8876.1"/>
         </dependencies>
     </metadata>
     <files>

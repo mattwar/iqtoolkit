@@ -15,12 +15,18 @@ namespace IQToolkit.Data
 {
     using Common;
 
+    /// <summary>
+    /// Implements the <see cref="IEntitySession"/> contract over an <see cref="EntityProvider"/>.
+    /// </summary>
     public class EntitySession : IEntitySession
     {
-        EntityProvider provider;
-        SessionProvider sessionProvider;
-        Dictionary<MappingEntity, ISessionTable> tables;
+        private readonly EntityProvider provider;
+        private readonly SessionProvider sessionProvider;
+        private readonly Dictionary<MappingEntity, ISessionTable> tables;
 
+        /// <summary>
+        /// Construct a <see cref="EntitySession"/>
+        /// </summary>
         public EntitySession(EntityProvider provider)
         {
             this.provider = provider;
@@ -28,6 +34,9 @@ namespace IQToolkit.Data
             this.tables = new Dictionary<MappingEntity, ISessionTable>();
         }
 
+        /// <summary>
+        /// The underlying <see cref="IEntityProvider"/>
+        /// </summary>
         public IEntityProvider Provider
         {
             get { return this.sessionProvider; }
@@ -43,11 +52,17 @@ namespace IQToolkit.Data
             return this.tables.Values;
         }
 
+        /// <summary>
+        /// Gets the <see cref="ISessionTable"/> for the corresponding database table.
+        /// </summary>
         public ISessionTable GetTable(Type elementType, string tableId)
         {
             return this.GetTable(this.sessionProvider.Provider.Mapping.GetEntity(elementType, tableId));
         }
 
+        /// <summary>
+        /// Gets the <see cref="ISessionTable"/> for the corresponding database table.
+        /// </summary>
         public ISessionTable<T> GetTable<T>(string tableId)
         {
             return (ISessionTable<T>)this.GetTable(typeof(T), tableId);
@@ -78,9 +93,9 @@ namespace IQToolkit.Data
 
         abstract class SessionTable<T> : Query<T>, ISessionTable<T>, ISessionTable, IEntitySessionTable
         {
-            EntitySession session;
-            MappingEntity entity;
-            IEntityTable<T> underlyingTable;
+            private readonly EntitySession session;
+            private readonly MappingEntity entity;
+            private readonly IEntityTable<T> underlyingTable;
 
             public SessionTable(EntitySession session, MappingEntity entity)
                 : base(session.sessionProvider, typeof(ISessionTable<T>))
@@ -146,10 +161,10 @@ namespace IQToolkit.Data
             }
         }
 
-        class SessionProvider : QueryProvider, IEntityProvider, ICreateExecutor
+        private class SessionProvider : QueryProvider, IEntityProvider, IQueryExecutorFactory
         {
-            EntitySession session;
-            EntityProvider provider;
+            private readonly EntitySession session;
+            private readonly EntityProvider provider;
 
             public SessionProvider(EntitySession session, EntityProvider provider)
             {
@@ -192,16 +207,16 @@ namespace IQToolkit.Data
                 return this.provider.CanBeParameter(expression);
             }
 
-            QueryExecutor ICreateExecutor.CreateExecutor()
+            QueryExecutor IQueryExecutorFactory.CreateExecutor()
             {
-                return new SessionExecutor(this.session, ((ICreateExecutor)this.provider).CreateExecutor());
+                return new SessionExecutor(this.session, ((IQueryExecutorFactory)this.provider).CreateExecutor());
             }
         }
 
         class SessionExecutor : QueryExecutor
         {
-            EntitySession session;
-            QueryExecutor executor;
+            private readonly EntitySession session;
+            private readonly QueryExecutor executor;
 
             public SessionExecutor(EntitySession session, QueryExecutor executor)
             {
@@ -251,6 +266,9 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Submit changes to changed entity instances back to the database, as a single transaction.
+        /// </summary>
         public virtual void SubmitChanges()
         {
             this.provider.DoTransacted(

@@ -2,13 +2,7 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 
 namespace IQToolkit.Data
@@ -296,7 +290,7 @@ namespace IQToolkit.Data
             }
         }
 
-        public override string GetVariableDeclaration(QueryType type, bool suppressSize)
+        public override string Format(QueryType type, bool suppressSize)
         {
             var sqlType = (DbQueryType)type;
             StringBuilder sb = new StringBuilder();
@@ -326,52 +320,4 @@ namespace IQToolkit.Data
             return sb.ToString();
         }
     }
-
-    public class DbQueryType : QueryType
-    {
-        SqlDbType dbType;
-        bool notNull;
-        int length;
-        short precision;
-        short scale;
-
-        public DbQueryType(SqlDbType dbType, bool notNull, int length, short precision, short scale)
-        {
-            this.dbType = dbType;
-            this.notNull = notNull;
-            this.length = length;
-            this.precision = precision;
-            this.scale = scale;
-        }
-
-        public DbType DbType
-        {
-            get { return DbTypeSystem.GetDbType(this.dbType); }
-        }
-
-        public SqlDbType SqlDbType
-        {
-            get { return this.dbType; }
-        }
-
-        public override int Length
-        {
-            get { return this.length; }
-        }
-
-        public override bool NotNull
-        {
-            get { return this.notNull; }
-        }
-
-        public override short Precision
-        {
-            get { return this.precision; }
-        }
-
-        public override short Scale
-        {
-            get { return this.scale; }
-        }
-    } 
 }

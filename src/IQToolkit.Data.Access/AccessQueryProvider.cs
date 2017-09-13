@@ -2,35 +2,57 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
 using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data.Access
 {
     using IQToolkit.Data.Common;
     using IQToolkit.Data.OleDb;
 
+    /// <summary>
+    /// A <see cref="DbEntityProvider"/> for Microsoft Access databases
+    /// </summary>
     public class AccessQueryProvider : OleDb.OleDbQueryProvider
     {
-        public AccessQueryProvider(OleDbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Construct a <see cref="AccessQueryProvider"/>
+        /// </summary>
+        public AccessQueryProvider(OleDbConnection connection, QueryMapping mapping = null, QueryPolicy policy = null)
             : base(connection, AccessLanguage.Default, mapping, policy)
         {
         }
 
-        public override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="AccessQueryProvider"/>
+        /// </summary>
+        public AccessQueryProvider(string connectionStringOrDatabaseFile, QueryMapping mapping = null, QueryPolicy policy = null)
+            : this(CreateConnection(connectionStringOrDatabaseFile), mapping, policy)
+        {
+        }
+
+        protected override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
         {
             return new AccessQueryProvider((OleDbConnection)connection, mapping, policy);
         }
 
+        /// <summary>
+        /// Creates a <see cref="OleDbConnection"/> given a connection string or database file.
+        /// </summary>
+        public static OleDbConnection CreateConnection(string connectionStringOrDatabaseFile)
+        {
+            if (!connectionStringOrDatabaseFile.Contains("="))
+            {
+                connectionStringOrDatabaseFile = GetConnectionString(connectionStringOrDatabaseFile);
+            }
+
+            return new OleDbConnection(connectionStringOrDatabaseFile);
+        }
+
+        /// <summary>
+        /// Gets a connection string appropriate for openning the specified dadtabase file.
+        /// </summary>
         public static string GetConnectionString(string databaseFile) 
         {
             databaseFile = Path.GetFullPath(databaseFile);

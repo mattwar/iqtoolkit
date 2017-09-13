@@ -57,6 +57,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IQToolkit.Data.SqlServerCe\IQToolkit.Data.SqlServerCe.csproj">
+      <Project>{a7c0c2b6-4680-4f61-a062-c785bd4f92a1}</Project>
+      <Name>IQToolkit.Data.SqlServerCe</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data\IQToolkit.Data.csproj">
       <Project>{3a356510-9c25-4a94-87b9-eeb31b6a1303}</Project>
       <Name>IQToolkit.Data</Name>

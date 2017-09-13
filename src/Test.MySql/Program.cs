@@ -1,7 +1,6 @@
 ﻿using System.Linq;
-using System.Linq.Expressions;
-using IQToolkit;
 using IQToolkit.Data;
+using IQToolkit.Data.MySqlClient;
 using IQToolkit.Data.Mapping;
 
 namespace Test
@@ -15,7 +14,9 @@ namespace Test
 
         private static DbEntityProvider CreateNorthwindProvider()
         {
-            return DbEntityProvider.From("IQToolkit.Data.MySqlClient", "Server=localhost;user id='root';password='mypwd';Database=Northwind", "Test.NorthwindWithAttributes");
+            return new MySqlQueryProvider(
+                "Server=localhost;user id='root';password='mypwd';Database=Northwind", 
+                new AttributeMapping(typeof(Test.NorthwindWithAttributes)));
         }
 
         public class NorthwindTranslationTests : Test.NorthwindTranslationTests

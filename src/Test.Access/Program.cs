@@ -1,13 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using IQToolkit;
 using IQToolkit.Data;
+using IQToolkit.Data.Access;
 using IQToolkit.Data.Mapping;
 
 namespace Test
@@ -21,7 +16,7 @@ namespace Test
 
         private static DbEntityProvider CreateNorthwindProvider()
         {
-            return DbEntityProvider.From(@"Northwind.mdb", "Test.NorthwindWithAttributes");
+            return new AccessQueryProvider("Northwind.mdb", new AttributeMapping(typeof(Test.NorthwindWithAttributes)));
         }
 
         public class NorthwindTranslationTests : Test.NorthwindTranslationTests
@@ -37,6 +32,13 @@ namespace Test
             protected override DbEntityProvider CreateProvider()
             {
                 return CreateNorthwindProvider();
+            }
+
+            // some API tests
+            public void TestCreateFromProviderName()
+            {
+                var provider = DbEntityProvider.From("IQToolkit.Data.Access");
+                Assert.NotEqual(null, provider);
             }
         }
 

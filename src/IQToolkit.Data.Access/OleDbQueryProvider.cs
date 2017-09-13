@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
-using System.IO;
 
 namespace IQToolkit.Data.OleDb
 {
     using IQToolkit.Data.Common;
 
-    public class OleDbQueryProvider : DbEntityProvider
+    /// <summary>
+    /// A base <see cref="DbEntityProvider"/> for OLEDB database providers
+    /// </summary>
+    public abstract class OleDbQueryProvider : DbEntityProvider
     {
         public OleDbQueryProvider(OleDbConnection connection, QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
             : base(connection, language, mapping, policy)

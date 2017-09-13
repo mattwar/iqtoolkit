@@ -25,13 +25,13 @@ namespace IQToolkit.Data.Mapping
         public string Alias { get; set; }
     }
 
-    [AttributeUsage(AttributeTargets.Property|AttributeTargets.Field, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class|AttributeTargets.Property|AttributeTargets.Field, AllowMultiple = false)]
     public class TableAttribute : TableBaseAttribute
     {
         public Type EntityType { get; set; }
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class|AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
     public class ExtensionTableAttribute : TableBaseAttribute
     {
         public string KeyColumns { get; set; }
@@ -67,12 +67,30 @@ namespace IQToolkit.Data.Mapping
         public bool IsForeignKey { get; set; }
     }
 
+    /// <summary>
+    /// A <see cref="QueryMapping"/> that is driven off mapping information encoded in attributes
+    /// on either the entity type's themselves, or on the table properties of a context class.
+    /// </summary>
     public class AttributeMapping : AdvancedMapping
     {
         Type contextType;
         Dictionary<string, MappingEntity> entities = new Dictionary<string, MappingEntity>();
         ReaderWriterLock rwLock = new ReaderWriterLock();
 
+        /// <summary>
+        /// Constructs a new instance of an <see cref="AttributeMapping"/> where mapping attributes are
+        /// discovered on individual entity types (instead of an a context class).
+        /// </summary>
+        public AttributeMapping()
+            : this(null)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a new instance of a <see cref="AttributeMapping"/> where mapping attributes are
+        /// discovered on a context class (instead of from the entity types).
+        /// </summary>
+        /// <param name="contextType">The type of the context class, where the context class has a property for each queryable table.</param>
         public AttributeMapping(Type contextType)
         {
             this.contextType = contextType;
@@ -111,46 +129,92 @@ namespace IQToolkit.Data.Mapping
             return entity;
         }
 
-        protected virtual IEnumerable<MappingAttribute> GetMappingAttributes(string rootEntityId)
+        protected virtual IEnumerable<MappingAttribute> GetMappingAttributes(Type elementType, string rootEntityId)
         {
-            var contextMember = this.FindMember(this.contextType, rootEntityId);
-            return (MappingAttribute[])Attribute.GetCustomAttributes(contextMember, typeof(MappingAttribute));
+            if (this.contextType != null)
+            {
+                // get attributes from member of context that returns a collection of that element type.
+                var contextMember = this.FindMember(this.contextType, rootEntityId);
+                return (MappingAttribute[])Attribute.GetCustomAttributes(contextMember, typeof(MappingAttribute));
+            }
+            else
+            {
+                // get attributes from elementType itself
+                var list = new List<MappingAttribute>();
+                foreach (var ma in elementType.GetCustomAttributes<MappingAttribute>())
+                {
+                    var table = ma as TableAttribute;
+                    if (table != null)
+                    {
+                        table.EntityType = elementType;
+                    }
+
+                    list.Add(ma);
+                }
+
+                foreach (var member in elementType.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    foreach (var ma in (MappingAttribute[])Attribute.GetCustomAttributes(member, typeof(MappingAttribute)))
+                    {
+                        var memattr = ma as MemberAttribute;
+                        if (memattr != null)
+                        {
+                            memattr.Member = member.Name;
+                        }
+
+                        list.Add(ma);
+                    }
+                }
+
+                return list;
+            }
         }
 
         public override string GetTableId(Type entityType)
         {
             if (contextType != null)
             {
+                // search for a member that returns a sequence of the entity type, and use its name as the table-id
                 foreach (var mi in contextType.GetMembers(BindingFlags.Instance | BindingFlags.Public))
                 {
                     FieldInfo fi = mi as FieldInfo;
                     if (fi != null && TypeHelper.GetElementType(fi.FieldType) == entityType)
                         return fi.Name;
+
                     PropertyInfo pi = mi as PropertyInfo;
                     if (pi != null && TypeHelper.GetElementType(pi.PropertyType) == entityType)
                         return pi.Name;
                 }
             }
+
+            // otherwise, use the entity types name as the table-id
             return entityType.Name;
         }
 
         private MappingEntity CreateEntity(Type elementType, string tableId, Type entityType)
         {
             if (tableId == null)
+            {
                 tableId = this.GetTableId(elementType);
+            }
+
             var members = new HashSet<string>();
             var mappingMembers = new List<AttributeMappingMember>();
             int dot = tableId.IndexOf('.');
             var rootTableId = dot > 0 ? tableId.Substring(0, dot) : tableId;
             var path = dot > 0 ? tableId.Substring(dot + 1) : "";
-            var mappingAttributes = this.GetMappingAttributes(rootTableId);
+
+            var mappingAttributes = this.GetMappingAttributes(elementType, rootTableId);
+
             var tableAttributes = mappingAttributes.OfType<TableBaseAttribute>()
                 .OrderBy(ta => ta.Name);
+
             var tableAttr = tableAttributes.OfType<TableAttribute>().FirstOrDefault();
             if (tableAttr != null && tableAttr.EntityType != null && entityType == elementType)
             {
                 entityType = tableAttr.EntityType;
             }
+
             var memberAttributes = mappingAttributes.OfType<MemberAttribute>()
                 .Where(ma => ma.Member.StartsWith(path))
                 .OrderBy(ma => ma.Member);
@@ -159,17 +223,22 @@ namespace IQToolkit.Data.Mapping
             {
                 if (string.IsNullOrEmpty(attr.Member))
                     continue;
+
                 string memberName = (path.Length == 0) ? attr.Member : attr.Member.Substring(path.Length + 1);
                 MemberInfo member = null;
                 MemberAttribute attribute = null;
                 AttributeMappingEntity nested = null;
+
                 if (memberName.Contains('.')) // additional nested mappings
                 {
                     string nestedMember = memberName.Substring(0, memberName.IndexOf('.'));
+
                     if (nestedMember.Contains('.'))
                         continue; // don't consider deeply nested members yet
+
                     if (members.Contains(nestedMember))
                         continue; // already seen it (ignore additional)
+
                     members.Add(nestedMember);
                     member = this.FindMember(entityType, nestedMember);
                     string newTableId = tableId + "." + nestedMember;
@@ -181,11 +250,14 @@ namespace IQToolkit.Data.Mapping
                     {
                         throw new InvalidOperationException(string.Format("AttributeMapping: more than one mapping attribute specified for member '{0}' on type '{1}'", memberName, entityType.Name));
                     }
+
                     member = this.FindMember(entityType, memberName);
                     attribute = attr;
                 }
+
                 mappingMembers.Add(new AttributeMappingMember(member, attribute, nested));
             }
+
             return new AttributeMappingEntity(elementType, tableId, entityType, tableAttributes, mappingMembers);
         }
 
@@ -198,12 +270,15 @@ namespace IQToolkit.Data.Mapping
             foreach (string name in names)
             {
                 member = type.GetMember(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase).FirstOrDefault();
+
                 if (member == null)
                 {
                     throw new InvalidOperationException(string.Format("AttributMapping: the member '{0}' does not exist on type '{1}'", name, type.Name));
                 }
+
                 type = TypeHelper.GetElementType(TypeHelper.GetMemberType(member));
             }
+
             return member;
         }
 

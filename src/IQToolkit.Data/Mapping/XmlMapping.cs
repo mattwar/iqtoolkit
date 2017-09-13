@@ -18,7 +18,7 @@ namespace IQToolkit.Data.Mapping
 
     public class XmlMapping : AttributeMapping
     {
-        Dictionary<string, XElement> entities;
+        private readonly Dictionary<string, XElement> entities;
         private static readonly XName Entity = XName.Get("Entity");
         private static readonly XName Id = XName.Get("Id");
         
@@ -33,7 +33,7 @@ namespace IQToolkit.Data.Mapping
             return new XmlMapping(XElement.Parse(xml));
         }
 
-        protected override IEnumerable<MappingAttribute> GetMappingAttributes(string rootEntityId)       
+        protected override IEnumerable<MappingAttribute> GetMappingAttributes(Type elementType, string rootEntityId)       
         {
             XElement root;
             if (this.entities.TryGetValue(rootEntityId, out root))

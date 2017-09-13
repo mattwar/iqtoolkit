@@ -3,14 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.IO;
-using System.Runtime.Serialization;
 
 namespace Test
 {
@@ -103,27 +96,27 @@ namespace Test
 
         public virtual IEntityTable<Customer> Customers
         {
-            get { return this.provider.GetTable<Customer>("Customers"); }
+            get { return this.provider.GetTable<Customer>(nameof(Customers)); }
         }
 
         public virtual IEntityTable<Order> Orders
         {
-            get { return this.provider.GetTable<Order>("Orders"); }
+            get { return this.provider.GetTable<Order>(nameof(Orders)); }
         }
 
         public virtual IEntityTable<OrderDetail> OrderDetails
         {
-            get { return this.provider.GetTable<OrderDetail>("OrderDetails"); }
+            get { return this.provider.GetTable<OrderDetail>(nameof(OrderDetails)); }
         }
 
         public virtual IEntityTable<Product> Products
         {
-            get { return this.provider.GetTable<Product>("Products"); }
+            get { return this.provider.GetTable<Product>(nameof(Products)); }
         }
 
         public virtual IEntityTable<Employee> Employees
         {
-            get { return this.provider.GetTable<Employee>("Employees"); }
+            get { return this.provider.GetTable<Employee>(nameof(Employees)); }
         }
     }
 
@@ -135,52 +128,52 @@ namespace Test
         }
 
         [Table]
-        [Column(Member = "CustomerId", IsPrimaryKey = true)]
-        [Column(Member = "ContactName")]
-        [Column(Member = "CompanyName")]
-        [Column(Member = "Phone")]
-        [Column(Member = "City", DbType="NVARCHAR(20)")]
-        [Column(Member = "Country")]
-        [Association(Member = "Orders", KeyMembers = "CustomerID", RelatedEntityID = "Orders", RelatedKeyMembers = "CustomerID")]
+        [Column(Member = nameof(Customer.CustomerID), IsPrimaryKey = true)]
+        [Column(Member = nameof(Customer.ContactName))]
+        [Column(Member = nameof(Customer.CompanyName))]
+        [Column(Member = nameof(Customer.Phone))]
+        [Column(Member = nameof(Customer.City), DbType="NVARCHAR(20)")]
+        [Column(Member = nameof(Customer.Country))]
+        [Association(Member = nameof(Customer.Orders), KeyMembers = nameof(Customer.CustomerID), RelatedEntityID = nameof(Orders), RelatedKeyMembers = nameof(Order.CustomerID))]
         public override IEntityTable<Customer> Customers
         {
             get { return base.Customers; }
         }
         
         [Table]
-        [Column(Member = "OrderID", IsPrimaryKey = true, IsGenerated = true)]
-        [Column(Member = "CustomerID")]
-        [Column(Member = "OrderDate")]
-        [Association(Member = "Customer", KeyMembers = "CustomerID", RelatedEntityID = "Customers", RelatedKeyMembers = "CustomerID")]
-        [Association(Member = "Details", KeyMembers = "OrderID", RelatedEntityID = "OrderDetails", RelatedKeyMembers = "OrderID")]
+        [Column(Member = nameof(Order.OrderID), IsPrimaryKey = true, IsGenerated = true)]
+        [Column(Member = nameof(Order.CustomerID))]
+        [Column(Member = nameof(Order.OrderDate))]
+        [Association(Member = nameof(Order.Customer), KeyMembers = nameof(Order.CustomerID), RelatedEntityID = nameof(Customers), RelatedKeyMembers = nameof(Customer.CustomerID))]
+        [Association(Member = nameof(Order.Details), KeyMembers = nameof(Order.OrderID), RelatedEntityID = nameof(OrderDetails), RelatedKeyMembers = nameof(OrderDetail.OrderID))]
         public override IEntityTable<Order> Orders
         {
             get { return base.Orders; }
         }
 
         [Table(Name = "Order Details")]
-        [Column(Member = "OrderID", IsPrimaryKey = true)]
-        [Column(Member = "ProductID", IsPrimaryKey = true)]
-        [Association(Member = "Product", KeyMembers = "ProductID", RelatedEntityID = "Products", RelatedKeyMembers = "ID")]
+        [Column(Member = nameof(OrderDetail.OrderID), IsPrimaryKey = true)]
+        [Column(Member = nameof(OrderDetail.ProductID), IsPrimaryKey = true)]
+        [Association(Member = nameof(OrderDetail.Product), KeyMembers = nameof(OrderDetail.ProductID), RelatedEntityID = nameof(Products), RelatedKeyMembers = nameof(Product.ID))]
         public override IEntityTable<OrderDetail> OrderDetails
         {
             get { return base.OrderDetails; }
         }
 
         [Table]
-        [Column(Member = "Id", Name="ProductId", IsPrimaryKey = true)]
-        [Column(Member = "ProductName")]
-        [Column(Member = "Discontinued")]
+        [Column(Member = nameof(Product.ID), Name="ProductId", IsPrimaryKey = true)]
+        [Column(Member = nameof(Product.ProductName))]
+        [Column(Member = nameof(Product.Discontinued))]
         public override IEntityTable<Product> Products
         {
             get { return base.Products; }
         }
 
         [Table]
-        [Column(Member = "EmployeeID", IsPrimaryKey = true)]
-        [Column(Member = "LastName")]
-        [Column(Member = "FirstName")]
-        [Column(Member = "Title")]
+        [Column(Member = nameof(Employee.EmployeeID), IsPrimaryKey = true)]
+        [Column(Member = nameof(Employee.LastName))]
+        [Column(Member = nameof(Employee.FirstName))]
+        [Column(Member = nameof(Employee.Title))]
         [Column(Member = "Address.Street", Name = "Address")]
         [Column(Member = "Address.City")]
         [Column(Member = "Address.Region")]
@@ -287,26 +280,26 @@ namespace Test
         }
 
         [Table]
-        [Column(Member = "CustomerId", IsPrimaryKey = true)]
-        [Column(Member = "ContactName")]
-        [Column(Member = "CompanyName")]
-        [Column(Member = "Phone")]
-        [Column(Member = "City", DbType = "NVARCHAR(20)")]
-        [Column(Member = "Country")]
-        [Association(Member = "Orders", KeyMembers = "CustomerID", RelatedEntityID = "Orders", RelatedKeyMembers = "CustomerID")]
+        [Column(Member = nameof(CustomerX.CustomerID), IsPrimaryKey = true)]
+        [Column(Member = nameof(CustomerX.ContactName))]
+        [Column(Member = nameof(CustomerX.CompanyName))]
+        [Column(Member = nameof(CustomerX.Phone))]
+        [Column(Member = nameof(CustomerX.City), DbType = "NVARCHAR(20)")]
+        [Column(Member = nameof(CustomerX.Country))]
+        [Association(Member = nameof(CustomerX.Orders), KeyMembers = nameof(CustomerX.CustomerID), RelatedEntityID = nameof(Orders), RelatedKeyMembers = nameof(OrderX.CustomerID))]
         public IQueryable<CustomerX> Customers
         {
-            get { return this.provider.GetTable<CustomerX>("Customers"); }
+            get { return this.provider.GetTable<CustomerX>(nameof(Customers)); }
         }
 
         [Table]
-        [Column(Member = "OrderID", IsPrimaryKey = true, IsGenerated = true)]
-        [Column(Member = "CustomerID")]
-        [Column(Member = "OrderDate")]
-        [Association(Member = "Customer", KeyMembers = "CustomerID", RelatedEntityID = "Customers", RelatedKeyMembers = "CustomerID")]
+        [Column(Member = nameof(OrderX.OrderID), IsPrimaryKey = true, IsGenerated = true)]
+        [Column(Member = nameof(OrderX.CustomerID))]
+        [Column(Member = nameof(OrderX.OrderDate))]
+        [Association(Member = nameof(OrderX.Customer), KeyMembers = nameof(OrderX.CustomerID), RelatedEntityID = nameof(Customers), RelatedKeyMembers = nameof(CustomerX.CustomerID))]
         public IEntityTable<OrderX> Orders
         {
-            get { return this.provider.GetTable<OrderX>("Orders"); }
+            get { return this.provider.GetTable<OrderX>(nameof(Orders)); }
         }
     }
 }

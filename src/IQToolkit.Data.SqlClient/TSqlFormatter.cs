@@ -686,7 +686,7 @@ namespace IQToolkit.Data.SqlClient
                 this.Write("DECLARE @");
                 this.Write(v.Name);
                 this.Write(" ");
-                this.Write(this.Language.TypeSystem.GetVariableDeclaration(v.QueryType, false));
+                this.Write(this.Language.TypeSystem.Format(v.QueryType, false));
             }
             if (decl.Source != null)
             {

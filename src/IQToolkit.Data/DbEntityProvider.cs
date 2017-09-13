@@ -2,47 +2,58 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data
 {
     using Common;
     using Mapping;
 
-    public class DbEntityProvider : EntityProvider
+    /// <summary>
+    /// The base type for <see cref="EntityProvider"/>'s that use a System.Data.<see cref="DbConnection"/>.
+    /// </summary>
+    public abstract class DbEntityProvider : EntityProvider
     {
-        DbConnection connection;
-        DbTransaction transaction;
-        IsolationLevel isolation = IsolationLevel.ReadCommitted;
+        private readonly DbConnection connection;
+        private DbTransaction transaction;
+        private IsolationLevel isolation = IsolationLevel.ReadCommitted;
 
-        int nConnectedActions = 0;
-        bool actionOpenedConnection = false;
+        private int nConnectedActions = 0;
+        private bool actionOpenedConnection = false;
 
-        public DbEntityProvider(DbConnection connection, QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
-            : base(language, mapping, policy)
+        /// <summary>
+        /// Constructs a new <see cref="DbEntityProvider"/>
+        /// </summary>
+        protected DbEntityProvider(DbConnection connection, QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
+            : base(language, mapping ?? new AttributeMapping(), policy ?? QueryPolicy.Default)
         {
             if (connection == null)
                 throw new InvalidOperationException("Connection not specified");
             this.connection = connection;
         }
 
+        /// <summary>
+        /// The <see cref="DbConnection"/> used for executing queries.
+        /// </summary>
         public virtual DbConnection Connection
         {
             get { return this.connection; }
         }
 
+        /// <summary>
+        /// The <see cref="DbTransaction"/> to use for updates.
+        /// </summary>
         public virtual DbTransaction Transaction
         {
-            get { return this.transaction; }
+            get
+            {
+                return this.transaction;
+            }
+
             set
             {
                 if (value != null && value.Connection != this.connection)
@@ -51,127 +62,160 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// The <see cref="System.Data.IsolationLevel"/> used for transactions.
+        /// </summary>
         public IsolationLevel Isolation
         {
             get { return this.isolation; }
             set { this.isolation = value; }
         }
 
-        public virtual DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        protected virtual DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
         {
             return (DbEntityProvider)Activator.CreateInstance(this.GetType(), new object[] { connection, mapping, policy });
         }
 
-        public virtual DbEntityProvider New(DbConnection connection)
-        {
-            var n = New(connection, this.Mapping, this.Policy);
-            n.Log = this.Log;
-            return n;
-        }
-
-        public virtual DbEntityProvider New(QueryMapping mapping)
+        /// <summary>
+        /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the specified <see cref="QueryMapping"/>.
+        /// </summary>
+        public DbEntityProvider WithMapping(QueryMapping mapping)
         {
             var n = New(this.Connection, mapping, this.Policy);
             n.Log = this.Log;
             return n;
         }
 
-        public virtual DbEntityProvider New(QueryPolicy policy)
+        /// <summary>
+        /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the mapping specified by the mapping string.
+        /// </summary>
+        /// <param name="mapping">This is typically a name of a context type with <see cref="MappingAttribute"/>'s or a path to a mapping file, 
+        /// but may have custom meaning for the provider.</param>
+        /// <returns></returns>
+        public DbEntityProvider WithMapping(string mapping)
+        {
+            return WithMapping(CreateMapping(mapping));
+        }
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the specified <see cref="QueryPolicy"/>.
+        /// </summary>
+        public DbEntityProvider WithPolicy(QueryPolicy policy)
         {
             var n = New(this.Connection, this.Mapping, policy);
             n.Log = this.Log;
             return n;
         }
 
-        public static DbEntityProvider FromApplicationSettings()
+        /// <summary>
+        /// Create a new <see cref="DbEntityProvider"/> from the specified <see cref="EntityProviderSettings"/>.
+        /// </summary>
+        public static DbEntityProvider FromSettings(EntityProviderSettings settings = null)
         {
-            var provider = System.Configuration.ConfigurationManager.AppSettings["Provider"];
-            var connection = System.Configuration.ConfigurationManager.AppSettings["Connection"];
-            var mapping = System.Configuration.ConfigurationManager.AppSettings["Mapping"];
-            return From(provider, connection, mapping);
-        }
+            settings = settings ?? EntityProviderSettings.FromApplicationSettings();
 
-        public static DbEntityProvider From(string connectionString, string mappingId)
-        {
-            return From(connectionString, mappingId, QueryPolicy.Default);
-        }
+            DbEntityProvider provider = settings.Provider != null
+                ? From(settings.Provider, settings.Connection)
+                : From(settings.Connection);
 
-        public static DbEntityProvider From(string connectionString, string mappingId, QueryPolicy policy)
-        {
-            return From(null, connectionString, mappingId, policy);
-        }
-
-        public static DbEntityProvider From(string connectionString, QueryMapping mapping, QueryPolicy policy)
-        {
-            return From((string)null, connectionString, mapping, policy);
-        }
-
-        public static DbEntityProvider From(string provider, string connectionString, string mappingId)
-        {
-            return From(provider, connectionString, mappingId, QueryPolicy.Default);
-        }
-
-        public static DbEntityProvider From(string provider, string connectionString, string mappingId, QueryPolicy policy)
-        {
-            return From(provider, connectionString, GetMapping(mappingId), policy);
-        }
-
-        public static DbEntityProvider From(string provider, string connectionString, QueryMapping mapping, QueryPolicy policy)
-        {
-            if (provider == null)
+            if (settings.Mapping != null)
             {
-                var clower = connectionString.ToLower();
-                // try sniffing connection to figure out provider
-                if (clower.Contains(".mdb") || clower.Contains(".accdb"))
-                {
-                    provider = "IQToolkit.Data.Access";
-                }
-                else if (clower.Contains(".sdf"))
-                {
-                    provider = "IQToolkit.Data.SqlServerCe";
-                }
-                else if (clower.Contains(".sl3") || clower.Contains(".db3"))
-                {
-                    provider = "IQToolkit.Data.SQLite";
-                }
-                else if (clower.Contains(".mdf"))
-                {
-                    provider = "IQToolkit.Data.SqlClient";
-                }
-                else
-                {
-                    throw new InvalidOperationException(string.Format("Query provider not specified and cannot be inferred."));
-                }
+                provider = provider.WithMapping(settings.Mapping);
             }
 
-            Type providerType = GetProviderType(provider);
-            if (providerType == null)
-                throw new InvalidOperationException(string.Format("Unable to find query provider '{0}'", provider));
-
-            return From(providerType, connectionString, mapping, policy);
+            return provider;
+        }
+        
+        /// <summary>
+        /// Create a new <see cref="DbEntityProvider"/>.
+        /// </summary>
+        /// <param name="connectionStringOrDatabaseFile">The ADO provider connection string or file path for a database file.</param>
+        public static DbEntityProvider From(string connectionStringOrDatabaseFile)
+        {
+            return From(InferProviderName(connectionStringOrDatabaseFile), connectionStringOrDatabaseFile);
         }
 
-        public static DbEntityProvider From(Type providerType, string connectionString, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Create a new <see cref="DbEntityProvider"/>.
+        /// </summary>
+        /// <param name="providerName">The type name of the query provider (typically the name of the assembly it is defined in, not the class name).</param>
+        /// <param name="connectionStringOrDatabaseFile">The ADO provider connection string or file path to a database file.</param>
+        public static DbEntityProvider From(string providerName, string connectionStringOrDatabaseFile)
         {
-            Type adoConnectionType = GetAdoConnectionType(providerType);
+            if (providerName == null)
+                throw new ArgumentNullException(nameof(providerName));
+            if (connectionStringOrDatabaseFile == null)
+                throw new ArgumentNullException(nameof(connectionStringOrDatabaseFile));
+
+            Type providerType = GetProviderType(providerName);
+            if (providerType == null)
+                throw new InvalidOperationException(string.Format("Unable to find query provider '{0}'", providerName));
+
+            return From(providerType, connectionStringOrDatabaseFile);
+        }
+
+        /// <summary>
+        /// Infers the known query provider by examining the connection string.
+        /// </summary>
+        private static string InferProviderName(string connectionString)
+        {
+            var clower = connectionString.ToLower();
+
+            // try sniffing connection to figure out provider
+            if (clower.Contains(".mdb") || clower.Contains(".accdb"))
+            {
+                return "IQToolkit.Data.Access";
+            }
+            else if (clower.Contains(".sdf"))
+            {
+                return "IQToolkit.Data.SqlServerCe";
+            }
+            else if (clower.Contains(".sl3") || clower.Contains(".db3"))
+            {
+                return "IQToolkit.Data.SQLite";
+            }
+            else if (clower.Contains(".mdf"))
+            {
+                return "IQToolkit.Data.SqlClient";
+            }
+            else
+            {
+                throw new InvalidOperationException(string.Format("Query provider not specified and cannot be inferred."));
+            }
+        }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="DbEntityProvider"/>.
+        /// </summary>
+        /// <param name="queryProviderType">The query provider type.</param>
+        /// <param name="connectionStringOrDatabaseFile">The ADO provider connection string or file path for a database file.</param>
+        public static DbEntityProvider From(Type queryProviderType, string connectionStringOrDatabaseFile)
+        {
+            if (queryProviderType == null)
+                throw new ArgumentNullException(nameof(queryProviderType));
+            if (connectionStringOrDatabaseFile == null)
+                throw new ArgumentNullException(nameof(connectionStringOrDatabaseFile));
+
+            Type adoConnectionType = GetAdoConnectionType(queryProviderType);
             if (adoConnectionType == null)
-                throw new InvalidOperationException(string.Format("Unable to deduce ADO provider for '{0}'", providerType.Name));
+                throw new InvalidOperationException(string.Format("Unable to deduce DbConnection type for '{0}'", queryProviderType.Name));
+
             DbConnection connection = (DbConnection)Activator.CreateInstance(adoConnectionType);
 
             // is the connection string just a filename?
-            if (!connectionString.Contains('='))
+            if (!connectionStringOrDatabaseFile.Contains('='))
             {
-                MethodInfo gcs = providerType.GetMethod("GetConnectionString", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string) }, null);
+                MethodInfo gcs = queryProviderType.GetMethod("GetConnectionString", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string) }, null);
                 if (gcs != null)
                 {
                     var getConnectionString = (Func<string, string>)Delegate.CreateDelegate(typeof(Func<string, string>), gcs);
-                    connectionString = getConnectionString(connectionString);
+                    connectionStringOrDatabaseFile = getConnectionString(connectionStringOrDatabaseFile);
                 }
             }
 
-            connection.ConnectionString = connectionString;
+            connection.ConnectionString = connectionStringOrDatabaseFile;
 
-            return (DbEntityProvider)Activator.CreateInstance(providerType, new object[] { connection, mapping, policy });
+            return (DbEntityProvider)Activator.CreateInstance(queryProviderType, new object[] { connection, null, null });
         }
 
         private static Type GetAdoConnectionType(Type providerType)
@@ -651,94 +695,6 @@ namespace IQToolkit.Data
                         }
                     }
                 }
-            }
-        }
-
-        protected class DbFieldReader : FieldReader
-        {
-            QueryExecutor executor;
-            DbDataReader reader;
-
-            public DbFieldReader(QueryExecutor executor, DbDataReader reader)
-            {
-                this.executor = executor;
-                this.reader = reader;
-                this.Init();
-            }
-
-            protected override int FieldCount
-            {
-                get { return this.reader.FieldCount; }
-            }
-
-            protected override Type GetFieldType(int ordinal)
-            {
-                return this.reader.GetFieldType(ordinal);
-            }
-
-            protected override bool IsDBNull(int ordinal)
-            {
-                return this.reader.IsDBNull(ordinal);
-            }
-
-            protected override T GetValue<T>(int ordinal)
-            {
-                return (T)this.executor.Convert(this.reader.GetValue(ordinal), typeof(T));
-            }
-
-            protected override Byte GetByte(int ordinal)
-            {
-                return this.reader.GetByte(ordinal);
-            }
-
-            protected override Char GetChar(int ordinal)
-            {
-                return this.reader.GetChar(ordinal);
-            }
-
-            protected override DateTime GetDateTime(int ordinal)
-            {
-                return this.reader.GetDateTime(ordinal);
-            }
-
-            protected override Decimal GetDecimal(int ordinal)
-            {
-                return this.reader.GetDecimal(ordinal);
-            }
-
-            protected override Double GetDouble(int ordinal)
-            {
-                return this.reader.GetDouble(ordinal);
-            }
-
-            protected override Single GetSingle(int ordinal)
-            {
-                return this.reader.GetFloat(ordinal);
-            }
-
-            protected override Guid GetGuid(int ordinal)
-            {
-                return this.reader.GetGuid(ordinal);
-            }
-
-            protected override Int16 GetInt16(int ordinal)
-            {
-                return this.reader.GetInt16(ordinal);
-            }
-
-            protected override Int32 GetInt32(int ordinal)
-            {
-                return this.reader.GetInt32(ordinal);
-            }
-
-            protected override Int64 GetInt64(int ordinal)
-            {
-                return this.reader.GetInt64(ordinal);
-            }
-
-            protected override String GetString(int ordinal)
-            {
-                return this.reader.GetString(ordinal);
             }
         }
     }

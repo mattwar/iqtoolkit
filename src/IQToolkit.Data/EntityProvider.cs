@@ -17,9 +17,9 @@ namespace IQToolkit.Data
     using Mapping;
 
     /// <summary>
-    /// A LINQ IQueryable query provider that executes database queries over a DbConnection
+    /// A base type for LINQ IQueryable query providers that executes translated queries against a database.
     /// </summary>
-    public abstract class EntityProvider : QueryProvider, IEntityProvider, ICreateExecutor
+    public abstract class EntityProvider : QueryProvider, IEntityProvider, IQueryExecutorFactory
     {
         QueryLanguage language;
         QueryMapping mapping;
@@ -142,7 +142,7 @@ namespace IQToolkit.Data
 
         protected abstract QueryExecutor CreateExecutor();
 
-        QueryExecutor ICreateExecutor.CreateExecutor()
+        QueryExecutor IQueryExecutorFactory.CreateExecutor()
         {
             return this.CreateExecutor();
         }
@@ -361,35 +361,77 @@ namespace IQToolkit.Data
 
             return TypedSubtreeFinder.Find(expression, type);
         }
-           
-        public static QueryMapping GetMapping(string mappingId)
+
+        /// <summary>
+        /// Create a <see cref="QueryMapping"/> from the specified mapping string.
+        /// </summary>
+        /// <param name="mapping">This is typically the type name of a context class with <see cref="MappingAttribute"/>'s 
+        /// or the path to a mapping file, but may have custom meaning for the provider.</param>
+        protected virtual QueryMapping CreateMapping(string mapping)
         {
-            if (mappingId != null)
+            if (mapping != null)
             {
-                Type type = FindLoadedType(mappingId);
-                if (type != null)
+                if (mapping == "Attribute" || mapping == "AttributeMapping")
                 {
-                    return new AttributeMapping(type);
+                    return new AttributeMapping();
                 }
 
-                if (File.Exists(mappingId))
+                Type type = FindLoadedType(mapping);
+                if (type != null)
                 {
-                    return XmlMapping.FromXml(File.ReadAllText(mappingId));
+                    if (type.IsSubclassOf(typeof(QueryMapping)))
+                    {
+                        // the type of a QueryMapping?
+                        return (QueryMapping)Activator.CreateInstance(type);
+                    }
+                    else
+                    {
+                        // assume this is a context type for attribute mapping
+                        return new AttributeMapping(type);
+                    }
+                }
+
+                // if this is a file name, try to load it as an XmlMapping.
+                if (File.Exists(mapping))
+                {
+                    return XmlMapping.FromXml(File.ReadAllText(mapping));
                 }
             }
 
+            // otherwise, use implicit mapping
             return new ImplicitMapping();
         }
 
-        public static Type GetProviderType(string providerName)
+        /// <summary>
+        /// Get the <see cref="Type"/> of the <see cref="EntityProvider"/> given the name of the provider assembly.
+        /// </summary>
+        /// <param name="providerAssemblyName">The name of the provider assembly.</param>
+        protected static Type GetProviderType(string providerAssemblyName)
         {
-            if (!string.IsNullOrEmpty(providerName))
+            if (!string.IsNullOrEmpty(providerAssemblyName))
             {
-                var type = FindInstancesIn(typeof(EntityProvider), providerName).FirstOrDefault();
+                var providers = FindInstancesInAssembly(typeof(EntityProvider), providerAssemblyName).ToList();
+
+                Type type = null;
+
+                if (providers.Count == 1)
+                {
+                    type = providers[0];
+                }
+                else if (providers.Count > 1)
+                {
+                    // if more than one, pick the provider in the same namespace that matches the assembly name
+                    type = providers.Where(t => string.Compare(t.Namespace, providerAssemblyName, true) == 0)
+                            .FirstOrDefault();
+                }
+
                 if (type != null)
+                {
                     return type;
+                }
             }
-            return null;
+
+            throw new InvalidOperationException(string.Format("Unable to find query provider '{0}'", providerAssemblyName));
         }
 
         private static Type FindLoadedType(string typeName)
@@ -400,18 +442,19 @@ namespace IQToolkit.Data
                 if (type != null)
                     return type;
             }
+
             return null;
         }
 
-        private static IEnumerable<Type> FindInstancesIn(Type type, string assemblyName)
+        private static IEnumerable<Type> FindInstancesInAssembly(Type type, string assemblyName)
         {
-            Assembly assembly = GetAssemblyForNamespace(assemblyName);
+            Assembly assembly = GetOrLoadAssembly(assemblyName);
             if (assembly != null)
             {
                 foreach (var atype in assembly.GetTypes())
                 {
-                    if (string.Compare(atype.Namespace, assemblyName, true) == 0
-                        && type.IsAssignableFrom(atype))
+                    // find types in the same namespace 
+                    if (type.IsAssignableFrom(atype))
                     {
                         yield return atype;
                     }
@@ -419,25 +462,25 @@ namespace IQToolkit.Data
             }
         }
 
-        private static Assembly GetAssemblyForNamespace(string nspace)
+        private static Assembly GetOrLoadAssembly(string assemblyName)
         {
             foreach (var assem in AppDomain.CurrentDomain.GetAssemblies())
             {
-                if (assem.FullName.Contains(nspace))
+                if (assem.FullName.Contains(assemblyName))
                 {
                     return assem;
                 }
             }
 
-            return Load(nspace + ".dll");
+            return Load(assemblyName + ".dll");
         }
 
-        private static Assembly Load(string name)
+        private static Assembly Load(string assemblyName)
         {
             // try to load it.
             try
             {
-                var fullName = Path.GetFullPath(name);
+                var fullName = Path.GetFullPath(assemblyName);
                 return Assembly.LoadFrom(fullName);
             }
             catch

@@ -1795,7 +1795,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1808,7 +1808,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
             policy.IncludeWith<Order>(o => o.Details);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1824,7 +1824,7 @@ namespace Test
             var mapping = new AttributeMapping(typeof(NorthwindX));
             var policy = new EntityPolicy();
             policy.IncludeWith<CustomerX>(c => c.Orders);
-            NorthwindX nw = new NorthwindX(this.GetProvider().New(policy).New(mapping));
+            NorthwindX nw = new NorthwindX(this.GetProvider().WithPolicy(policy).WithMapping(mapping));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1836,7 +1836,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders.Where(o => (o.OrderID & 1) == 0));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1848,7 +1848,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders, true);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1860,7 +1860,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.AssociateWith<Customer>(c => c.Orders.Where(o => (o.OrderID & 1) == 0));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI")
                 .Select(c => new { CustomerID = c.CustomerID, FilteredOrdersCount = c.Orders.Count() }).ToList();
@@ -1873,7 +1873,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
             policy.AssociateWith<Customer>(c => c.Orders.Where(o => (o.OrderID & 1) == 0));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1886,7 +1886,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.AssociateWith<Customer>(c => c.Orders.Where(o => (o.OrderID & 1) == 0));
             policy.IncludeWith<Customer>(c => c.Orders);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1898,7 +1898,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Order>(o => o.Details);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
             var list = nw.Orders.Where(o => o.CustomerID == "ALFKI").GroupBy(o => o.CustomerID).ToList();
             Assert.Equal(1, list.Count);
             var grp = list[0].ToList();
@@ -1912,7 +1912,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.Apply<Customer>(seq => seq.Where(c => c.City == "London"));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.ToList();
             Assert.Equal(6, custs.Count);
@@ -1924,7 +1924,7 @@ namespace Test
             string ty = "don";
             var policy = new EntityPolicy();
             policy.Apply<Customer>(seq => seq.Where(c => c.City == ci + ty));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.ToList();
             Assert.Equal(6, custs.Count);
@@ -1935,7 +1935,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.Apply<Customer>(seq => seq.Where(c => c.City == "London"));
             policy.Apply<Customer>(seq => seq.Where(c => c.Country == "UK"));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.ToList();
             Assert.Equal(6, custs.Count);
@@ -1945,7 +1945,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.Apply<Customer>(seq => seq.OrderBy(c => c.ContactName));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var list = nw.Customers.Where(c => c.City == "London").ToList();
 
@@ -1959,7 +1959,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.Apply<Order>(ords => ords.Where(o => o.OrderDate.Year > 0));
             policy.IncludeWith<Customer>(c => c.Orders.Where(o => (o.OrderID & 1) == 0));
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             var custs = nw.Customers.Where(c => c.CustomerID == "ALFKI").ToList();
             Assert.Equal(1, custs.Count);
@@ -1972,7 +1972,7 @@ namespace Test
             EntityPolicy policy = new EntityPolicy();
             policy.IncludeWith<Order>(o => o.Details);
 
-            var ndb = new Northwind(this.GetProvider().New(policy));
+            var ndb = new Northwind(this.GetProvider().WithPolicy(policy));
             var q = from o in ndb.Orders
                     where o.OrderID == 10248
                     select o;

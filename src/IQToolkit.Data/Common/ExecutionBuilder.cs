@@ -41,7 +41,7 @@ namespace IQToolkit.Data.Common
             var executor = Expression.Parameter(typeof(QueryExecutor), "executor");
             var builder = new ExecutionBuilder(linguist, policy, executor);
             builder.variables.Add(executor);
-            builder.initializers.Add(Expression.Call(Expression.Convert(provider, typeof(ICreateExecutor)), "CreateExecutor", null, null));
+            builder.initializers.Add(Expression.Call(Expression.Convert(provider, typeof(IQueryExecutorFactory)), "CreateExecutor", null, null));
             var result = builder.Build(expression);
             return result;
         }

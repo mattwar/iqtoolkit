@@ -2,36 +2,61 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data.SqlClient
 {
     using IQToolkit.Data.Common;
 
+    /// <summary>
+    /// A <see cref="DbEntityProvider"/> for Microsoft SQL Server databases
+    /// </summary>
     public class SqlQueryProvider : DbEntityProvider
     {
-        bool? allowMulitpleActiveResultSets;
+        private bool? allowMulitpleActiveResultSets;
 
-        public SqlQueryProvider(SqlConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="SqlQueryProvider"/>
+        /// </summary>
+        public SqlQueryProvider(SqlConnection connection, QueryMapping mapping = null, QueryPolicy policy = null)
             : base(connection, TSqlLanguage.Default, mapping, policy)
         {
         }
 
-        public override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="SqlQueryProvider"/>
+        /// </summary>
+        public SqlQueryProvider(string connectionStringOrDatabaseFile, QueryMapping mapping = null, QueryPolicy policy = null)
+            : this(CreateConnection(connectionStringOrDatabaseFile), mapping, policy)
+        {
+        }
+
+        protected override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
         {
             return new SqlQueryProvider((SqlConnection)connection, mapping, policy);
         }
 
+        /// <summary>
+        /// Creates a <see cref="SqlConnection"/> given a connection string or database file.
+        /// </summary>
+        public static SqlConnection CreateConnection(string connectionString)
+        {
+            if (!connectionString.Contains('='))
+            {
+                connectionString = GetConnectionString(connectionString);
+            }
+
+            return new SqlConnection(connectionString);
+        }
+
+        /// <summary>
+        /// Gets a connection string that will connect to the specified database file.
+        /// </summary>
         public static string GetConnectionString(string databaseFile)
         {
             if (databaseFile.EndsWith(".mdf"))
@@ -52,6 +77,7 @@ namespace IQToolkit.Data.SqlClient
                     var result = builder["MultipleActiveResultSets"];
                     this.allowMulitpleActiveResultSets = (result != null && result.GetType() == typeof(bool) && (bool)result);
                 }
+
                 return (bool)this.allowMulitpleActiveResultSets;
             }
         }

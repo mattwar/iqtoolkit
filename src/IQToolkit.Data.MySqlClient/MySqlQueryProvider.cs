@@ -2,30 +2,36 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 using MySql.Data.MySqlClient;
 
 namespace IQToolkit.Data.MySqlClient
 {
     using IQToolkit.Data.Common;
 
+    /// <summary>
+    /// A <see cref="DbEntityProvider" for MySql databases
+    /// </summary>
     public class MySqlQueryProvider : DbEntityProvider
     {
-        public MySqlQueryProvider(MySqlConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="MySqlQueryProvider"/>
+        /// </summary>
+        public MySqlQueryProvider(MySqlConnection connection, QueryMapping mapping = null, QueryPolicy policy = null)
             : base(connection, MySqlLanguage.Default, mapping, policy)
         {
         }
 
-        public override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="MySqlQueryProvider"/>
+        /// </summary>
+        public MySqlQueryProvider(string connectionString, QueryMapping mapping = null, QueryPolicy policy = null)
+            : this(new MySqlConnection(connectionString), mapping, policy)
+        {
+        }
+
+        protected override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
         {
             return new MySqlQueryProvider((MySqlConnection)connection, mapping, policy);
         }

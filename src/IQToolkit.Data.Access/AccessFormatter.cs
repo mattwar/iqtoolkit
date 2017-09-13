@@ -41,7 +41,7 @@ namespace IQToolkit.Data.Access
                         this.Write(", ");
                     this.WriteParameterName(names[i].Name);
                     this.Write(" ");
-                    this.Write(this.Language.TypeSystem.GetVariableDeclaration(names[i].QueryType, true));
+                    this.Write(this.Language.TypeSystem.Format(names[i].QueryType, true));
                 }
                 this.Write(";");
                 this.WriteLine(Indentation.Same);

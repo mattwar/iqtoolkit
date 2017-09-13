@@ -2,28 +2,27 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data.Common
 {
-    public abstract class QueryType
-    {
-        public abstract bool NotNull { get; }
-        public abstract int Length { get; }
-        public abstract short Precision { get; }
-        public abstract short Scale { get; }
-    }
-
+    /// <summary>
+    /// A type system used by a query language
+    /// </summary>
     public abstract class QueryTypeSystem 
     {
+        /// <summary>
+        /// Parse a type declaration
+        /// </summary>
         public abstract QueryType Parse(string typeDeclaration);
+
+        /// <summary>
+        /// Convert a CLR type to a database type.
+        /// </summary>
         public abstract QueryType GetColumnType(Type type);
-        public abstract string GetVariableDeclaration(QueryType type, bool suppressSize);
+
+        /// <summary>
+        /// Format the datatype as it would appear in the language in a declaration.
+        /// </summary>
+        public abstract string Format(QueryType type, bool suppressSize);
     }
 }

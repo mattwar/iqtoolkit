@@ -69,7 +69,7 @@ namespace IQToolkit.Data.Access
             }
         }
 
-        public override string GetVariableDeclaration(QueryType type, bool suppressSize)
+        public override string Format(QueryType type, bool suppressSize)
         {
             StringBuilder sb = new StringBuilder();
             DbQueryType sqlType = (DbQueryType)type;

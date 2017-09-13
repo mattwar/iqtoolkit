@@ -2,7 +2,6 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -12,19 +11,19 @@ using System.Text;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Formats a query expression into common SQL language syntax
+    /// Formats a query expression into a common SQL language syntax
     /// </summary>
     public class SqlFormatter : DbExpressionVisitor
     {
-        QueryLanguage language;
-        StringBuilder sb;
-        int indent = 2;
-        int depth;
-        Dictionary<TableAlias, string> aliases;
-        bool hideColumnAliases;
-        bool hideTableAliases;
-        bool isNested;
-        bool forDebug;
+        private readonly QueryLanguage language;
+        private readonly StringBuilder sb;
+        private readonly Dictionary<TableAlias, string> aliases;
+        private int indent = 2;
+        private int depth;
+        private bool hideColumnAliases;
+        private bool hideTableAliases;
+        private bool isNested;
+        private bool forDebug;
 
         private SqlFormatter(QueryLanguage language, bool forDebug)
         {

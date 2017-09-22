@@ -8,12 +8,18 @@ using System.Linq;
 
 namespace IQToolkit
 {
+    /// <summary>
+    /// A defer loaded value.
+    /// </summary>
     public struct DeferredValue<T> : IDeferLoadable
     {
-        IEnumerable<T> source;
-        bool loaded;
-        T value;
+        private IEnumerable<T> source;
+        private bool loaded;
+        private T value;
 
+        /// <summary>
+        /// Constructs a <see cref="DeferredValue{T}"/>
+        /// </summary>
         public DeferredValue(T value)
         {
             this.value = value;
@@ -21,6 +27,10 @@ namespace IQToolkit
             this.loaded = true;
         }
 
+        /// <summary>
+        /// Constructs a <see cref="DeferredValue{T}"/> from the first item in the sequence
+        /// when the <see cref="Load"/> method is invoked.
+        /// </summary>
         public DeferredValue(IEnumerable<T> source)
         {
             this.source = source;
@@ -28,38 +38,43 @@ namespace IQToolkit
             this.value = default(T);
         }
 
+        /// <summary>
+        /// Loads the value if it is not already loaded.
+        /// </summary>
         public void Load()
         {
-            if (this.source != null)
+            if (this.source != null && !this.IsLoaded)
             {
                 this.value = this.source.SingleOrDefault();
                 this.loaded = true;
             }
         }
 
+        /// <summary>
+        /// True if the value is already loaded.
+        /// </summary>
         public bool IsLoaded
         {
             get { return this.loaded; }
         }
 
+        /// <summary>
+        /// True if the value was assigned instead of being loaded from a source.
+        /// </summary>
         public bool IsAssigned
         {
             get { return this.loaded && this.source == null; }
         }
 
-        private void Check()
-        {
-            if (!this.IsLoaded)
-            {
-                this.Load();
-            }
-        }
-
+        /// <summary>
+        /// The value that is defer loaded.
+        /// The value will be loaded if not already loaded or assigned when this property is read.
+        /// </summary>
         public T Value
         {
             get
             {
-                this.Check();
+                this.Load();
                 return this.value;
             }
 

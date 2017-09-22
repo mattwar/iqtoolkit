@@ -7,10 +7,13 @@ using System.Collections.Generic;
 
 namespace IQToolkit
 {
+    /// <summary>
+    /// Represents a key with multiple values as a single instance.
+    /// </summary>
     public class CompoundKey : IEquatable<CompoundKey>, IEnumerable<object>, IEnumerable
     {
-        object[] values;
-        int hc;
+        private readonly object[] values;
+        private readonly int hc;
 
         public CompoundKey(params object[] values)
         {

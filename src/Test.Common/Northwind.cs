@@ -82,7 +82,7 @@ namespace Test
 
     public class Northwind
     {
-        private IEntityProvider provider;
+        private readonly IEntityProvider provider;
 
         public Northwind(IEntityProvider provider)
         {
@@ -96,27 +96,27 @@ namespace Test
 
         public virtual IEntityTable<Customer> Customers
         {
-            get { return this.provider.GetTable<Customer>(nameof(Customers)); }
+            get { return this.provider.GetTable<Customer>(); }
         }
 
         public virtual IEntityTable<Order> Orders
         {
-            get { return this.provider.GetTable<Order>(nameof(Orders)); }
+            get { return this.provider.GetTable<Order>(); }
         }
 
         public virtual IEntityTable<OrderDetail> OrderDetails
         {
-            get { return this.provider.GetTable<OrderDetail>(nameof(OrderDetails)); }
+            get { return this.provider.GetTable<OrderDetail>(); }
         }
 
         public virtual IEntityTable<Product> Products
         {
-            get { return this.provider.GetTable<Product>(nameof(Products)); }
+            get { return this.provider.GetTable<Product>(); }
         }
 
         public virtual IEntityTable<Employee> Employees
         {
-            get { return this.provider.GetTable<Employee>(nameof(Employees)); }
+            get { return this.provider.GetTable<Employee>(); }
         }
     }
 
@@ -134,7 +134,7 @@ namespace Test
         [Column(Member = nameof(Customer.Phone))]
         [Column(Member = nameof(Customer.City), DbType="NVARCHAR(20)")]
         [Column(Member = nameof(Customer.Country))]
-        [Association(Member = nameof(Customer.Orders), KeyMembers = nameof(Customer.CustomerID), RelatedEntityID = nameof(Orders), RelatedKeyMembers = nameof(Order.CustomerID))]
+        [Association(Member = nameof(Customer.Orders), KeyMembers = nameof(Customer.CustomerID), RelatedKeyMembers = nameof(Order.CustomerID))]
         public override IEntityTable<Customer> Customers
         {
             get { return base.Customers; }
@@ -144,8 +144,8 @@ namespace Test
         [Column(Member = nameof(Order.OrderID), IsPrimaryKey = true, IsGenerated = true)]
         [Column(Member = nameof(Order.CustomerID))]
         [Column(Member = nameof(Order.OrderDate))]
-        [Association(Member = nameof(Order.Customer), KeyMembers = nameof(Order.CustomerID), RelatedEntityID = nameof(Customers), RelatedKeyMembers = nameof(Customer.CustomerID))]
-        [Association(Member = nameof(Order.Details), KeyMembers = nameof(Order.OrderID), RelatedEntityID = nameof(OrderDetails), RelatedKeyMembers = nameof(OrderDetail.OrderID))]
+        [Association(Member = nameof(Order.Customer), KeyMembers = nameof(Order.CustomerID), RelatedKeyMembers = nameof(Customer.CustomerID))]
+        [Association(Member = nameof(Order.Details), KeyMembers = nameof(Order.OrderID), RelatedKeyMembers = nameof(OrderDetail.OrderID))]
         public override IEntityTable<Order> Orders
         {
             get { return base.Orders; }
@@ -154,7 +154,7 @@ namespace Test
         [Table(Name = "Order Details")]
         [Column(Member = nameof(OrderDetail.OrderID), IsPrimaryKey = true)]
         [Column(Member = nameof(OrderDetail.ProductID), IsPrimaryKey = true)]
-        [Association(Member = nameof(OrderDetail.Product), KeyMembers = nameof(OrderDetail.ProductID), RelatedEntityID = nameof(Products), RelatedKeyMembers = nameof(Product.ID))]
+        [Association(Member = nameof(OrderDetail.Product), KeyMembers = nameof(OrderDetail.ProductID), RelatedKeyMembers = nameof(Product.ID))]
         public override IEntityTable<OrderDetail> OrderDetails
         {
             get { return base.OrderDetails; }
@@ -218,17 +218,17 @@ namespace Test
 
         public ISessionTable<Customer> Customers
         {
-            get { return this.session.GetTable<Customer>("Customers"); }
+            get { return this.session.GetTable<Customer>(); }
         }
 
         public ISessionTable<Order> Orders
         {
-            get { return this.session.GetTable<Order>("Orders"); }
+            get { return this.session.GetTable<Order>(); }
         }
 
         public ISessionTable<OrderDetail> OrderDetails
         {
-            get { return this.session.GetTable<OrderDetail>("OrderDetails"); }
+            get { return this.session.GetTable<OrderDetail>(); }
         }
     }
 
@@ -286,20 +286,20 @@ namespace Test
         [Column(Member = nameof(CustomerX.Phone))]
         [Column(Member = nameof(CustomerX.City), DbType = "NVARCHAR(20)")]
         [Column(Member = nameof(CustomerX.Country))]
-        [Association(Member = nameof(CustomerX.Orders), KeyMembers = nameof(CustomerX.CustomerID), RelatedEntityID = nameof(Orders), RelatedKeyMembers = nameof(OrderX.CustomerID))]
+        [Association(Member = nameof(CustomerX.Orders), KeyMembers = nameof(CustomerX.CustomerID), RelatedKeyMembers = nameof(OrderX.CustomerID))]
         public IQueryable<CustomerX> Customers
         {
-            get { return this.provider.GetTable<CustomerX>(nameof(Customers)); }
+            get { return this.provider.GetTable<CustomerX>(); }
         }
 
         [Table]
         [Column(Member = nameof(OrderX.OrderID), IsPrimaryKey = true, IsGenerated = true)]
         [Column(Member = nameof(OrderX.CustomerID))]
         [Column(Member = nameof(OrderX.OrderDate))]
-        [Association(Member = nameof(OrderX.Customer), KeyMembers = nameof(OrderX.CustomerID), RelatedEntityID = nameof(Customers), RelatedKeyMembers = nameof(CustomerX.CustomerID))]
+        [Association(Member = nameof(OrderX.Customer), KeyMembers = nameof(OrderX.CustomerID), RelatedKeyMembers = nameof(CustomerX.CustomerID))]
         public IEntityTable<OrderX> Orders
         {
-            get { return this.provider.GetTable<OrderX>(nameof(Orders)); }
+            get { return this.provider.GetTable<OrderX>(); }
         }
     }
 }

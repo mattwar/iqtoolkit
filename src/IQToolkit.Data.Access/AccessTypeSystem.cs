@@ -34,6 +34,7 @@ namespace IQToolkit.Data.Access
             {
                 return base.GetQueryType("varchar", new [] {"max"}, isNotNull);
             }
+
             return base.GetQueryType(typeName, args, isNotNull);
         }
 

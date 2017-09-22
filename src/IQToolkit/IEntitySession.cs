@@ -18,14 +18,19 @@ namespace IQToolkit
         IEntityProvider Provider { get; }
 
         /// <summary>
-        /// Gets the <see cref="ISessionTable{T}"/> for the corresponding logical database table.
+        /// Gets the <see cref="ISessionTable{TEntity}"/> for the corresponding logical database table.
         /// </summary>
-        ISessionTable<T> GetTable<T>(string tableId);
+        /// <param name="entityId">An id used to associate the entity type with its mapping.
+        /// If not specified the name of the entity type is used.</param>
+        ISessionTable<TEntity> GetTable<TEntity>(string entityId = null);
 
         /// <summary>
         /// Gets the <see cref="ISessionTable"/> for the corresponding logical database table.
         /// </summary>
-        ISessionTable GetTable(Type elementType, string tableId);
+        /// <param name="entityType">The entity type.</param>
+        /// <param name="entityId">An id used to associate the entity type with its mapping.
+        /// If not specified the name of the entity type is used.</param>
+        ISessionTable GetTable(Type entityType, string entityId = null);
 
         /// <summary>
         /// Submit all changes to the database as a single transaction.
@@ -46,7 +51,7 @@ namespace IQToolkit
         /// <summary>
         /// The underlying provider's <see cref="IEntityTable"/> corresponding to this <see cref="ISessionTable"/>.
         /// </summary>
-        IEntityTable ProviderTable { get; }
+        IEntityTable Table { get; }
 
         /// <summary>
         /// Gets an entity instance given its id (primary key value)
@@ -70,9 +75,9 @@ namespace IQToolkit
     public interface ISessionTable<T> : IQueryable<T>, ISessionTable
     {
         /// <summary>
-        /// The <see cref="IEntitySession{T}"/> associated with this <see cref="ISessionTable{T}"/>
+        /// The <see cref="IEntityTable{T}"/> associated with this <see cref="ISessionTable{T}"/>
         /// </summary>
-        new IEntityTable<T> ProviderTable { get; }
+        new IEntityTable<T> Table { get; }
 
         /// <summary>
         /// Gets an entity instance given its id (primary key value)

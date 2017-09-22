@@ -3,6 +3,7 @@
 
 using IQToolkit.Data;
 using IQToolkit.Data.Access;
+using IQToolkit.Data.Dynamic;
 using IQToolkit.Data.Mapping;
 
 namespace Test
@@ -35,10 +36,18 @@ namespace Test
             }
 
             // some API tests
+            public void TestCreateFromDatabaseFile()
+            {
+                var provider = DynamicProvider.Create("Northwind.mdb");
+                Assert.NotEqual(null, provider);
+                Assert.Equal(true, provider is AccessQueryProvider);
+            }
+
             public void TestCreateFromProviderName()
             {
-                var provider = DbEntityProvider.From("IQToolkit.Data.Access");
+                var provider = DynamicProvider.Create("IQToolkit.Data.Access", "Northwind.mdb");
                 Assert.NotEqual(null, provider);
+                Assert.Equal(true, provider is AccessQueryProvider);
             }
         }
 

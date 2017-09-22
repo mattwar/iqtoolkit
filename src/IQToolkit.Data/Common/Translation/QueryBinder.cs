@@ -946,25 +946,25 @@ namespace IQToolkit.Data.Common
 
         private Expression BindInsert(IEntityTable upd, Expression instance, LambdaExpression selector)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(this.mapper.GetInsertExpression(entity, instance, selector));
         }
 
         private Expression BindUpdate(IEntityTable upd, Expression instance, LambdaExpression updateCheck, LambdaExpression resultSelector)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(this.mapper.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null));
         }
 
         private Expression BindInsertOrUpdate(IEntityTable upd, Expression instance, LambdaExpression updateCheck, LambdaExpression resultSelector)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(this.mapper.GetInsertOrUpdateExpression(entity, instance, updateCheck, resultSelector));
         }
 
         private Expression BindDelete(IEntityTable upd, Expression instance, LambdaExpression deleteCheck)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance != null ? instance.Type : deleteCheck.Parameters[0].Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance != null ? instance.Type : deleteCheck.Parameters[0].Type, upd.EntityId);
             return this.Visit(this.mapper.GetDeleteExpression(entity, instance, deleteCheck));
         }
 
@@ -995,7 +995,7 @@ namespace IQToolkit.Data.Common
                 if (t != null)
                 {
                     IHaveMappingEntity ihme = t as IHaveMappingEntity;
-                    MappingEntity entity = ihme != null ? ihme.Entity : this.mapper.Mapping.GetEntity(t.ElementType, t.TableId);
+                    MappingEntity entity = ihme != null ? ihme.Entity : this.mapper.Mapping.GetEntity(t.ElementType, t.EntityId);
                     return this.VisitSequence(this.mapper.GetQueryExpression(entity));
                 }
                 else if (q.Expression.NodeType == ExpressionType.Constant)

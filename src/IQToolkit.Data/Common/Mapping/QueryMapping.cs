@@ -16,26 +16,26 @@ namespace IQToolkit.Data.Common
     public abstract class QueryMapping
     {
         /// <summary>
-        /// Determines the entity Id based on the type of the entity alone
+        /// Determines the entity Id based on the type of the entity alone.
         /// </summary>
-        public virtual string GetTableId(Type type)
+        public virtual string GetEntityId(Type entityType)
         {
-            return type.Name;
+            return entityType.Name;
         }
 
         /// <summary>
         /// Get the meta entity directly corresponding to the CLR type
         /// </summary>
-        public virtual MappingEntity GetEntity(Type type)
+        public virtual MappingEntity GetEntity(Type entityType)
         {
-            return this.GetEntity(type, this.GetTableId(type));
+            return this.GetEntity(entityType, this.GetEntityId(entityType));
         }
 
         /// <summary>
         /// Get the meta entity that maps between the CLR type 'entityType' and the database table, yet
         /// is represented publicly as 'elementType'.
         /// </summary>
-        public abstract MappingEntity GetEntity(Type elementType, string entityID);
+        public abstract MappingEntity GetEntity(Type elementType, string entityId);
 
         /// <summary>
         /// Get the meta entity represented by the IQueryable context member

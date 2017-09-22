@@ -3,10 +3,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit
 {
@@ -15,24 +13,30 @@ namespace IQToolkit
     /// </summary>
     public static class TypeHelper
     {
-        public static Type FindIEnumerable(Type seqType)
+        /// <summary>
+        /// Finds the type's implemented <see cref="IEnumerable{T}"/> type.
+        /// </summary>
+        public static Type FindIEnumerable(Type type)
         {
-            if (seqType == null || seqType == typeof(string))
+            if (type == null || type == typeof(string))
                 return null;
-            if (seqType.IsArray)
-                return typeof(IEnumerable<>).MakeGenericType(seqType.GetElementType());
-            if (seqType.IsGenericType)
+
+            if (type.IsArray)
+                return typeof(IEnumerable<>).MakeGenericType(type.GetElementType());
+
+            if (type.IsGenericType)
             {
-                foreach (Type arg in seqType.GetGenericArguments())
+                foreach (Type arg in type.GetGenericArguments())
                 {
                     Type ienum = typeof(IEnumerable<>).MakeGenericType(arg);
-                    if (ienum.IsAssignableFrom(seqType))
+                    if (ienum.IsAssignableFrom(type))
                     {
                         return ienum;
                     }
                 }
             }
-            Type[] ifaces = seqType.GetInterfaces();
+
+            Type[] ifaces = type.GetInterfaces();
             if (ifaces != null && ifaces.Length > 0)
             {
                 foreach (Type iface in ifaces)
@@ -41,58 +45,97 @@ namespace IQToolkit
                     if (ienum != null) return ienum;
                 }
             }
-            if (seqType.BaseType != null && seqType.BaseType != typeof(object))
+
+            if (type.BaseType != null && type.BaseType != typeof(object))
             {
-                return FindIEnumerable(seqType.BaseType);
+                return FindIEnumerable(type.BaseType);
             }
+
             return null;
         }
 
+        /// <summary>
+        /// Returns true if the type is a sequence type.
+        /// </summary>
+        public static bool IsSequenceType(Type type)
+        {
+            return FindIEnumerable(type) != null;
+        }
+
+        /// <summary>
+        /// Gets the constructed <see cref="IEnumerable{T}"/> for the given element type.
+        /// </summary>
         public static Type GetSequenceType(Type elementType)
         {
             return typeof(IEnumerable<>).MakeGenericType(elementType);
         }
 
-        public static Type GetElementType(Type seqType)
+        /// <summary>
+        /// Gets the element type given the sequence type.
+        /// If the type is not a sequence, returns the type itself.
+        /// </summary>
+        public static Type GetElementType(Type sequenceType)
         {
-            Type ienum = FindIEnumerable(seqType);
-            if (ienum == null) return seqType;
+            Type ienum = FindIEnumerable(sequenceType);
+            if (ienum == null) return sequenceType;
             return ienum.GetGenericArguments()[0];
         }
 
+        /// <summary>
+        /// Returns true if the type is a <see cref="Nullable{T}"/>.
+        /// </summary>
         public static bool IsNullableType(Type type)
         {
             return type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
         }
 
+        /// <summary>
+        /// Returns true if the type can be assigned the value null.
+        /// </summary>
         public static bool IsNullAssignable(Type type)
         {
             return !type.IsValueType || IsNullableType(type);
         }
 
+        /// <summary>
+        /// Gets the underlying type if the specified type is a <see cref="Nullable{T}"/>,
+        /// otherwise just returns given type.
+        /// </summary>
         public static Type GetNonNullableType(Type type)
         {
             if (IsNullableType(type))
             {
                 return type.GetGenericArguments()[0];
             }
+
             return type;
         }
 
+        /// <summary>
+        /// Gets a null-assignable variation of the type.
+        /// Returns a <see cref="Nullable{T}"/> type if the given type is a value type.
+        /// </summary>
         public static Type GetNullAssignableType(Type type)
         {
             if (!IsNullAssignable(type))
             {
                 return typeof(Nullable<>).MakeGenericType(type);
             }
+
             return type;
         }
 
+        /// <summary>
+        /// Gets the <see cref="ConstantExpression"/> for null of the specified type.
+        /// </summary>
         public static ConstantExpression GetNullConstant(Type type)
         {
             return Expression.Constant(null, GetNullAssignableType(type));
         }
 
+        /// <summary>
+        /// Gets the type of the <see cref="MemberInfo"/>.
+        /// </summary>
         public static Type GetMemberType(MemberInfo mi)
         {
             FieldInfo fi = mi as FieldInfo;
@@ -106,6 +149,9 @@ namespace IQToolkit
             return null;
         }
 
+        /// <summary>
+        /// Gets the default value of the specified type.
+        /// </summary>
         public static object GetDefault(Type type)
         {
             bool isNullable = !type.IsValueType || TypeHelper.IsNullableType(type);
@@ -114,6 +160,9 @@ namespace IQToolkit
             return null;
         }
 
+        /// <summary>
+        /// Returns true if the member is either a read-only field or get-only property.
+        /// </summary>
         public static bool IsReadOnly(MemberInfo member)
         {
             switch (member.MemberType)
@@ -128,6 +177,9 @@ namespace IQToolkit
             }
         }
 
+        /// <summary>
+        /// Return true if the type is a kind of integer.
+        /// </summary>
         public static bool IsInteger(Type type)
         {
             Type nnType = GetNonNullableType(type);

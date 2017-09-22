@@ -9,6 +9,9 @@ using System.Reflection;
 
 namespace IQToolkit 
 {
+    /// <summary>
+    /// The base class of an expression visitor (actually a rewriter)
+    /// </summary>
     public abstract class ExpressionVisitor
     {
         protected ExpressionVisitor()
@@ -19,6 +22,7 @@ namespace IQToolkit
         {
             if (exp == null)
                 return exp;
+
             switch (exp.NodeType)
             {
                 case ExpressionType.Negate:

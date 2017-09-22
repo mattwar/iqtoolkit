@@ -47,6 +47,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
+    <DocumentationFile>..\..\bin\Debug\IQToolkit\IQToolkit.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

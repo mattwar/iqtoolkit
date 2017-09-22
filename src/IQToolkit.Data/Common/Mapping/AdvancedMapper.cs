@@ -10,7 +10,7 @@ using System.Reflection;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// A <see cref="QueryMapper"/> that can apply an <see cref="AdvanceMapping"/> to a query.
+    /// A <see cref="QueryMapper"/> that can apply an <see cref="AdvancedMapping"/> to a query.
     /// </summary>
     public class AdvancedMapper : BasicMapper
     {
@@ -23,7 +23,7 @@ namespace IQToolkit.Data.Common
         }
 
         /// <summary>
-        /// Gets a set of related <see cref="MappingTables"/> in dependency order.
+        /// Gets a set of related <see cref="MappingTable"/>'s in dependency order.
         /// </summary>
         public virtual IEnumerable<MappingTable> GetDependencyOrderedTables(MappingEntity entity)
         {

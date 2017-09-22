@@ -11,7 +11,7 @@ namespace IQToolkit.Data.MySqlClient
     using IQToolkit.Data.Common;
 
     /// <summary>
-    /// A <see cref="DbEntityProvider" for MySql databases
+    /// A <see cref="DbEntityProvider"/> for MySql databases
     /// </summary>
     public class MySqlQueryProvider : DbEntityProvider
     {

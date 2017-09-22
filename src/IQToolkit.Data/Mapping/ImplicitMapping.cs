@@ -24,7 +24,7 @@ namespace IQToolkit.Data.Mapping
         {
         }
 
-        public override string GetTableId(Type type)
+        public override string GetEntityId(Type type)
         {
             return this.InferTableName(type);
         }
@@ -59,7 +59,7 @@ namespace IQToolkit.Data.Mapping
             return IsScalar(TypeHelper.GetMemberType(member));
         }
 
-        private bool IsScalar(Type type)
+        private static bool IsScalar(Type type)
         {
             type = TypeHelper.GetNonNullableType(type);
             switch (Type.GetTypeCode(type))
@@ -83,7 +83,7 @@ namespace IQToolkit.Data.Mapping
             if (IsMapped(entity, member) && !IsColumn(entity, member))
             {
                 Type otherType = TypeHelper.GetElementType(TypeHelper.GetMemberType(member));
-                return !this.IsScalar(otherType);
+                return !IsScalar(otherType);
             }
             return false;
         }
@@ -154,7 +154,7 @@ namespace IQToolkit.Data.Mapping
 
         public override string GetTableName(MappingEntity entity)
         {
-            return !string.IsNullOrEmpty(entity.TableId) ? entity.TableId : this.InferTableName(entity.EntityType);
+            return !string.IsNullOrEmpty(entity.EntityId) ? entity.EntityId : this.InferTableName(entity.EntityType);
         }
 
         private string InferTableName(Type rowType)

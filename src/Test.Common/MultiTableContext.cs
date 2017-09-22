@@ -1,20 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.IO;
-
 namespace Test
 {
     using IQToolkit;
-    using IQToolkit.Data;
     using IQToolkit.Data.Mapping;
 
     public class MultiTableEntity
@@ -48,7 +37,7 @@ namespace Test
         [Column(Member = "Value3", Alias = "TT3")]
         public IUpdatable<MultiTableEntity> MultiTableEntities
         {
-            get { return this.provider.GetTable<MultiTableEntity>("MultiTableEntities"); }
+            get { return this.provider.GetTable<MultiTableEntity>(); }
         }
     }
 }

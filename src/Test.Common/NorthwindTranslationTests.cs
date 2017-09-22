@@ -1650,10 +1650,11 @@ namespace Test
 
         public void TestXmlMappingSelectCustomers()
         {
-            var nw = new Northwind(this.GetProvider().WithMapping(XmlMapping.FromXml(File.ReadAllText(@"Northwind.xml"))));
+            var nw = new Northwind(this.GetProvider().WithMapping(
+                XmlMapping.FromXml(File.ReadAllText(@"Northwind.xml"))));
 
             TestQuery(
-                from c in db.Customers
+                from c in nw.Customers
                 where c.City == "London"
                 select c.ContactName
                 );

@@ -7,9 +7,13 @@ using System.Threading;
 
 namespace IQToolkit
 {
+    /// <summary>
+    /// A cache of compiled queries.
+    /// </summary>
     public class QueryCache
     {
-        MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
+        private readonly MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
+
         static readonly Func<QueryCompiler.CompiledQuery, QueryCompiler.CompiledQuery, bool> fnCompareQueries = CompareQueries;
         static readonly Func<object, object, bool> fnCompareValues = CompareConstantValues;
 
@@ -31,6 +35,9 @@ namespace IQToolkit
             return object.Equals(x, y);
         }
 
+        /// <summary>
+        /// Executes a cached query.
+        /// </summary>
         public object Execute(Expression query)
         {
             object[] args;
@@ -38,32 +45,50 @@ namespace IQToolkit
             return cached.Invoke(args);
         }
 
+        /// <summary>
+        /// Executes a cached query.
+        /// </summary>
         public object Execute(IQueryable query)
         {
-            return this.Equals(query.Expression);
+            return this.Execute(query.Expression);
         }
 
+        /// <summary>
+        /// Executes a cached query.
+        /// </summary>
         public IEnumerable<T> Execute<T>(IQueryable<T> query)
         {
             return (IEnumerable<T>)this.Execute(query.Expression);
         }
 
+        /// <summary>
+        /// The number of queries currently cached.
+        /// </summary>
         public int Count
         {
             get { return this.cache.Count; }
         }
 
+        /// <summary>
+        /// Clears the cache.
+        /// </summary>
         public void Clear()
         {
             this.cache.Clear();
         }
 
+        /// <summary>
+        /// True if the expression corresponds to a query already cached.
+        /// </summary>
         public bool Contains(Expression query)
         {
             object[] args;
             return this.Find(query, false, out args) != null;
         }
 
+        /// <summary>
+        /// True if the <see cref="IQueryable"/> is already cached.
+        /// </summary>
         public bool Contains(IQueryable query)
         {
             return this.Contains(query.Expression);
@@ -143,11 +168,10 @@ namespace IQToolkit
             return null;
         }
 
-
-        class ExplicitToObjectArray : ExpressionVisitor
+        private class ExplicitToObjectArray : ExpressionVisitor
         {
-            IList<ParameterExpression> parameters;
-            ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
+            private readonly IList<ParameterExpression> parameters;
+            private readonly ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
 
             private ExplicitToObjectArray(IList<ParameterExpression> parameters)
             {

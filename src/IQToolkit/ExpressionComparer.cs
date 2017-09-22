@@ -2,23 +2,19 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit
 {
     /// <summary>
-    /// Compare two expressions to determine if they are equivalent
+    /// Compare two expressions to determine if they are equivalent.
     /// </summary>
     public class ExpressionComparer
     {
-        ScopedDictionary<ParameterExpression, ParameterExpression> parameterScope;
-        Func<object, object, bool> fnCompare;
+        private readonly Func<object, object, bool> fnCompare;
+        private ScopedDictionary<ParameterExpression, ParameterExpression> parameterScope;
 
         protected ExpressionComparer(
             ScopedDictionary<ParameterExpression, ParameterExpression> parameterScope,
@@ -64,6 +60,7 @@ namespace IQToolkit
                 return false;
             if (a.Type != b.Type)
                 return false;
+
             switch (a.NodeType)
             {
                 case ExpressionType.Negate:

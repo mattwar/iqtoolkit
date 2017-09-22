@@ -12,11 +12,11 @@ namespace IQToolkit
     /// </summary>
     public class MostRecentlyUsedCache<T>
     {
-        int maxSize;
-        List<T> list;
-        Func<T, T, bool> fnEquals;
-        ReaderWriterLockSlim rwlock;
-        int version;
+        private readonly int maxSize;
+        private readonly List<T> list;
+        private readonly Func<T, T, bool> fnEquals;
+        private readonly ReaderWriterLockSlim rwlock;
+        private int version;
 
         public MostRecentlyUsedCache(int maxSize)
             : this(maxSize, EqualityComparer<T>.Default)

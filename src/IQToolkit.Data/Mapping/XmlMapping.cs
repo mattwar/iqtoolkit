@@ -2,20 +2,17 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Threading;
 using System.Xml.Linq;
 
 namespace IQToolkit.Data.Mapping
 {
     using Common;
 
+    /// <summary>
+    /// A <see cref="QueryMapping"/> stored in XML.
+    /// </summary>
     public class XmlMapping : AttributeMapping
     {
         private readonly Dictionary<string, XElement> entities;
@@ -23,29 +20,39 @@ namespace IQToolkit.Data.Mapping
         private static readonly XName Id = XName.Get("Id");
         
         public XmlMapping(XElement root)
-            : base(null)
+            : base(contextType: null)
         {
             this.entities = root.Elements().Where(e => e.Name == Entity).ToDictionary(e => (string)e.Attribute(Id));
         }
 
+        /// <summary>
+        /// Creates a <see cref="XmlMapping"/> from xml text.
+        /// </summary>
         public static XmlMapping FromXml(string xml)
         {
             return new XmlMapping(XElement.Parse(xml));
         }
 
-        protected override IEnumerable<MappingAttribute> GetMappingAttributes(Type elementType, string rootEntityId)       
+        protected override IEnumerable<MappingAttribute> GetMappingAttributes(Type entityType, string entityId)
         {
             XElement root;
-            if (this.entities.TryGetValue(rootEntityId, out root))
+
+            if (this.entities.TryGetValue(entityId, out root))
             {
+                var list = new List<MappingAttribute>();
+
                 foreach (var elem in root.Elements())
                 {
                     if (elem != null)
                     {
-                        yield return this.GetMappingAttribute(elem);
+                        list.Add(this.GetMappingAttribute(elem));
                     }
                 }
+
+                return list;
             }
+
+            return NoAttributes;
         }
 
         private MappingAttribute GetMappingAttribute(XElement element)

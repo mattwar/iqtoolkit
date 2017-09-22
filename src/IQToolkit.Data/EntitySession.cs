@@ -102,7 +102,7 @@ namespace IQToolkit.Data
             {
                 this.session = session;
                 this.entity = entity;
-                this.underlyingTable = this.session.Provider.GetTable<T>(entity.TableId);
+                this.underlyingTable = this.session.Provider.GetTable<T>(entity.EntityId);
             }
 
             public IEntitySession Session
@@ -115,12 +115,12 @@ namespace IQToolkit.Data
                 get { return this.entity; }
             }
 
-            public IEntityTable<T> ProviderTable
+            public IEntityTable<T> Table
             {
                 get { return this.underlyingTable; }
             }
 
-            IEntityTable ISessionTable.ProviderTable
+            IEntityTable ISessionTable.Table
             {
                 get { return this.underlyingTable; }
             }
@@ -345,24 +345,24 @@ namespace IQToolkit.Data
                 switch (item.State)
                 {
                     case SubmitAction.Delete:
-                        this.ProviderTable.Delete(item.Instance);
+                        this.Table.Delete(item.Instance);
                         return true;
                     case SubmitAction.Insert:
-                        this.ProviderTable.Insert(item.Instance);
+                        this.Table.Insert(item.Instance);
                         return true;
                     case SubmitAction.InsertOrUpdate:
-                        this.ProviderTable.InsertOrUpdate(item.Instance);
+                        this.Table.InsertOrUpdate(item.Instance);
                         return true;
                     case SubmitAction.PossibleUpdate:
                         if (item.Original != null &&
                             this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
                         {
-                            this.ProviderTable.Update(item.Instance);
+                            this.Table.Update(item.Instance);
                             return true;
                         }
                         break;
                     case SubmitAction.Update:
-                        this.ProviderTable.Update(item.Instance);
+                        this.Table.Update(item.Instance);
                         return true;
                     default:
                         break; // do nothing
@@ -413,6 +413,7 @@ namespace IQToolkit.Data
                 {
                     this.AssignAction(typedInstance, SubmitAction.PossibleUpdate);
                 }
+
                 return cached;
             }
 
@@ -434,6 +435,7 @@ namespace IQToolkit.Data
                     }
                     return ti.State;
                 }
+
                 return SubmitAction.None;
             }
 

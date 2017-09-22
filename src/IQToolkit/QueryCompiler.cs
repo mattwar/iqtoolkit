@@ -2,11 +2,9 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Reflection;
 
 namespace IQToolkit
@@ -16,42 +14,66 @@ namespace IQToolkit
     /// </summary>
     public static class QueryCompiler
     {
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Delegate Compile(LambdaExpression query)
         {
             CompiledQuery cq = new CompiledQuery(query);
             return StrongDelegate.CreateDelegate(query.Type, (Func<object[], object>)cq.Invoke);
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static D Compile<D>(Expression<D> query)
         {
             return (D)(object)Compile((LambdaExpression)query);
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Func<TResult> Compile<TResult>(Expression<Func<TResult>> query)
         {
             return new CompiledQuery(query).Invoke<TResult>;
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Func<T1, TResult> Compile<T1, TResult>(Expression<Func<T1, TResult>> query)
         {
             return new CompiledQuery(query).Invoke<T1, TResult>;
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Func<T1, T2, TResult> Compile<T1, T2, TResult>(Expression<Func<T1, T2, TResult>> query)
         {
             return new CompiledQuery(query).Invoke<T1, T2, TResult>;
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Func<T1, T2, T3, TResult> Compile<T1, T2, T3, TResult>(Expression<Func<T1, T2, T3, TResult>> query)
         {
             return new CompiledQuery(query).Invoke<T1, T2, T3, TResult>;
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Func<T1, T2, T3, T4, TResult> Compile<T1, T2, T3, T4, TResult>(Expression<Func<T1, T2, T3, T4, TResult>> query)
         {
             return new CompiledQuery(query).Invoke<T1, T2, T3, T4, TResult>;
         }
 
+        /// <summary>
+        /// Convert a query into a delegate that will execute the query when invoked.
+        /// </summary>
         public static Func<IEnumerable<T>> Compile<T>(this IQueryable<T> source)
         {
             return Compile<IEnumerable<T>>(
@@ -61,8 +83,8 @@ namespace IQToolkit
 
         public class CompiledQuery
         {
-            LambdaExpression query;
-            Delegate fnQuery;
+            private readonly LambdaExpression query;
+            private Delegate fnQuery;
 
             internal CompiledQuery(LambdaExpression query)
             {

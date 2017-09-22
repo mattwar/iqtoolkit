@@ -10,14 +10,23 @@ using System.Reflection;
 
 namespace IQToolkit
 {
+    /// <summary>
+    /// An interface that indicates that a <see cref="IQueryable"/> source is also updatable.
+    /// </summary>
     public interface IUpdatable : IQueryable
     {
     }
 
+    /// <summary>
+    /// An interface that indicates that a <see cref="IQueryable{T}"/> source is also updatable.
+    /// </summary>
     public interface IUpdatable<T> : IUpdatable, IQueryable<T>
     {
     }
 
+    /// <summary>
+    /// Extension methods that implement the updatable pattern.
+    /// </summary>
     public static class Updatable
     {
         public static object Insert(IUpdatable collection, object instance, LambdaExpression resultSelector)
@@ -29,6 +38,7 @@ namespace IQToolkit
                 Expression.Constant(instance),
                 resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(LambdaExpression))
                 );
+
             return collection.Provider.Execute(callMyself);
         }
 
@@ -50,6 +60,7 @@ namespace IQToolkit
                 Expression.Constant(instance),
                 resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(Expression<Func<T,S>>))
                 );
+
             return (S)collection.Provider.Execute(callMyself);
         }
 
@@ -75,6 +86,7 @@ namespace IQToolkit
                 updateCheck != null ? (Expression)Expression.Quote(updateCheck) : Expression.Constant(null, typeof(LambdaExpression)),
                 resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(LambdaExpression))
                 );
+
             return collection.Provider.Execute(callMyself);
         }
 
@@ -99,6 +111,7 @@ namespace IQToolkit
                 updateCheck != null ? (Expression)Expression.Quote(updateCheck) : Expression.Constant(null, typeof(Expression<Func<T, bool>>)),
                 resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(Expression<Func<T, S>>))
                 );
+
             return (S)collection.Provider.Execute(callMyself);
         }
 
@@ -137,6 +150,7 @@ namespace IQToolkit
                 updateCheck != null ? (Expression)Expression.Quote(updateCheck) : Expression.Constant(null, typeof(LambdaExpression)),
                 resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(LambdaExpression))
                 );
+
             return collection.Provider.Execute(callMyself);
         }
 
@@ -161,6 +175,7 @@ namespace IQToolkit
                 updateCheck != null ? (Expression)Expression.Quote(updateCheck) : Expression.Constant(null, typeof(Expression<Func<T, bool>>)),
                 resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(Expression<Func<T, S>>))
                 );
+
             return (S)collection.Provider.Execute(callMyself);
         }
 
@@ -299,6 +314,7 @@ namespace IQToolkit
                 Expression.Constant(batchSize),
                 Expression.Constant(stream)
                 );
+
             return (IEnumerable<S>)collection.Provider.Execute(callMyself);
         }
 

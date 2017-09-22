@@ -16,5 +16,6 @@
     </metadata>
     <files>
         <file src="..\bin\Release\SqlClient\IQToolkit.Data.SqlClient.dll" target="lib\net45\IQToolkit.Data.SqlClient.dll" />
+        <file src="..\bin\Release\SqlClient\IQToolkit.Data.SqlClient.dll" target="lib\net45\IQToolkit.Data.SqlClient.xml" />
     </files>
 </package>

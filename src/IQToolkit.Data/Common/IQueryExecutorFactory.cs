@@ -4,7 +4,7 @@
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// A <see cref="QueryExector"/> factory.
+    /// A <see cref="QueryExecutor"/> factory.
     /// </summary>
     public interface IQueryExecutorFactory
     {

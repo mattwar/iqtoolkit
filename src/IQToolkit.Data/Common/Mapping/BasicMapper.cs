@@ -61,7 +61,7 @@ namespace IQToolkit.Data.Common
                 pc.Projector
                 );
 
-            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.ElementType);
+            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.EntityType);
         }
 
         public override EntityExpression GetEntityExpression(Expression root, MappingEntity entity)
@@ -116,7 +116,7 @@ namespace IQToolkit.Data.Common
                                         .Where(cbr => cbr != null && cbr.Remaining.Count == 0).ToList();
                 if (consThatApply.Count == 0)
                 {
-                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped includedMembers.", entity.ElementType));
+                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped includedMembers.", entity.EntityType));
                 }
                 // just use the first one... (Note: need better algorithm. :-)
                 if (readonlyMembers.Length == assignments.Count)

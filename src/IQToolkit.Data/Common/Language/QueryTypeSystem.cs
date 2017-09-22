@@ -11,7 +11,7 @@ namespace IQToolkit.Data.Common
     public abstract class QueryTypeSystem 
     {
         /// <summary>
-        /// Parse a type declaration
+        /// Parse a type declaration in the database's language.
         /// </summary>
         public abstract QueryType Parse(string typeDeclaration);
 
@@ -21,7 +21,7 @@ namespace IQToolkit.Data.Common
         public abstract QueryType GetColumnType(Type type);
 
         /// <summary>
-        /// Format the datatype as it would appear in the language in a declaration.
+        /// Format the data type as it would appear in the language in a declaration.
         /// </summary>
         public abstract string Format(QueryType type, bool suppressSize);
     }

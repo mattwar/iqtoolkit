@@ -19,11 +19,12 @@ namespace IQToolkit.Data.Common
         {
         }
 
-        public override MappingEntity GetEntity(Type elementType, string tableId)
+        public override MappingEntity GetEntity(Type elementType, string entityId)
         {
-            if (tableId == null)
-                tableId = this.GetTableId(elementType);
-            return new BasicMappingEntity(elementType, tableId);
+            if (entityId == null)
+                entityId = this.GetEntityId(elementType);
+
+            return new BasicMappingEntity(elementType, entityId);
         }
 
         public override MappingEntity GetEntity(MemberInfo contextMember)
@@ -32,7 +33,7 @@ namespace IQToolkit.Data.Common
             return this.GetEntity(elementType);
         }
 
-        class BasicMappingEntity : MappingEntity
+        private class BasicMappingEntity : MappingEntity
         {
             string entityID;
             Type type;
@@ -43,7 +44,7 @@ namespace IQToolkit.Data.Common
                 this.type = type;
             }
 
-            public override string TableId
+            public override string EntityId
             {
                 get { return this.entityID; }
             }
@@ -127,9 +128,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Determines if a property can be part of an update operation
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual bool IsUpdatable(MappingEntity entity, MemberInfo member)
         {
             return !this.IsPrimaryKey(entity, member) && !this.IsReadOnly(entity, member);   
@@ -169,9 +167,6 @@ namespace IQToolkit.Data.Common
         /// <summary>
         /// Returns the key members on the other side (related side) of the association
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="member"></param>
-        /// <returns></returns>
         public virtual IEnumerable<MemberInfo> GetAssociationRelatedKeyMembers(MappingEntity entity, MemberInfo member)
         {
             return new MemberInfo[] { };
@@ -267,22 +262,27 @@ namespace IQToolkit.Data.Common
             // make predicate
             ParameterExpression p = Expression.Parameter(entity.ElementType, "p");
             Expression pred = null;
+
             var idMembers = this.GetPrimaryKeyMembers(entity).ToList();
             if (idMembers.Count != keys.Length)
             {
                 throw new InvalidOperationException("Incorrect number of primary key values");
             }
+
             for (int i = 0, n = keys.Length; i < n; i++)
             {
                 MemberInfo mem = idMembers[i];
                 Type memberType = TypeHelper.GetMemberType(mem);
+
                 if (keys[i] != null && TypeHelper.GetNonNullableType(keys[i].Type) != TypeHelper.GetNonNullableType(memberType))
                 {
                     throw new InvalidOperationException("Primary key value is wrong type");
                 }
+
                 Expression eq = Expression.MakeMemberAccess(p, mem).Equal(keys[i]);
                 pred = (pred == null) ? eq : pred.And(eq);
             }
+
             var predLambda = Expression.Lambda(pred, p);
 
             return Expression.Call(typeof(Queryable), "SingleOrDefault", new Type[] { entity.ElementType }, source, predLambda);
@@ -325,6 +325,7 @@ namespace IQToolkit.Data.Common
                 if (this.IsRelationship(entity, mi) && this.IsRelationshipTarget(entity, mi))
                 {
                     MappingEntity relatedEntity = this.GetRelatedEntity(entity, mi);
+
                     var value = mi.GetValue(instance);
                     if (value != null)
                     {

@@ -42,7 +42,7 @@ namespace IQToolkit.Data.Common
         }
 
         /// <summary>
-        /// Creates a <see cref="Police"/> instance.
+        /// Creates a <see cref="QueryPolice"/> instance.
         /// </summary>
         public virtual QueryPolice CreatePolice(QueryTranslator translator)
         {

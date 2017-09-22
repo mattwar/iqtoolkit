@@ -1,96 +1,103 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit
 {
+    /// <summary>
+    /// Common helper extension methods for construction expressions.
+    /// </summary>
     public static class ExpressionExtensions
     {
-        public static Expression Equal(this Expression expression1, Expression expression2)
+        public static Expression Equal(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.Equal(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.Equal(left, right);
         }
 
-        public static Expression NotEqual(this Expression expression1, Expression expression2)
+        public static Expression NotEqual(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.NotEqual(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.NotEqual(left, right);
         }
 
-        public static Expression GreaterThan(this Expression expression1, Expression expression2)
+        public static Expression GreaterThan(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.GreaterThan(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.GreaterThan(left, right);
         }
 
-        public static Expression GreaterThanOrEqual(this Expression expression1, Expression expression2)
+        public static Expression GreaterThanOrEqual(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.GreaterThanOrEqual(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.GreaterThanOrEqual(left, right);
         }
 
-        public static Expression LessThan(this Expression expression1, Expression expression2)
+        public static Expression LessThan(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.LessThan(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.LessThan(left, right);
         }
 
-        public static Expression LessThanOrEqual(this Expression expression1, Expression expression2)
+        public static Expression LessThanOrEqual(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.LessThanOrEqual(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.LessThanOrEqual(left, right);
         }
 
-        public static Expression And(this Expression expression1, Expression expression2)
+        public static Expression And(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.And(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.And(left, right);
         }
 
-        public static Expression Or(this Expression expression1, Expression expression2)
+        public static Expression Or(this Expression left, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.Or(expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.Or(left, right);
         }
 
-        public static Expression Binary(this Expression expression1, ExpressionType op, Expression expression2)
+        /// <summary>
+        /// Constructs a binary operator expression from the two expressions and an operator type.
+        /// </summary>
+        public static Expression Binary(this Expression left, ExpressionType op, Expression right)
         {
-            ConvertExpressions(ref expression1, ref expression2);
-            return Expression.MakeBinary(op, expression1, expression2);
+            ConvertExpressions(ref left, ref right);
+            return Expression.MakeBinary(op, left, right);
         }
 
-        private static void ConvertExpressions(ref Expression expression1, ref Expression expression2)
+        /// <summary>
+        /// Converts left and right expressions to the same type.
+        /// </summary>
+        private static void ConvertExpressions(ref Expression left, ref Expression right)
         {
-            if (expression1.Type != expression2.Type)
+            if (left.Type != right.Type)
             {
-                var isNullable1 = TypeHelper.IsNullableType(expression1.Type);
-                var isNullable2 = TypeHelper.IsNullableType(expression2.Type);
+                var isNullable1 = TypeHelper.IsNullableType(left.Type);
+                var isNullable2 = TypeHelper.IsNullableType(right.Type);
                 if (isNullable1 || isNullable2)
                 {
-                    if (TypeHelper.GetNonNullableType(expression1.Type) == TypeHelper.GetNonNullableType(expression2.Type))
+                    if (TypeHelper.GetNonNullableType(left.Type) == TypeHelper.GetNonNullableType(right.Type))
                     {
                         if (!isNullable1)
                         {
-                            expression1 = Expression.Convert(expression1, expression2.Type);
+                            left = Expression.Convert(left, right.Type);
                         }
                         else if (!isNullable2)
                         {
-                            expression2 = Expression.Convert(expression2, expression1.Type);
+                            right = Expression.Convert(right, left.Type);
                         }
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Finds all the expressions at the leaves of a tree of binary operations.
+        /// </summary>
         public static Expression[] Split(this Expression expression, params ExpressionType[] binarySeparators)
         {
             var list = new List<Expression>();
@@ -98,6 +105,9 @@ namespace IQToolkit
             return list.ToArray();
         }
 
+        /// <summary>
+        /// Finds all the expressions at the leaves of a tree of binary operations.
+        /// </summary>
         private static void Split(Expression expression, List<Expression> list, ExpressionType[] binarySeparators)
         {
             if (expression != null)
@@ -118,6 +128,9 @@ namespace IQToolkit
             }
         }
 
+        /// <summary>
+        /// Converts a list of expression into a tree of binary operations.
+        /// </summary>
         public static Expression Join(this IEnumerable<Expression> list, ExpressionType binarySeparator)
         {
             if (list != null)
@@ -128,6 +141,7 @@ namespace IQToolkit
                     return array.Aggregate((x1, x2) => Expression.MakeBinary(binarySeparator, x1, x2));
                 }
             }
+
             return null;
         }
     }

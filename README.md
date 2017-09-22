@@ -1,5 +1,5 @@
 # iqtoolkit
-Toolkit for building LINQ IQueryable providers. This is the official move of my IQToolkit project from CodePlex. 
+A toolkit for building LINQ IQueryable providers. This is the official move of my IQToolkit project from CodePlex. 
 
 IQToolkit is essential if you are building your own LINQ IQueryable provider. It contains common tools and source code 
 you can apply to your own project.
@@ -28,4 +28,8 @@ The MySql tests require MySql to be installed and a copy of the Northwind databa
 
 Each provider has a separate test.XXX.exe file (found in the bin folder) that can be run from the command line. Test.Access.exe runs the unit tests for the Access provider, etc.
 
+Use it Today
+------------------------
+IQToolkit implements a simple ORM you can use to issue queries against many kinds of databases.
 
+[Follow these instructions](/HOWTO.md) to learn how to use IQToolkit as an ORM right now.

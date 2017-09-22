@@ -676,7 +676,7 @@ namespace Test
 
             // both objects should be different instances
             var cust = ns.Customers.Single(c => c.CustomerID == "ALFKI");
-            var cust2 = ns.Customers.ProviderTable.Single(c => c.CustomerID == "ALFKI");
+            var cust2 = ns.Customers.Table.Single(c => c.CustomerID == "ALFKI");
 
             Assert.NotEqual(null, cust);
             Assert.NotEqual(null, cust2);

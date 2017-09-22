@@ -10,7 +10,8 @@ using System.Reflection;
 namespace IQToolkit
 {
     /// <summary>
-    /// Rewrites an expression tree so that locally isolatable sub-expressions are evaluated and converted into ConstantExpression nodes.
+    /// Rewrites an expression tree so that locally isolatable sub-expressions are evaluated 
+    /// and converted into ConstantExpression nodes.
     /// </summary>
     public static class PartialEvaluator
     {
@@ -35,6 +36,13 @@ namespace IQToolkit
             return Eval(expression, fnCanBeEvaluated, null);
         }
 
+        /// <summary>
+        /// Performs evaluation and replacement of independent sub-trees
+        /// </summary>
+        /// <param name="expression">The root of the expression tree.</param>
+        /// <param name="fnCanBeEvaluated">A function that decides whether a given expression node can be part of the local function.</param>
+        /// <param name="fnPostEval">A function to apply to each newly formed <see cref="ConstantExpression"/>.</param>
+        /// <returns>A new tree with sub-trees evaluated and replaced.</returns>
         public static Expression Eval(Expression expression, Func<Expression, bool> fnCanBeEvaluated, Func<ConstantExpression, Expression> fnPostEval)
         {
             if (fnCanBeEvaluated == null)

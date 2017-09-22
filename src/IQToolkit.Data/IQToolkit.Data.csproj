@@ -45,6 +45,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
+    <DocumentationFile>..\..\bin\Debug\IQToolkit\IQToolkit.Data.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -90,6 +91,7 @@
     <Compile Include="Common\Language\QueryLanguage.cs" />
     <Compile Include="Common\Language\QueryTypeSystem.cs" />
     <Compile Include="Common\Language\SqlFormatter.cs" />
+    <Compile Include="DynamicProvider.cs" />
     <Compile Include="DbFieldReader.cs" />
     <Compile Include="DbQueryType.cs" />
     <Compile Include="DbTypeSystem.cs" />
@@ -132,7 +134,9 @@
     <Compile Include="EntityProvider.cs" />
     <Compile Include="EntityProviderSettings.cs" />
     <Compile Include="EntitySession.cs" />
+    <Compile Include="EntityTable.cs" />
     <Compile Include="Mapping\AttributeMapping.cs" />
+    <Compile Include="Mapping\HybridMapping.cs" />
     <Compile Include="Mapping\ImplicitMapping.cs" />
     <Compile Include="Mapping\XmlMapping.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

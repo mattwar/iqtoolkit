@@ -16,7 +16,7 @@ namespace IQToolkit.Data
     /// <summary>
     /// The base type for <see cref="EntityProvider"/>'s that use a System.Data.<see cref="DbConnection"/>.
     /// </summary>
-    public abstract class DbEntityProvider : EntityProvider
+    public abstract partial class DbEntityProvider : EntityProvider
     {
         private readonly DbConnection connection;
         private DbTransaction transaction;
@@ -29,7 +29,7 @@ namespace IQToolkit.Data
         /// Constructs a new <see cref="DbEntityProvider"/>
         /// </summary>
         protected DbEntityProvider(DbConnection connection, QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
-            : base(language, mapping ?? new AttributeMapping(), policy ?? QueryPolicy.Default)
+            : base(language, mapping, policy)
         {
             if (connection == null)
                 throw new InvalidOperationException("Connection not specified");
@@ -87,17 +87,6 @@ namespace IQToolkit.Data
         }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the mapping specified by the mapping string.
-        /// </summary>
-        /// <param name="mapping">This is typically a name of a context type with <see cref="MappingAttribute"/>'s or a path to a mapping file, 
-        /// but may have custom meaning for the provider.</param>
-        /// <returns></returns>
-        public DbEntityProvider WithMapping(string mapping)
-        {
-            return WithMapping(CreateMapping(mapping));
-        }
-
-        /// <summary>
         /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the specified <see cref="QueryPolicy"/>.
         /// </summary>
         public DbEntityProvider WithPolicy(QueryPolicy policy)
@@ -108,135 +97,16 @@ namespace IQToolkit.Data
         }
 
         /// <summary>
-        /// Create a new <see cref="DbEntityProvider"/> from the specified <see cref="EntityProviderSettings"/>.
+        /// True if a query or other action caused the connection to become open.
         /// </summary>
-        public static DbEntityProvider FromSettings(EntityProviderSettings settings = null)
-        {
-            settings = settings ?? EntityProviderSettings.FromApplicationSettings();
-
-            DbEntityProvider provider = settings.Provider != null
-                ? From(settings.Provider, settings.Connection)
-                : From(settings.Connection);
-
-            if (settings.Mapping != null)
-            {
-                provider = provider.WithMapping(settings.Mapping);
-            }
-
-            return provider;
-        }
-        
-        /// <summary>
-        /// Create a new <see cref="DbEntityProvider"/>.
-        /// </summary>
-        /// <param name="connectionStringOrDatabaseFile">The ADO provider connection string or file path for a database file.</param>
-        public static DbEntityProvider From(string connectionStringOrDatabaseFile)
-        {
-            return From(InferProviderName(connectionStringOrDatabaseFile), connectionStringOrDatabaseFile);
-        }
-
-        /// <summary>
-        /// Create a new <see cref="DbEntityProvider"/>.
-        /// </summary>
-        /// <param name="providerName">The type name of the query provider (typically the name of the assembly it is defined in, not the class name).</param>
-        /// <param name="connectionStringOrDatabaseFile">The ADO provider connection string or file path to a database file.</param>
-        public static DbEntityProvider From(string providerName, string connectionStringOrDatabaseFile)
-        {
-            if (providerName == null)
-                throw new ArgumentNullException(nameof(providerName));
-            if (connectionStringOrDatabaseFile == null)
-                throw new ArgumentNullException(nameof(connectionStringOrDatabaseFile));
-
-            Type providerType = GetProviderType(providerName);
-            if (providerType == null)
-                throw new InvalidOperationException(string.Format("Unable to find query provider '{0}'", providerName));
-
-            return From(providerType, connectionStringOrDatabaseFile);
-        }
-
-        /// <summary>
-        /// Infers the known query provider by examining the connection string.
-        /// </summary>
-        private static string InferProviderName(string connectionString)
-        {
-            var clower = connectionString.ToLower();
-
-            // try sniffing connection to figure out provider
-            if (clower.Contains(".mdb") || clower.Contains(".accdb"))
-            {
-                return "IQToolkit.Data.Access";
-            }
-            else if (clower.Contains(".sdf"))
-            {
-                return "IQToolkit.Data.SqlServerCe";
-            }
-            else if (clower.Contains(".sl3") || clower.Contains(".db3"))
-            {
-                return "IQToolkit.Data.SQLite";
-            }
-            else if (clower.Contains(".mdf"))
-            {
-                return "IQToolkit.Data.SqlClient";
-            }
-            else
-            {
-                throw new InvalidOperationException(string.Format("Query provider not specified and cannot be inferred."));
-            }
-        }
-
-        /// <summary>
-        /// Creates a new instance of <see cref="DbEntityProvider"/>.
-        /// </summary>
-        /// <param name="queryProviderType">The query provider type.</param>
-        /// <param name="connectionStringOrDatabaseFile">The ADO provider connection string or file path for a database file.</param>
-        public static DbEntityProvider From(Type queryProviderType, string connectionStringOrDatabaseFile)
-        {
-            if (queryProviderType == null)
-                throw new ArgumentNullException(nameof(queryProviderType));
-            if (connectionStringOrDatabaseFile == null)
-                throw new ArgumentNullException(nameof(connectionStringOrDatabaseFile));
-
-            Type adoConnectionType = GetAdoConnectionType(queryProviderType);
-            if (adoConnectionType == null)
-                throw new InvalidOperationException(string.Format("Unable to deduce DbConnection type for '{0}'", queryProviderType.Name));
-
-            DbConnection connection = (DbConnection)Activator.CreateInstance(adoConnectionType);
-
-            // is the connection string just a filename?
-            if (!connectionStringOrDatabaseFile.Contains('='))
-            {
-                MethodInfo gcs = queryProviderType.GetMethod("GetConnectionString", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string) }, null);
-                if (gcs != null)
-                {
-                    var getConnectionString = (Func<string, string>)Delegate.CreateDelegate(typeof(Func<string, string>), gcs);
-                    connectionStringOrDatabaseFile = getConnectionString(connectionStringOrDatabaseFile);
-                }
-            }
-
-            connection.ConnectionString = connectionStringOrDatabaseFile;
-
-            return (DbEntityProvider)Activator.CreateInstance(queryProviderType, new object[] { connection, null, null });
-        }
-
-        private static Type GetAdoConnectionType(Type providerType)
-        {
-            // sniff constructors 
-            foreach (var con in providerType.GetConstructors())
-            {
-                foreach (var arg in con.GetParameters())
-                {
-                    if (arg.ParameterType.IsSubclassOf(typeof(DbConnection)))
-                        return arg.ParameterType;
-                }
-            }
-            return null;
-        }
-
         protected bool ActionOpenedConnection
         {
             get { return this.actionOpenedConnection; }
         }
 
+        /// <summary>
+        /// Opens the connection if it is currently closed.
+        /// </summary>
         protected void StartUsingConnection()
         {
             if (this.connection.State == ConnectionState.Closed)
@@ -244,13 +114,19 @@ namespace IQToolkit.Data
                 this.connection.Open();
                 this.actionOpenedConnection = true;
             }
+
             this.nConnectedActions++;
         }
 
+        /// <summary>
+        /// Closes the connection if no actions still require it.
+        /// </summary>
         protected void StopUsingConnection()
         {
             System.Diagnostics.Debug.Assert(this.nConnectedActions > 0);
+
             this.nConnectedActions--;
+
             if (this.nConnectedActions == 0 && this.actionOpenedConnection)
             {
                 this.connection.Close();
@@ -258,6 +134,9 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Invokes the specified <see cref="Action"/> while the connection is open.
+        /// </summary>
         public override void DoConnected(Action action)
         {
             this.StartUsingConnection();
@@ -271,6 +150,12 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Invokes the specified <see cref="Action"/> during a database transaction.
+        /// If no transaction is currently associated with the <see cref="DbEntityProvider"/> a new
+        /// one is started for the duration of the action. If the action completes without exception
+        /// the transation is commited, otherwise it is aborted.
+        /// </summary>
         public override void DoTransacted(Action action)
         {
             this.StartUsingConnection();
@@ -302,12 +187,16 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Execute the command specified in the database's language against the database.
+        /// </summary>
         public override int ExecuteCommand(string commandText)
         {
             if (this.Log != null)
             {
                 this.Log.WriteLine(commandText);
             }
+
             this.StartUsingConnection();
             try
             {
@@ -328,8 +217,8 @@ namespace IQToolkit.Data
 
         public class Executor : QueryExecutor
         {
-            DbEntityProvider provider;
-            int rowsAffected;
+            private readonly DbEntityProvider provider;
+            private int rowsAffected;
 
             public Executor(DbEntityProvider provider)
             {
@@ -372,8 +261,10 @@ namespace IQToolkit.Data
                 {
                     return TypeHelper.GetDefault(type);
                 }
+
                 type = TypeHelper.GetNonNullableType(type);
                 Type vtype = value.GetType();
+
                 if (type != vtype)
                 {
                     if (type.IsEnum)
@@ -385,15 +276,19 @@ namespace IQToolkit.Data
                         else
                         {
                             Type utype = Enum.GetUnderlyingType(type);
+
                             if (utype != vtype)
                             {
                                 value = System.Convert.ChangeType(value, utype);
                             }
+
                             return Enum.ToObject(type, value);
                         }
                     }
+
                     return System.Convert.ChangeType(value, type);
                 }
+
                 return value;
             }
 
@@ -401,11 +296,13 @@ namespace IQToolkit.Data
             {
                 this.LogCommand(command, paramValues);
                 this.StartUsingConnection();
+
                 try
                 {
                     DbCommand cmd = this.GetCommand(command, paramValues);
                     DbDataReader reader = this.ExecuteReader(cmd);
                     var result = Project(reader, fnProjector, entity, true);
+
                     if (this.provider.ActionOpenedConnection)
                     {
                         result = result.ToList();
@@ -414,6 +311,7 @@ namespace IQToolkit.Data
                     {
                         result = new EnumerateOnce<T>(result);
                     }
+
                     return result;
                 }
                 finally
@@ -425,6 +323,7 @@ namespace IQToolkit.Data
             protected virtual DbDataReader ExecuteReader(DbCommand command)
             {
                 var reader = command.ExecuteReader();
+
                 if (this.BufferResultRows)
                 {
                     // use data table to buffer results
@@ -436,6 +335,7 @@ namespace IQToolkit.Data
                     table.Load(reader);
                     reader = table.CreateDataReader();
                 }
+
                 return reader;
             }
 

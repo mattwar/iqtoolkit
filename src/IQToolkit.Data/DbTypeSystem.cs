@@ -9,6 +9,10 @@ namespace IQToolkit.Data
 {
     using Common;
 
+    /// <summary>
+    /// A <see cref="QueryTypeSystem"/> for types based on <see cref="SqlDbType"/>.
+    /// Default parser, format implementations assume a type system similar to TSQL.
+    /// </summary>
     public class DbTypeSystem : QueryTypeSystem
     {        
         public override QueryType Parse(string typeDeclaration)
@@ -16,6 +20,7 @@ namespace IQToolkit.Data
             string[] args = null;
             string typeName = null;
             string remainder = null;
+
             int openParen = typeDeclaration.IndexOf('(');
             if (openParen >= 0)
             {
@@ -47,6 +52,14 @@ namespace IQToolkit.Data
             return this.GetQueryType(typeName, args, isNotNull);
         }
 
+        /// <summary>
+        /// Gets the <see cref="QueryType"/> for a know database type.
+        /// This API does not parse the type name.
+        /// Arguments to the type are specified by the <see cref="args"/> parameter.
+        /// </summary>
+        /// <param name="typeName">The base name of a type in the databases language.</param>
+        /// <param name="args">Any additional arguments (like length of a text type)</param>
+        /// <param name="isNotNull">Determines if the type cannot be null.</param>
         public virtual QueryType GetQueryType(string typeName, string[] args, bool isNotNull)
         {
             if (String.Compare(typeName, "rowversion", StringComparison.OrdinalIgnoreCase) == 0)
@@ -144,30 +157,46 @@ namespace IQToolkit.Data
             return NewType(dbType, isNotNull, length, precision, scale);
         }
 
-        public virtual QueryType NewType(SqlDbType type, bool isNotNull, int length, short precision, short scale)
+        /// <summary>
+        /// Construct a new <see cref="QueryType"/> instance from 
+        /// </summary>
+        protected virtual QueryType NewType(SqlDbType type, bool isNotNull, int length, short precision, short scale)
         {
             return new DbQueryType(type, isNotNull, length, precision, scale);
         }
 
+        /// <summary>
+        /// Gets the <see cref="SqlDbType"/> given the type name (same name as <see cref="SqlDbType"/> members)
+        /// </summary>
         public virtual SqlDbType GetSqlType(string typeName)
         {
             return (SqlDbType)Enum.Parse(typeof(SqlDbType), typeName, true);
         }
 
+        /// <summary>
+        /// Default maximum size of a text data type.
+        /// </summary>
         public virtual int StringDefaultSize
         {
             get { return Int32.MaxValue; }
         }
 
+        /// <summary>
+        /// Default maximum size of a binary data type.
+        /// </summary>
         public virtual int BinaryDefaultSize
         {
             get { return Int32.MaxValue; }
         }
 
+        /// <summary>
+        /// Gets the <see cref="QueryType"/> associated with a CLR type.
+        /// </summary>
         public override QueryType GetColumnType(Type type)
         {
             bool isNotNull = type.IsValueType && !TypeHelper.IsNullableType(type);
             type = TypeHelper.GetNonNullableType(type);
+
             switch (Type.GetTypeCode(type))
             {
                 case TypeCode.Boolean:
@@ -208,6 +237,9 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Gets the corresponding <see cref="DbType"/> for the <see cref="SqlDbType"/>
+        /// </summary>
         public static DbType GetDbType(SqlDbType dbType)
         {
             switch (dbType)
@@ -273,6 +305,9 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// True if the <see cref="SqlDbType"/> is a variable length type.
+        /// </summary>
         public static bool IsVariableLength(SqlDbType dbType)
         {
             switch (dbType)
@@ -290,11 +325,15 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Format the <see cref="QueryType"/> as if specified in the database language.
+        /// </summary>
         public override string Format(QueryType type, bool suppressSize)
         {
             var sqlType = (DbQueryType)type;
             StringBuilder sb = new StringBuilder();
             sb.Append(sqlType.SqlDbType.ToString().ToUpper());
+
             if (sqlType.Length > 0 && !suppressSize)
             {
                 if (sqlType.Length == Int32.MaxValue)
@@ -317,6 +356,7 @@ namespace IQToolkit.Data
                     sb.AppendFormat("({0})", sqlType.Precision);
                 }
             }
+
             return sb.ToString();
         }
     }

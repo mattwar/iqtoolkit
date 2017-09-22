@@ -12,9 +12,14 @@ using System.Text;
 
 namespace IQToolkit
 {
-#if NOREFEMIT
+    /// <summary>
+    /// Evaluates an expression without using Reflection.Emit.
+    /// </summary>
     public static class ExpressionEvaluator
     {
+        /// <summary>
+        /// Evaluate an expression without using Reflection.Emit.
+        /// </summary>
         public static object Eval(Expression expression)
         {
             LambdaExpression lambda = expression as LambdaExpression;
@@ -26,6 +31,7 @@ namespace IQToolkit
             {
                 throw new InvalidOperationException("Wrong number of arguments specified");
             }
+
             var result = EvaluatorBuilder.Build(null, null, expression);
             return result.EvalBoxed(new EvaluatorState(null, null));
         }
@@ -36,6 +42,7 @@ namespace IQToolkit
             {
                 throw new InvalidOperationException("Wrong number of arguments specified");
             }
+
             var result = EvaluatorBuilder.Build(null, function.Parameters, function.Body);
             return result.EvalBoxed(new EvaluatorState(null, args));
         }
@@ -58,12 +65,14 @@ namespace IQToolkit
             return StrongDelegate.CreateDelegate(delegateType, host.Eval);
         }
 
+        /// <summary>
+        /// A class that hosts an evaluation.
+        /// </summary>
         public class EvaluatorHost
         {
-            EvaluatorState outer;
-            int nArgs;
-            Evaluator evaluator;
-
+            private readonly EvaluatorState outer;
+            private readonly int nArgs;
+            private readonly Evaluator evaluator;
 
             public EvaluatorHost(EvaluatorState outer, int nArgs, Evaluator evaluator)
             {
@@ -82,15 +91,19 @@ namespace IQToolkit
                         Array.Copy(args, tmp, len);
                     args = tmp;
                 }
+
                 return this.evaluator.EvalBoxed(new EvaluatorState(this.outer, args));
             }
         }
 
+        /// <summary>
+        /// The variable state of an evaluation.
+        /// </summary>
         public class EvaluatorState
         {
-            EvaluatorState outer;
-            object[] values;
-            int start;
+            private readonly EvaluatorState outer;
+            private readonly object[] values;
+            private readonly int start;
 
             public EvaluatorState(EvaluatorState outer, object[] values)
             {
@@ -130,11 +143,14 @@ namespace IQToolkit
             }
         }
 
+        /// <summary>
+        /// Builds an evaluator tree that matches an expression.
+        /// </summary>
         private class EvaluatorBuilder
         {
-            EvaluatorBuilder outer;
-            ReadOnlyCollection<ParameterExpression> parameters;
-            int count = -1;
+            private readonly EvaluatorBuilder outer;
+            private readonly ReadOnlyCollection<ParameterExpression> parameters;
+            private int count = -1;
 
             private EvaluatorBuilder(EvaluatorBuilder outer, List<ParameterExpression> parameters)
             {
@@ -3274,5 +3290,4 @@ namespace IQToolkit
             }
         }
     }
-#endif
 }

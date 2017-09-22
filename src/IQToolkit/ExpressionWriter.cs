@@ -14,24 +14,31 @@ using System.IO;
 namespace IQToolkit
 {
     /// <summary>
-    /// Writes out an expression tree in a C#-ish syntax
+    /// Writes out an expression tree in a C#-ish syntax.
+    /// Useful for debugging expression trees.
     /// </summary>
     public class ExpressionWriter : ExpressionVisitor
     {
-        TextWriter writer;
-        int indent = 2;
-        int depth;
+        private readonly TextWriter writer;
+        private int indent = 2;
+        private int depth;
 
         protected ExpressionWriter(TextWriter writer)
         {
             this.writer = writer;
         }
 
+        /// <summary>
+        /// Write an expression to the text writer.
+        /// </summary>
         public static void Write(TextWriter writer, Expression expression)
         {
             new ExpressionWriter(writer).Visit(expression);
         }
 
+        /// <summary>
+        /// Gets the written text of an expression tree in a C#-ish syntax.
+        /// </summary>
         public static string WriteToString(Expression expression)
         {
             StringWriter sw = new StringWriter();

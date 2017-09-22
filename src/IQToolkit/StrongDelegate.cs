@@ -2,13 +2,7 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit
 {
@@ -18,7 +12,7 @@ namespace IQToolkit
     /// </summary>
     public class StrongDelegate
     {
-        Func<object[], object> fn;
+        private readonly Func<object[], object> fn;
 
         private StrongDelegate(Func<object[], object> fn)
         {
@@ -29,6 +23,7 @@ namespace IQToolkit
 
         static StrongDelegate()
         {
+            // find all the various M<> methods
             _meths = new MethodInfo[9];
 
             var meths = typeof(StrongDelegate).GetMethods();
@@ -47,11 +42,23 @@ namespace IQToolkit
         /// Create a strongly typed delegate over a method with a weak signature
         /// </summary>
         /// <param name="delegateType">The strongly typed delegate's type</param>
-        /// <param name="target"></param>
+        /// <param name="target">The target instance for the delegate. This can be specified as null if the method is static.</param>
         /// <param name="method">Any method that takes a single array of objects and returns an object.</param>
         /// <returns></returns>
         public static Delegate CreateDelegate(Type delegateType, object target, MethodInfo method)
         {
+            if (delegateType == null)
+                throw new ArgumentNullException(nameof(delegateType));
+
+            if (!delegateType.IsSubclassOf(typeof(Delegate)))
+                throw new ArgumentException(string.Format("The type '{0}' is not a delegate type.", delegateType.FullName));
+
+            if (method == null)
+                throw new ArgumentNullException(nameof(method));
+
+            if (target == null && !method.IsStatic)
+                throw new ArgumentException(string.Format("The method '{0}' requires a non-null target.", method.Name));
+
             return CreateDelegate(delegateType, (Func<object[], object>)Delegate.CreateDelegate(typeof(Func<object[], object>), target, method));
         }
 
@@ -63,21 +70,34 @@ namespace IQToolkit
         /// <returns></returns>
         public static Delegate CreateDelegate(Type delegateType, Func<object[], object> fn)
         {
+            if (delegateType == null)
+                throw new ArgumentNullException(nameof(delegateType));
+
+            if (!delegateType.IsSubclassOf(typeof(Delegate)))
+                throw new ArgumentException(string.Format("The type '{0}' is not a delegate type.", delegateType.FullName));
+
+            if (fn == null)
+                throw new ArgumentNullException(nameof(fn));
+
             MethodInfo invoke = delegateType.GetMethod("Invoke");
             var parameters = invoke.GetParameters();
             Type[] typeArgs = new Type[1 + parameters.Length];
+
             for (int i = 0, n = parameters.Length; i < n; i++)
             {
                 typeArgs[i] = parameters[i].ParameterType;
             }
+
             typeArgs[typeArgs.Length - 1] = invoke.ReturnType;
+
             if (typeArgs.Length <= _meths.Length)
             {
                 var gm = _meths[typeArgs.Length - 1];
                 var m = gm.MakeGenericMethod(typeArgs);
                 return Delegate.CreateDelegate(delegateType, new StrongDelegate(fn), m);
             }
-            throw new NotSupportedException("Delegate has too many arguments");
+
+            throw new NotSupportedException(string.Format("The function has more than {0} arguments.", _meths.Length - 1));
         }
 
         public R M<R>()

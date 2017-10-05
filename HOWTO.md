@@ -405,7 +405,7 @@ DELETE FROM [Customers]
 WHERE ([CustomerID] = p0)
 ```
 
-But that is also required in order to delete the entity from the database.
+But that is also not required in order to delete the entity from the database.
 I can make a new instance and give it the `CustomerID` of a `Customer` I want to delete, and
 use that instance when I call the `Delete` method.
 As long as my `Customer` instance has the correct `CustomerID` the delete will execute just the same.
@@ -443,7 +443,7 @@ the query provider API.
 **Context classes** are classes that expose the collections I want exposed
 by simply wrapping the query provider with a class I define.
 
-For example, I can create a context class for my NorthindWind database and only 
+For example, I can create a context class for the Northind database and only 
 expose queryable properties corresponding to the entities I want accessed.
 
 ```CSharp
@@ -835,7 +835,7 @@ session.GetTable<Customer>().DeleteOnSubmit(cust);
 
 // make other changes
 
-db.SubmitChanges();
+session.SubmitChanges();
 ```
 
 

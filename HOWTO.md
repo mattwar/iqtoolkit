@@ -12,8 +12,6 @@ ORM that can be used to query and interact with many kinds of databases.
 
 The current live repository for the source can be found [here](https://github.com/mattwar/iqtoolkit).
 
-<br/>
-
 ## How do I get it?
 
 You'll either need to build the sources yourself or download the built packages from Nuget.
@@ -25,8 +23,6 @@ You can find official packages on nuget under the following names:
 4. **IQToolkit.SqlServerCe** -- A query provider Microsoft SQL Server Compact Edition (System.Data.SqlServerCe)
 5. **IQToolkit.SQLite** -- A query provider SQLite (.db3) files (System.Data.SQLite)
 6. **IQToolkit.MySql** -- A query provider for MySql (MySql.Data)
-
-<br/>
 
 # The Basics
 
@@ -55,7 +51,6 @@ If I already have a `DbConnection` instance from existing code, I can specify it
 OleDbConnection connection = ...;
 var provider = new AccessQueryProvider(connection);
 ```
-<br/>
 
 ## Basic Querying
 
@@ -90,7 +85,6 @@ SELECT t0.[ContactName], t0.[CustomerID], t0.[Phone]
 FROM [Customers] AS t0
 WHERE (t0.[ContactName] LIKE p0 + '%')
 ```
-<br/>
 
 ## Basic Mapping
 
@@ -143,7 +137,6 @@ var results = query.ToList();
 
 *Note:  It is possible to avoid putting attributes directly on entity classes or to use an entirely different
 kind of mapping like a file-based mapping instead. You can find these in the advanced mapping topics.*
-<br/>
 
 ###  Basic Relationships
 
@@ -256,8 +249,6 @@ retrieving much more data than my application needs.
 
 If I want my related entities to be included in my query results, I can specify that with a query policy.
 
-<br/>
-
 ## Basic Policy
 
 Query policies control what optional parts of an entity get returned in the query results.
@@ -294,7 +285,6 @@ SELECT t0.[ContactName], t0.[CustomerID], t0.[Phone]
 FROM [Customers] AS t0
 WHERE (t0.[CustomerID] = p0)
 ```
-<br/>
 
 ## Basic Inserts, Updates and Deletes
 
@@ -325,8 +315,6 @@ public class Customer
 
 Now all I really need to do is get my hands on an appropriate instance of `Customer` and 
 call the appropriate API method.
-
-<br/>
 
 ### Inserting
 
@@ -359,7 +347,6 @@ INSERT INTO [Customers](
     [Phone])
 VALUES (p0, p1, p2, p3, p4, p5)
 ```
-<br/>
 
 ### Updating
 
@@ -392,14 +379,12 @@ But it is not truly required to query the database before updating an entity.
 If I knew the key value up front, I could have created a new instance of `Customer` with 
 the `CustomerID` value from a known row in the table.
 To the provider, there is no difference between an instance returned from a prior query and one I simply conjured up on the spot.
-All it cases about is are the values it has.
+All it cares about is the values it has in its members, not the object identity of the instance.
 
-Entity tables are not like typical collection classes like `List<T>`. 
-They correspond to tables in a database.
-Merely modifying a member on an entity class is not sufficient to change the state of the database. 
-I have to call the `Update` method or nothing happens.
-
-<br/>
+Entity tables do not behave like ordinary collection classes, they do not store the entities locally.
+They are proxes to tables in a database, where the entities actually live as rows of column values.
+Merely modifying a member on an entity class is not sufficient to change the data in the database. 
+I have to call the `Update()` method on entity table, passing it the modified entity instance.
 
 ### Deleting
 
@@ -424,7 +409,6 @@ But that is also required in order to delete the entity from the database.
 I can make a new instance and give it the `CustomerID` of a `Customer` I want to delete, and
 use that instance when I call the `Delete` method.
 As long as my `Customer` instance has the correct `CustomerID` the delete will execute just the same.
-<br/>
 
 ## Other Topics
 
@@ -491,8 +475,6 @@ var query = from c in db.Customers
             where c.ContactName.StartsWith("Maria") 
             select c;
 ```
-
-<br/>
 
 ## Advanced Topics
 
@@ -593,7 +575,6 @@ Then the join to the `Customers` table gets dropped, and is instead:
 SELECT t0.[OrderID], t0.[CustomerID]
 FROM [Orders] AS t0
 ```
-<br/>
 
 *It is also possible to insert, update and delete multi-table entities, 
 but maybe just not with this hacky example.*
@@ -660,7 +641,6 @@ So regardless of how the entity classes are nested (or not), the query that is e
 SELECT t0.[City], t0.[Country], t0.[PostalCode], t0.[Region], t0.[Address], t0.[CompanyName], 
        t0.[ContactName], t0.[CustomerID], t0.[Phone]
 FROM [Customers] AS t0
-
 ```
 
 ### Mapping with Context Classes
@@ -724,8 +704,6 @@ but it is not possible to have the same member mapped more than once.*
 ### Runtime Entity Types
 
 ### Immutable Entity Classes
-
-
 
 ---------
 
@@ -820,7 +798,6 @@ UPDATE [Customers]
 SET [City] = p1, [CompanyName] = p2, [ContactName] = p3, [Country] = p4, [Phone] = p5
 WHERE ([CustomerID] = p0)
 ```
-<br/>
 
 ### Inserting in a Session
 
@@ -844,7 +821,6 @@ session.GetTable<Customer>().InsertOnSubmit(cust);
 
 session.SubmitChanges();
 ```
-<br/>
 
 ### Deleting in a Session
 

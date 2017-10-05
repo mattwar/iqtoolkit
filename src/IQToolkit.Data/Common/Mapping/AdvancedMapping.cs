@@ -2,6 +2,7 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace IQToolkit.Data.Common
@@ -24,14 +25,35 @@ namespace IQToolkit.Data.Common
         public abstract IList<MappingTable> GetTables(MappingEntity entity);
 
         /// <summary>
-        /// Gets the query alias to use for a specific table.
+        /// Gets the primary table of the mapping (for multi-table mappings).
         /// </summary>
-        public abstract string GetAlias(MappingTable table);
+        public MappingTable GetPrimaryTable(MappingEntity entity)
+        {
+            return this.GetTables(entity).Single(t => !this.IsExtensionTable(t));
+        }
 
         /// <summary>
-        /// Gets the query alias to use for a specific member.
+        /// Gets all extension tables (not the primary table) of a multi-table mapping.
         /// </summary>
-        public abstract string GetAlias(MappingEntity entity, MemberInfo member);
+        public IEnumerable<MappingTable> GetExtensionTables(MappingEntity entity)
+        {
+            return this.GetTables(entity).Where(t => this.IsExtensionTable(t));
+        }
+
+        /// <summary>
+        /// Gets the <see cref="MappingEntity"/> associated with the <see cref="MappingTable"/>.
+        /// </summary>
+        public abstract MappingEntity GetEntity(MappingTable table);
+
+        /// <summary>
+        /// Gets the mapping id for a specific table.
+        /// </summary>
+        public abstract string GetTableId(MappingTable table);
+
+        /// <summary>
+        /// Gets the table id used for the mapped member.
+        /// </summary>
+        public abstract string GetTableId(MappingEntity entity, MemberInfo member);
 
         /// <summary>
         /// Gets the name of a table.
@@ -45,8 +67,11 @@ namespace IQToolkit.Data.Common
         /// </summary>
         public abstract bool IsExtensionTable(MappingTable table);
 
-
-        public abstract string GetExtensionRelatedAlias(MappingTable table);
+        /// <summary>
+        /// Gets the related table's id for an extension table.
+        /// This is usually the primary table's id.
+        /// </summary>
+        public abstract string GetExtensionRelatedTableId(MappingTable table);
 
         /// <summary>
         /// Gets the column names in the extension table that correspond to the primary table's primary key.

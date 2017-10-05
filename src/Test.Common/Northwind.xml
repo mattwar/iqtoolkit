@@ -2,7 +2,7 @@
 <map>
   <Entity Id="Customer">
     <Table Name="Customers" />
-    <Column Member = "CustomerId" IsPrimaryKey = "true" />
+    <Column Member = "CustomerID" IsPrimaryKey = "true" />
     <Column Member = "ContactName" />
     <Column Member = "CompanyName" />
     <Column Member = "Phone" />

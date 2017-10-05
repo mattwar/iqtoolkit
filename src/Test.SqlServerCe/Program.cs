@@ -20,6 +20,14 @@ namespace Test
             return new SqlCeQueryProvider("Northwind40.sdf", new AttributeMapping(contextType ?? typeof(Test.NorthwindWithAttributes)));
         }
 
+        public class NorthwindMappingTests : Test.NorthwindMappingTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
         public class NorthwindTranslationTests : Test.NorthwindTranslationTests
         {
             protected override DbEntityProvider CreateProvider()

@@ -136,7 +136,6 @@
     <Compile Include="EntitySession.cs" />
     <Compile Include="EntityTable.cs" />
     <Compile Include="Mapping\AttributeMapping.cs" />
-    <Compile Include="Mapping\HybridMapping.cs" />
     <Compile Include="Mapping\ImplicitMapping.cs" />
     <Compile Include="Mapping\XmlMapping.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

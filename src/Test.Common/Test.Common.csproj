@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NorthwindMappingTests.cs" />
     <Compile Include="ExcludeProviderAttribute.cs" />
     <Compile Include="MultiTableContext.cs" />
     <Compile Include="MultiTableTests.cs" />

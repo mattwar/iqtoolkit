@@ -27,8 +27,8 @@ namespace IQToolkit.Data.Common
         /// </summary>
         public virtual IEnumerable<MappingTable> GetDependencyOrderedTables(MappingEntity entity)
         {
-            var lookup = this.mapping.GetTables(entity).ToLookup(t => this.mapping.GetAlias(t));
-            return this.mapping.GetTables(entity).Sort(t => this.mapping.IsExtensionTable(t) ? lookup[this.mapping.GetExtensionRelatedAlias(t)] : null);
+            var lookup = this.mapping.GetTables(entity).ToLookup(t => this.mapping.GetTableId(t));
+            return this.mapping.GetTables(entity).Sort(t => this.mapping.IsExtensionTable(t) ? lookup[this.mapping.GetExtensionRelatedTableId(t)] : null);
         }
 
         public override EntityExpression GetEntityExpression(Expression root, MappingEntity entity)
@@ -82,18 +82,18 @@ namespace IQToolkit.Data.Common
             var aliases = new Dictionary<string, TableAlias>();
             MappingTable rootTable = tables.Single(ta => !this.mapping.IsExtensionTable(ta));
             var tex = new TableExpression(new TableAlias(), entity, this.mapping.GetTableName(rootTable));
-            aliases.Add(this.mapping.GetAlias(rootTable), tex.Alias);
+            aliases.Add(this.mapping.GetTableId(rootTable), tex.Alias);
             Expression source = tex;
 
             foreach (MappingTable table in tables.Where(t => this.mapping.IsExtensionTable(t)))
             {
                 TableAlias joinedTableAlias = new TableAlias();
-                string extensionAlias = this.mapping.GetAlias(table);
+                string extensionAlias = this.mapping.GetTableId(table);
                 aliases.Add(extensionAlias, joinedTableAlias);
 
                 List<string> keyColumns = this.mapping.GetExtensionKeyColumnNames(table).ToList();
                 List<MemberInfo> relatedMembers = this.mapping.GetExtensionRelatedMembers(table).ToList();
-                string relatedAlias = this.mapping.GetExtensionRelatedAlias(table);
+                string relatedAlias = this.mapping.GetExtensionRelatedTableId(table);
 
                 TableAlias relatedTableAlias;
                 aliases.TryGetValue(relatedAlias, out relatedTableAlias);
@@ -127,7 +127,7 @@ namespace IQToolkit.Data.Common
                 pc.Projector
                 );
 
-            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.ElementType);
+            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.StaticType);
         }
 
         private void GetColumns(MappingEntity entity, Dictionary<string, TableAlias> aliases, List<ColumnDeclaration> columns)
@@ -143,7 +143,7 @@ namespace IQToolkit.Data.Common
                     else if (this.mapping.IsColumn(entity, mi))
                     {
                         string name = this.mapping.GetColumnName(entity, mi);
-                        string aliasName = this.mapping.GetAlias(entity, mi);
+                        string aliasName = this.mapping.GetTableId(entity, mi);
                         TableAlias alias;
                         aliases.TryGetValue(aliasName, out alias);
                         var colType = this.GetColumnType(entity, mi);
@@ -173,7 +173,7 @@ namespace IQToolkit.Data.Common
                 var tableAlias = new TableAlias();
                 var tex = new TableExpression(tableAlias, entity, this.mapping.GetTableName(table));
                 var assignments = this.GetColumnAssignments(tex, instance, entity,
-                    (e, m) => this.mapping.GetAlias(e, m) == this.mapping.GetAlias(table) && !this.mapping.IsGenerated(e, m),
+                    (e, m) => this.mapping.GetTableId(e, m) == this.mapping.GetTableId(table) && !this.mapping.IsGenerated(e, m),
                     vexMap
                     );
                 var totalAssignments = assignments.Concat(
@@ -182,7 +182,7 @@ namespace IQToolkit.Data.Common
                 commands.Add(new InsertCommand(tex, totalAssignments));
 
                 List<MemberInfo> members;
-                if (map.TryGetValue(this.mapping.GetAlias(table), out members))
+                if (map.TryGetValue(this.mapping.GetTableId(table), out members))
                 {
                     var d = this.GetDependentGeneratedVariableDeclaration(entity, table, members, instance, vexMap);
                     commands.Add(d);
@@ -201,7 +201,7 @@ namespace IQToolkit.Data.Common
         {
             return
                 (from xt in this.mapping.GetTables(entity).Where(t => this.mapping.IsExtensionTable(t))
-                 group xt by this.mapping.GetExtensionRelatedAlias(xt))
+                 group xt by this.mapping.GetExtensionRelatedTableId(xt))
                 .ToDictionary(
                     g => g.Key,
                     g => g.SelectMany(xt => this.mapping.GetExtensionRelatedMembers(xt)).Distinct().ToList()
@@ -334,7 +334,7 @@ namespace IQToolkit.Data.Common
             foreach (var table in this.GetDependencyOrderedTables(entity))
             {
                 TableExpression tex = new TableExpression(new TableAlias(), entity, this.mapping.GetTableName(table));
-                var assignments = this.GetColumnAssignments(tex, instance, entity, (e, m) => this.mapping.GetAlias(e, m) == this.mapping.GetAlias(table) && this.mapping.IsUpdatable(e, m), null);
+                var assignments = this.GetColumnAssignments(tex, instance, entity, (e, m) => this.mapping.GetTableId(e, m) == this.mapping.GetTableId(table) && this.mapping.IsUpdatable(e, m), null);
                 var where = this.GetIdentityCheck(tex, entity, instance);
                 commands.Add(new UpdateCommand(tex, where, assignments));
             }

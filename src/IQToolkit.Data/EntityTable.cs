@@ -53,14 +53,6 @@ namespace IQToolkit.Data
         }
 
         /// <summary>
-        /// The entity type.
-        /// </summary>
-        public Type EntityType
-        {
-            get { return this.entity.EntityType; }
-        }
-
-        /// <summary>
         /// Gets the entity from the database by its id (primary key value).
         /// </summary>
         public T GetById(object id)

@@ -49,12 +49,12 @@ namespace IQToolkit.Data.Common
                 get { return this.entityID; }
             }
 
-            public override Type ElementType
+            public override Type StaticType
             {
                 get { return this.type; }
             }
 
-            public override Type EntityType
+            public override Type RuntimeType
             {
                 get { return this.type; }
             }
@@ -181,7 +181,7 @@ namespace IQToolkit.Data.Common
         /// </summary>
         public virtual string GetTableName(MappingEntity entity)
         {
-            return entity.EntityType.Name;
+            return entity.StaticType.Name;
         }
 
         /// <summary>
@@ -197,8 +197,7 @@ namespace IQToolkit.Data.Common
         /// </summary>
         public override IEnumerable<MemberInfo> GetMappedMembers(MappingEntity entity)
         {
-            //Type type = entity.ElementType.IsInterface ? entity.EntityType : entity.ElementType;
-            Type type = entity.EntityType;
+            Type type = entity.StaticType;
             HashSet<MemberInfo> members = new HashSet<MemberInfo>(type.GetFields().Cast<MemberInfo>().Where(m => this.IsMapped(entity, m)));
             members.UnionWith(type.GetProperties().Cast<MemberInfo>().Where(m => this.IsMapped(entity, m)));
             return members.OrderBy(m => m.Name);
@@ -206,7 +205,8 @@ namespace IQToolkit.Data.Common
 
         public override object CloneEntity(MappingEntity entity, object instance)
         {
-            var clone = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(entity.EntityType);
+            var clone = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(entity.RuntimeType);
+
             foreach (var mi in this.GetMappedMembers(entity))
             {
                 if (this.IsColumn(entity, mi))
@@ -214,6 +214,7 @@ namespace IQToolkit.Data.Common
                     mi.SetValue(clone, mi.GetValue(instance));
                 }
             }
+
             return clone;
         }
 
@@ -260,7 +261,7 @@ namespace IQToolkit.Data.Common
         public override Expression GetPrimaryKeyQuery(MappingEntity entity, Expression source, Expression[] keys)
         {
             // make predicate
-            ParameterExpression p = Expression.Parameter(entity.ElementType, "p");
+            ParameterExpression p = Expression.Parameter(entity.StaticType, "p");
             Expression pred = null;
 
             var idMembers = this.GetPrimaryKeyMembers(entity).ToList();
@@ -285,7 +286,7 @@ namespace IQToolkit.Data.Common
 
             var predLambda = Expression.Lambda(pred, p);
 
-            return Expression.Call(typeof(Queryable), "SingleOrDefault", new Type[] { entity.ElementType }, source, predLambda);
+            return Expression.Call(typeof(Queryable), "SingleOrDefault", new Type[] { entity.StaticType }, source, predLambda);
         }
 
         public override IEnumerable<EntityInfo> GetDependentEntities(MappingEntity entity, object instance)

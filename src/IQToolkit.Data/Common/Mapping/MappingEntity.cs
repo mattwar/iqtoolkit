@@ -6,7 +6,7 @@ using System;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// An entity (table/row type) described in the mapping system.
+    /// Represents info about an entity (a CLR type that is mapped into a row of a table in a database.)
     /// </summary>
     public abstract class MappingEntity
     {
@@ -16,14 +16,14 @@ namespace IQToolkit.Data.Common
         public abstract string EntityId { get; }
 
         /// <summary>
-        /// The static type of the entity returned from the <see cref="IEntityTable{T}"/> 
-        /// This could differ from the <see cref="EntityType"/> if the static type is a base type or an interface.
+        /// The static type of the entity that is referenced by queries, etc. 
         /// </summary>
-        public abstract Type ElementType { get; }
+        public abstract Type StaticType { get; }
 
         /// <summary>
-        /// The type of the entity that is constructed and returned from the <see cref="IEntityTable{T}"/>.
+        /// The type of the entity that is constructed at runtime.
+        /// This may be different than the static type if the static type is an base class or interface.
         /// </summary>
-        public abstract Type EntityType { get; }
+        public abstract Type RuntimeType { get; }
     }
 }

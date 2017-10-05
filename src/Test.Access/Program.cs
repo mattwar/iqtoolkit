@@ -20,6 +20,14 @@ namespace Test
             return new AccessQueryProvider("Northwind.mdb", new AttributeMapping(typeof(Test.NorthwindWithAttributes)));
         }
 
+        public class NorthwindMappingTests : Test.NorthwindMappingTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
         public class NorthwindTranslationTests : Test.NorthwindTranslationTests
         {
             protected override DbEntityProvider CreateProvider()
@@ -33,21 +41,6 @@ namespace Test
             protected override DbEntityProvider CreateProvider()
             {
                 return CreateNorthwindProvider();
-            }
-
-            // some API tests
-            public void TestCreateFromDatabaseFile()
-            {
-                var provider = DynamicProvider.Create("Northwind.mdb");
-                Assert.NotEqual(null, provider);
-                Assert.Equal(true, provider is AccessQueryProvider);
-            }
-
-            public void TestCreateFromProviderName()
-            {
-                var provider = DynamicProvider.Create("IQToolkit.Data.Access", "Northwind.mdb");
-                Assert.NotEqual(null, provider);
-                Assert.Equal(true, provider is AccessQueryProvider);
             }
         }
 

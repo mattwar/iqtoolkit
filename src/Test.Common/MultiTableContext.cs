@@ -28,13 +28,13 @@ namespace Test
             get { return this.provider; }
         }
 
-        [Table(Name = "TestTable1", Alias = "TT1")]
-        [ExtensionTable(Name = "TestTable2", Alias = "TT2", KeyColumns = "ID", RelatedAlias = "TT1", RelatedKeyColumns = "ID")]
-        [ExtensionTable(Name = "TestTable3", Alias = "TT3", KeyColumns = "ID", RelatedAlias = "TT1", RelatedKeyColumns = "ID")]
-        [Column(Member = "ID", Alias = "TT1", IsPrimaryKey = true, IsGenerated = true)]
-        [Column(Member = "Value1", Alias = "TT1")]
-        [Column(Member = "Value2", Alias = "TT2")]
-        [Column(Member = "Value3", Alias = "TT3")]
+        [Table(Name = "TestTable1")]
+        [ExtensionTable(Name = "TestTable2", KeyColumns = "ID", RelatedKeyColumns = "ID")]
+        [ExtensionTable(Name = "TestTable3", KeyColumns = "ID", RelatedKeyColumns = "ID")]
+        [Column(Member = "ID", IsPrimaryKey = true, IsGenerated = true)]
+        [Column(Member = "Value1")]
+        [Column(Member = "Value2", TableId = "TestTable2")]
+        [Column(Member = "Value3", TableId = "TestTable3")]
         public IUpdatable<MultiTableEntity> MultiTableEntities
         {
             get { return this.provider.GetTable<MultiTableEntity>(); }

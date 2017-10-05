@@ -2,14 +2,10 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data
 {
@@ -55,17 +51,22 @@ namespace IQToolkit.Data
         /// <summary>
         /// Gets the <see cref="ISessionTable"/> for the corresponding database table.
         /// </summary>
-        public ISessionTable GetTable(Type elementType, string tableId)
+        /// <param name="entityType">The type of the entities held by this table.</param>
+        /// <param name="entityId">The id of the entity in the mapping.
+        /// If unspecified, the provider will infer the id from the element type.</param>
+        public ISessionTable GetTable(Type entityType, string entityId = null)
         {
-            return this.GetTable(this.sessionProvider.Provider.Mapping.GetEntity(elementType, tableId));
+            return this.GetTable(this.sessionProvider.Provider.Mapping.GetEntity(entityType, entityId));
         }
 
         /// <summary>
         /// Gets the <see cref="ISessionTable"/> for the corresponding database table.
         /// </summary>
-        public ISessionTable<T> GetTable<T>(string tableId)
+        /// <param name="entityId">The id of the entity in the mapping.
+        /// If unspecified, the provider will infer the id from the element type.</param>
+        public ISessionTable<TEntity> GetTable<TEntity>(string entityId = null)
         {
-            return (ISessionTable<T>)this.GetTable(typeof(T), tableId);
+            return (ISessionTable<TEntity>)this.GetTable(typeof(TEntity), entityId);
         }
 
         protected ISessionTable GetTable(MappingEntity entity)
@@ -91,7 +92,7 @@ namespace IQToolkit.Data
             MappingEntity Entity { get; }
         }
 
-        abstract class SessionTable<T> : Query<T>, ISessionTable<T>, ISessionTable, IEntitySessionTable
+        private abstract class SessionTable<T> : Query<T>, ISessionTable<T>, ISessionTable, IEntitySessionTable
         {
             private readonly EntitySession session;
             private readonly MappingEntity entity;
@@ -213,7 +214,7 @@ namespace IQToolkit.Data
             }
         }
 
-        class SessionExecutor : QueryExecutor
+        private class SessionExecutor : QueryExecutor
         {
             private readonly EntitySession session;
             private readonly QueryExecutor executor;
@@ -267,7 +268,7 @@ namespace IQToolkit.Data
         }
 
         /// <summary>
-        /// Submit changes to changed entity instances back to the database, as a single transaction.
+        /// Submit changes made to entity instances back to the database, as a single transaction.
         /// </summary>
         public virtual void SubmitChanges()
         {
@@ -296,10 +297,10 @@ namespace IQToolkit.Data
 
         protected virtual ISessionTable CreateTable(MappingEntity entity)
         {
-            return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.ElementType), new object[] { this, entity });
+            return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.StaticType), new object[] { this, entity });
         }
 
-        interface ITrackedTable : IEntitySessionTable
+        private interface ITrackedTable : IEntitySessionTable
         {
             object GetFromCacheById(object key);
             IEnumerable<TrackedItem> TrackedItems { get; }
@@ -308,10 +309,10 @@ namespace IQToolkit.Data
             void AcceptChanges(TrackedItem item);
         }
 
-        class TrackedTable<T> : SessionTable<T>, ITrackedTable
+        private class TrackedTable<T> : SessionTable<T>, ITrackedTable
         {
-            Dictionary<T, TrackedItem> tracked;
-            Dictionary<object, T> identityCache;
+            private readonly Dictionary<T, TrackedItem> tracked;
+            private readonly Dictionary<object, T> identityCache;
 
             public TrackedTable(EntitySession session, MappingEntity entity)
                 : base(session, entity)
@@ -367,6 +368,7 @@ namespace IQToolkit.Data
                     default:
                         break; // do nothing
                 }
+
                 return false;
             }
 
@@ -417,6 +419,9 @@ namespace IQToolkit.Data
                 return cached;
             }
 
+            /// <summary>
+            /// Gets the current <see cref="SubmitAction"/> for the entity instance.
+            /// </summary>
             public override SubmitAction GetSubmitAction(T instance)
             {
                 TrackedItem ti;
@@ -454,6 +459,7 @@ namespace IQToolkit.Data
                         }
                         break;
                 }
+
                 this.AssignAction(instance, action);
             }
 
@@ -526,52 +532,24 @@ namespace IQToolkit.Data
             }
         }
 
-        class TrackedItem
+        private class TrackedItem
         {
-            ITrackedTable table;
-            object instance;
-            object original;
-            SubmitAction state;
-            bool hookedEvent;
+            public ITrackedTable Table { get; }
+            public object Instance { get; }
+            public object Original { get; }
+            public SubmitAction State { get; }
+            public bool HookedEvent { get; }
 
             internal TrackedItem(ITrackedTable table, object instance, object original, SubmitAction state, bool hookedEvent)
             {
-                this.table = table;
-                this.instance = instance;
-                this.original = original;
-                this.state = state;
-                this.hookedEvent = hookedEvent;
+                this.Table = table;
+                this.Instance = instance;
+                this.Original = original;
+                this.State = state;
+                this.HookedEvent = hookedEvent;
             }
 
-            public ITrackedTable Table
-            {
-                get { return this.table; }
-            }
-
-            public MappingEntity Entity 
-            {
-                get { return this.table.Entity; }
-            }
-
-            public object Instance
-            {
-                get { return this.instance; }
-            }
-
-            public object Original
-            {
-                get { return this.original; }
-            }
-
-            public SubmitAction State
-            {
-                get { return this.state; }
-            }
-
-            public bool HookedEvent
-            {
-                get { return this.hookedEvent; }
-            }
+            public MappingEntity Entity => this.Table.Entity;
 
             public static readonly IEnumerable<TrackedItem> EmptyList = new TrackedItem[] { };
         }
@@ -583,7 +561,7 @@ namespace IQToolkit.Data
                          where ti.State != SubmitAction.None
                          select ti).ToList();
 
-            // build edge maps to represent all references between entities
+            // build edge map to represent all references between entities
             var edges = this.GetEdges(items).Distinct().ToList();
             var stLookup = edges.ToLookup(e => e.Source, e => e.Target);
             var tsLookup = edges.ToLookup(e => e.Target, e => e.Source);
@@ -636,6 +614,7 @@ namespace IQToolkit.Data
                         yield return new Edge(dc, c);
                     }
                 }
+
                 foreach (var d in this.provider.Mapping.GetDependentEntities(c.Entity, c.Instance))
                 {
                     var dc = this.GetTrackedItem(d);
@@ -647,11 +626,11 @@ namespace IQToolkit.Data
             }
         }
 
-        class Edge : IEquatable<Edge>
+        private class Edge : IEquatable<Edge>
         {
-            internal TrackedItem Source { get; private set; }
-            internal TrackedItem Target { get; private set; }
-            int hash;
+            public TrackedItem Source { get; }
+            public TrackedItem Target { get; }
+            private readonly int hash;
 
             internal Edge(TrackedItem source, TrackedItem target)
             {

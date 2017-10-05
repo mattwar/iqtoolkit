@@ -55,7 +55,7 @@ namespace IQToolkit.Data
         /// <summary>
         /// Gets the <see cref="QueryType"/> for a know database type.
         /// This API does not parse the type name.
-        /// Arguments to the type are specified by the <see cref="args"/> parameter.
+        /// Arguments to the type are specified by the <see cref="P:args"/> parameter.
         /// </summary>
         /// <param name="typeName">The base name of a type in the databases language.</param>
         /// <param name="args">Any additional arguments (like length of a text type)</param>

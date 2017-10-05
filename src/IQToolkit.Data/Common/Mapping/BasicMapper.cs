@@ -40,10 +40,12 @@ namespace IQToolkit.Data.Common
         public virtual QueryType GetColumnType(MappingEntity entity, MemberInfo member)
         {
             string dbType = this.mapping.GetColumnDbType(entity, member);
+
             if (dbType != null)
             {
                 return this.translator.Linguist.Language.TypeSystem.Parse(dbType);
             }
+
             return this.translator.Linguist.Language.TypeSystem.GetColumnType(TypeHelper.GetMemberType(member));
         }
 
@@ -61,7 +63,7 @@ namespace IQToolkit.Data.Common
                 pc.Projector
                 );
 
-            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.EntityType);
+            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.StaticType);
         }
 
         public override EntityExpression GetEntityExpression(Expression root, MappingEntity entity)
@@ -106,7 +108,7 @@ namespace IQToolkit.Data.Common
 
             // handle cases where members are not directly assignable
             EntityAssignment[] readonlyMembers = assignments.Where(b => TypeHelper.IsReadOnly(b.Member)).ToArray();
-            ConstructorInfo[] cons = entity.EntityType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            ConstructorInfo[] cons = entity.RuntimeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
             bool hasNoArgConstructor = cons.Any(c => c.GetParameters().Length == 0);
 
             if (readonlyMembers.Length > 0 || !hasNoArgConstructor)
@@ -116,13 +118,15 @@ namespace IQToolkit.Data.Common
                                         .Where(cbr => cbr != null && cbr.Remaining.Count == 0).ToList();
                 if (consThatApply.Count == 0)
                 {
-                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped includedMembers.", entity.EntityType));
+                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped includedMembers.", entity.RuntimeType));
                 }
+
                 // just use the first one... (Note: need better algorithm. :-)
                 if (readonlyMembers.Length == assignments.Count)
                 {
                     return consThatApply[0].Expression;
                 }
+
                 var r = this.BindConstructor(consThatApply[0].Expression.Constructor, assignments);
 
                 newExpression = r.Expression;
@@ -130,16 +134,17 @@ namespace IQToolkit.Data.Common
             }
             else
             {
-                newExpression = Expression.New(entity.EntityType);
+                newExpression = Expression.New(entity.RuntimeType);
             }
 
             Expression result;
             if (assignments.Count > 0)
             {
-                if (entity.ElementType.IsInterface)
+                if (entity.StaticType.IsInterface)
                 {
-                    assignments = this.MapAssignments(assignments, entity.EntityType).ToList();
+                    assignments = this.RemapAssignments(assignments, entity.RuntimeType).ToList();
                 }
+
                 result = Expression.MemberInit(newExpression, (MemberBinding[])assignments.Select(a => Expression.Bind(a.Member, a.Expression)).ToArray());
             }
             else
@@ -147,15 +152,15 @@ namespace IQToolkit.Data.Common
                 result = newExpression;
             }
 
-            if (entity.ElementType != entity.EntityType)
+            if (entity.StaticType != entity.RuntimeType)
             {
-                result = Expression.Convert(result, entity.ElementType);
+                result = Expression.Convert(result, entity.StaticType);
             }
 
             return result;
         }
 
-        private IEnumerable<EntityAssignment> MapAssignments(IEnumerable<EntityAssignment> assignments, Type entityType)
+        private IEnumerable<EntityAssignment> RemapAssignments(IEnumerable<EntityAssignment> assignments, Type entityType)
         {
             foreach (var assign in assignments)
             {

@@ -154,7 +154,7 @@ namespace IQToolkit.Data.Mapping
 
         public override string GetTableName(MappingEntity entity)
         {
-            return !string.IsNullOrEmpty(entity.EntityId) ? entity.EntityId : this.InferTableName(entity.EntityType);
+            return !string.IsNullOrEmpty(entity.EntityId) ? entity.EntityId : this.InferTableName(entity.StaticType);
         }
 
         private string InferTableName(Type rowType)

@@ -19,6 +19,14 @@ namespace Test
             return new SQLiteQueryProvider("Northwind.db3", new AttributeMapping(typeof(Test.NorthwindWithAttributes)));
         }
 
+        public class NorthwindMappingTests : Test.NorthwindMappingTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
+        }
+
         public class NorthwindTranslationTests : Test.NorthwindTranslationTests
         {
             protected override DbEntityProvider CreateProvider()

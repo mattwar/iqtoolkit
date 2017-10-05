@@ -32,7 +32,7 @@ namespace IQToolkit.Data
                 throw new ArgumentNullException(nameof(language));
 
             this.language = language;
-            this.mapping = mapping ?? new HybridMapping();
+            this.mapping = mapping ?? new AttributeMapping();
             this.policy = policy ?? QueryPolicy.Default;
             this.tables = new Dictionary<MappingEntity, IEntityTable>();
         }
@@ -98,7 +98,7 @@ namespace IQToolkit.Data
         protected virtual IEntityTable CreateTable(MappingEntity entity)
         {
             return (IEntityTable) Activator.CreateInstance(
-                typeof(EntityTable<>).MakeGenericType(entity.ElementType), 
+                typeof(EntityTable<>).MakeGenericType(entity.StaticType), 
                 new object[] { this, entity }
                 );
         }

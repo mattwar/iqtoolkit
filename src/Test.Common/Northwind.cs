@@ -10,7 +10,6 @@ namespace Test
     using IQToolkit;
     using IQToolkit.Data;
     using IQToolkit.Data.Mapping;
-
     public class Customer
     {
         public string CustomerID;

@@ -91,7 +91,6 @@
     <Compile Include="Common\Language\QueryLanguage.cs" />
     <Compile Include="Common\Language\QueryTypeSystem.cs" />
     <Compile Include="Common\Language\SqlFormatter.cs" />
-    <Compile Include="DynamicProvider.cs" />
     <Compile Include="DbFieldReader.cs" />
     <Compile Include="DbQueryType.cs" />
     <Compile Include="DbTypeSystem.cs" />

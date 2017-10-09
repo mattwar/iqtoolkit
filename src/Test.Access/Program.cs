@@ -3,7 +3,6 @@
 
 using IQToolkit.Data;
 using IQToolkit.Data.Access;
-using IQToolkit.Data.Dynamic;
 using IQToolkit.Data.Mapping;
 
 namespace Test

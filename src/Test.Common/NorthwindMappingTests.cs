@@ -43,37 +43,6 @@ namespace Test
             }
         }
 
-        class Basic_AttributesOnEntity_Strict
-        {
-            [Entity(Strict=true)]
-            [Table(Name = "Customers")]
-            public class Customer
-            {
-                [Column(Name = "CustomerID")]
-                public string ID;
-
-                [Column(Name = "ContactName")]
-                public string Name;
-
-                public string Phone;
-            }
-        }
-
-        public void TestBasicMapping_AttributesOnEntity_Strict()
-        {
-            var provider = this.GetProvider().WithMapping(new AttributeMapping());
-            var items = provider.GetTable<Basic_AttributesOnEntity_Strict.Customer>().ToList();
-
-            Assert.Equal(91, items.Count);
-
-            foreach (var item in items)
-            {
-                Assert.NotEqual(null, item.ID);
-                Assert.NotEqual(null, item.Name);
-                Assert.Equal(null, item.Phone);
-            }
-        }
-
         class Basic_AttributesOnEntity_RuntimeType
         {
             [Entity(RuntimeType = typeof(RuntimeCustomer))]
@@ -145,40 +114,7 @@ namespace Test
             }
         }
 
-        class Basic_AttributesOnContext_Strict
-        {
-            public class Customer
-            {
-                public string ID;
-                public string Name;
-                public string Phone;
-            }
-
-            public abstract class Context
-            {
-                [Entity(Strict=true)]
-                [Table(Name = "Customers")]
-                [Column(Member = "Customers.ID", Name = "CustomerID")] // legal to have context property preceding
-                [Column(Member = "Name", Name = "ContactName")]
-                public abstract IQueryable<Customer> Customers { get; }
-            }
-        }
-
-        public void TestBasicMapping_AttributesOnConext_Strict()
-        {
-            var provider = this.GetProvider().WithMapping(new AttributeMapping(typeof(Basic_AttributesOnContext_Strict.Context)));
-            var items = provider.GetTable<Basic_AttributesOnContext_Strict.Customer>().ToList();
-
-            Assert.Equal(91, items.Count);
-
-            foreach (var item in items)
-            {
-                Assert.NotEqual(null, item.ID);
-                Assert.NotEqual(null, item.Name);
-                Assert.Equal(null, item.Phone);
-            }
-        }
-
+        
         class Basic_AttributesOnContext_TableNameInferred
         {
             public class Customer
@@ -285,41 +221,6 @@ namespace Test
                 Assert.NotEqual(null, item.ID);
                 Assert.NotEqual(null, item.Name);
                 Assert.NotEqual(null, item.Phone);
-            }
-        }
-
-        class Basic_XmlMapped_Strict
-        {
-            public class Customer
-            {
-                public string ID;
-                public string Name;
-                public string Phone;
-            }
-
-            public static string Xml = @"
-<map>
-  <Entity Id=""Customer"" Strict=""true"">
-    <Table Name=""Customers""/>
-    <Column Member=""ID"" Name=""CustomerID""/>
-    <Column Member=""Name"" Name=""ContactName""/>
-  </Entity>
- </map>
-";
-        }
-
-        public void TestBasicMapping_XmlMapped_Strict()
-        {
-            var provider = this.GetProvider().WithMapping(XmlMapping.FromXml(Basic_XmlMapped_Strict.Xml));
-            var items = provider.GetTable<Basic_XmlMapped_Strict.Customer>().ToList();
-
-            Assert.Equal(91, items.Count);
-
-            foreach (var item in items)
-            {
-                Assert.NotEqual(null, item.ID);
-                Assert.NotEqual(null, item.Name);
-                Assert.Equal(null, item.Phone); // not included in strict mapping
             }
         }
 

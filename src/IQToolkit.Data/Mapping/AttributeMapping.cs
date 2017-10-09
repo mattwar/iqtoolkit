@@ -37,12 +37,6 @@ namespace IQToolkit.Data.Mapping
         /// If not specified it is the same as the entity type, the type the attribute is placed on.
         /// </summary>
         public Type RuntimeType { get; set; }
-
-        /// <summary>
-        /// If true, then the mapping is considered strict.
-        /// 1) includes class members with explicitly declared mapping attributes.
-        /// </summary>
-        public bool Strict { get; set; }
     }
 
     /// <summary>
@@ -262,13 +256,6 @@ namespace IQToolkit.Data.Mapping
         {
             var list = new List<MappingAttribute>();
             this.GetDeclaredMappingAttributes(entityType, entityId, parent, list);
-
-            // strict mode only lets declared attributes influence the mapping
-            var entityAttr = list.OfType<EntityAttribute>().FirstOrDefault();
-            if (entityAttr != null && entityAttr.Strict)
-            {
-                return list;
-            }
 
             if (parent == null)
             {

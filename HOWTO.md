@@ -699,7 +699,6 @@ but it is not possible to have the same member mapped more than once.*
 
 ### Mapping with XML Files
 
-### Strict Mapping
 
 ### Runtime Entity Types
 

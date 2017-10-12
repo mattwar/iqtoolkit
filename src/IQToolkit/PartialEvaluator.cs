@@ -54,6 +54,7 @@ namespace IQToolkit
         {
             HashSet<Expression> candidates;
             Func<ConstantExpression, Expression> onEval;
+            Boolean skipPostEval = false;
 
             private SubtreeEvaluator(HashSet<Expression> candidates, Func<ConstantExpression, Expression> onEval)
             {
@@ -77,6 +78,34 @@ namespace IQToolkit
                     return this.Evaluate(exp);
                 }
                 return base.Visit(exp);
+            }
+
+            protected override Expression VisitConditional(ConditionalExpression c)
+            {
+                // if the conditional test can be evaluated locally, rewrite expression
+                // to the valid case
+                if (this.candidates.Contains(c.Test))
+                {
+                    this.skipPostEval = true;
+
+                    Expression test = Evaluate(c.Test);
+
+                    this.skipPostEval = false;
+
+                    if (test is ConstantExpression && ((ConstantExpression)test).Type == typeof(Boolean))
+                    {                                                
+                        if ((Boolean)((ConstantExpression)test).Value)
+                        {
+                            return Visit(c.IfTrue);
+                        }
+                        else
+                        {
+                            return Visit(c.IfFalse);
+                        }
+                    }
+                }
+
+                return base.VisitConditional(c);
             }
 
             private Expression PostEval(ConstantExpression e)

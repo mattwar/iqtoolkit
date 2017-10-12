@@ -1717,6 +1717,22 @@ namespace Test
             Assert.Equal(true, value);
         }
 
+        public void TestConditionalWithInvalidCase()
+        {
+            Nullable<Boolean> hasOrders = null;
+
+            var query = db.Customers.Select(r => new
+            {
+                CustomerID = r.CustomerID,
+                HasOrders = hasOrders != null
+                                  ? (bool)hasOrders
+                                  : db.Orders.Any(o => o.CustomerID.Equals(r.CustomerID))
+            });
+
+            var test = query.ToList();
+            Assert.Equal(91, test.Count());
+        }
+
         public void TestSelectManyJoined()
         {
             var cods = 

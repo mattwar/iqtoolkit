@@ -242,7 +242,7 @@ namespace Test
 
             public static string Xml = @"
 <map>
-  <Entity Id = ""ICustomer"" RuntimeType=""Test.NorthwindMappingTests+Basic_XmlMapped_RuntimeType.RuntimeCustomer"">
+  <Entity Id = ""ICustomer"" RuntimeType=""Test.NorthwindMappingTests+Basic_XmlMapped_RuntimeType+RuntimeCustomer"">
     <Table Name=""Customers""/>
     <Column Member=""ID"" Name=""CustomerID""/>
     <Column Member=""Name"" Name=""ContactName""/>

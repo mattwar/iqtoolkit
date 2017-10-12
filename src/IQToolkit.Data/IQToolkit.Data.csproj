@@ -38,32 +38,31 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\bin\Debug\IQToolkit\</OutputPath>
+    <OutputPath>..\..\bin\Debug\IQToolkit.Data\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>..\..\bin\Debug\IQToolkit\IQToolkit.Data.xml</DocumentationFile>
+    <DocumentationFile>..\..\bin\Debug\IQToolkit.Data\IQToolkit.Data.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\Release\IQToolkit\</OutputPath>
+    <OutputPath>..\..\bin\Release\IQToolkit.Data\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>..\..\bin\Release\IQToolkit\IQToolkit.Data.XML</DocumentationFile>
+    <DocumentationFile>..\..\bin\Release\IQToolkit.Data\IQToolkit.Data.XML</DocumentationFile>
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
@@ -78,7 +77,6 @@
     <Compile Include="Common\Mapping\MappingTable.cs" />
     <Compile Include="Common\Mapping\QueryMapper.cs" />
     <Compile Include="Common\QueryPolice.cs" />
-    <Compile Include="DbEntityProvider.cs" />
     <Compile Include="Common\ExecutionBuilder.cs" />
     <Compile Include="Common\Expressions\Aggregator.cs" />
     <Compile Include="Common\Expressions\DbExpressionComparer.cs" />
@@ -91,9 +89,6 @@
     <Compile Include="Common\Language\QueryLanguage.cs" />
     <Compile Include="Common\Language\QueryTypeSystem.cs" />
     <Compile Include="Common\Language\SqlFormatter.cs" />
-    <Compile Include="DbFieldReader.cs" />
-    <Compile Include="DbQueryType.cs" />
-    <Compile Include="DbTypeSystem.cs" />
     <Compile Include="Common\Mapping\AdvancedMapping.cs" />
     <Compile Include="Common\Mapping\BasicMapping.cs" />
     <Compile Include="Common\Mapping\QueryMapping.cs" />
@@ -144,6 +139,7 @@
     <ProjectReference Include="..\IQToolkit\IQToolkit.csproj">
       <Project>{0DA62A7C-3B40-456F-A4B2-B3E19ED4080E}</Project>
       <Name>IQToolkit</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

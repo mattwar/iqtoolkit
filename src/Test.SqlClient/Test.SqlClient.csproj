@@ -71,6 +71,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IQToolkit.Data.Ado\IQToolkit.Data.Ado.csproj">
+      <Project>{130854d0-8529-49e1-8e56-8e7f64da3399}</Project>
+      <Name>IQToolkit.Data.Ado</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data.SqlClient\IQToolkit.Data.SqlClient.csproj">
       <Project>{3f003957-1b67-440b-bafe-c2b32886a429}</Project>
       <Name>IQToolkit.Data.SqlClient</Name>

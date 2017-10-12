@@ -76,17 +76,27 @@
     <Compile Include="SqlCeQueryProvider.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IQToolkit.Data.Ado\IQToolkit.Data.Ado.csproj">
+      <Project>{130854d0-8529-49e1-8e56-8e7f64da3399}</Project>
+      <Name>IQToolkit.Data.Ado</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data\IQToolkit.Data.csproj">
       <Project>{3A356510-9C25-4A94-87B9-EEB31B6A1303}</Project>
       <Name>IQToolkit.Data</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\IQToolkit\IQToolkit.csproj">
       <Project>{0DA62A7C-3B40-456F-A4B2-B3E19ED4080E}</Project>
       <Name>IQToolkit</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!--

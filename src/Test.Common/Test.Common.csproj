@@ -60,13 +60,20 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IQToolkit.Data.Ado\IQToolkit.Data.Ado.csproj">
+      <Project>{130854d0-8529-49e1-8e56-8e7f64da3399}</Project>
+      <Name>IQToolkit.Data.Ado</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data\IQToolkit.Data.csproj">
       <Project>{3a356510-9c25-4a94-87b9-eeb31b6a1303}</Project>
       <Name>IQToolkit.Data</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\IQToolkit\IQToolkit.csproj">
       <Project>{0da62a7c-3b40-456f-a4b2-b3e19ed4080e}</Project>
       <Name>IQToolkit</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\Test\Test.csproj">
       <Project>{2adfcebe-90ba-4841-9f5b-7321f65a4d13}</Project>

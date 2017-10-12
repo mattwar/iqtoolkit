@@ -56,6 +56,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IQToolkit.Data.Ado\IQToolkit.Data.Ado.csproj">
+      <Project>{130854d0-8529-49e1-8e56-8e7f64da3399}</Project>
+      <Name>IQToolkit.Data.Ado</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data.MySqlClient\IQToolkit.Data.MySqlClient.csproj">
       <Project>{5450ee6f-92f0-4f1f-b99f-5649a4e445fd}</Project>
       <Name>IQToolkit.Data.MySqlClient</Name>

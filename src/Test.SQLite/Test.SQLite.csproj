@@ -54,6 +54,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IQToolkit.Data.Ado\IQToolkit.Data.Ado.csproj">
+      <Project>{130854d0-8529-49e1-8e56-8e7f64da3399}</Project>
+      <Name>IQToolkit.Data.Ado</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data.Sqlite\IQToolkit.Data.SQLite.csproj">
       <Project>{e008624b-2344-420a-a514-4b2ad89906ec}</Project>
       <Name>IQToolkit.Data.SQLite</Name>

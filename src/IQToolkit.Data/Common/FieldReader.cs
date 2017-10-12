@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public abstract class FieldReader
     {
-        TypeCode[] typeCodes;
+        private TypeCode[] typeCodes;
 
         public FieldReader()
         {

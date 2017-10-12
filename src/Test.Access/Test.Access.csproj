@@ -58,6 +58,10 @@
       <Project>{c7388c7b-4cc9-4f1d-af36-6d4f6575ad04}</Project>
       <Name>IQToolkit.Data.Access</Name>
     </ProjectReference>
+    <ProjectReference Include="..\IQToolkit.Data.Ado\IQToolkit.Data.Ado.csproj">
+      <Project>{130854d0-8529-49e1-8e56-8e7f64da3399}</Project>
+      <Name>IQToolkit.Data.Ado</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IQToolkit.Data\IQToolkit.Data.csproj">
       <Project>{3a356510-9c25-4a94-87b9-eeb31b6a1303}</Project>
       <Name>IQToolkit.Data</Name>

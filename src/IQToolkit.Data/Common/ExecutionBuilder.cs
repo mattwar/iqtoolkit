@@ -14,20 +14,20 @@ using System.Text;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Builds an execution plan for a query expression
+    /// Builds an execution plan for a query expression.
     /// </summary>
     public class ExecutionBuilder : DbExpressionVisitor
     {
-        QueryPolicy policy;
-        QueryLinguist linguist;
-        Expression executor;
-        Scope scope;
-        bool isTop = true;
-        MemberInfo receivingMember;
-        int nReaders = 0;
-        List<ParameterExpression> variables = new List<ParameterExpression>();
-        List<Expression> initializers = new List<Expression>();
-        Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
+        private readonly QueryPolicy policy;
+        private readonly QueryLinguist linguist;
+        private readonly Expression executor;
+        private Scope scope;
+        private bool isTop = true;
+        private MemberInfo receivingMember;
+        private int nReaders = 0;
+        private readonly List<ParameterExpression> variables = new List<ParameterExpression>();
+        private readonly List<Expression> initializers = new List<Expression>();
+        private Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
 
         private ExecutionBuilder(QueryLinguist linguist, QueryPolicy policy, Expression executor)
         {

@@ -224,6 +224,48 @@ namespace Test
             }
         }
 
+        class Basic_XmlMapped_RuntimeType
+        {
+            public interface ICustomer
+            {
+                string ID { get; set; }
+                string Name { get; set; }
+                string Phone { get; set; }
+            }
+
+            public class RuntimeCustomer : ICustomer
+            {
+                public string ID { get; set; }
+                public string Name { get; set; }
+                public string Phone { get; set; }
+            }
+
+            public static string Xml = @"
+<map>
+  <Entity Id = ""ICustomer"" RuntimeType=""Test.NorthwindMappingTests+Basic_XmlMapped_RuntimeType.RuntimeCustomer"">
+    <Table Name=""Customers""/>
+    <Column Member=""ID"" Name=""CustomerID""/>
+    <Column Member=""Name"" Name=""ContactName""/>
+  </Entity>
+ </map>
+";
+        }
+
+        public void TestBasicMapping_XmlMapped_RuntimeType()
+        {
+            var provider = this.GetProvider().WithMapping(
+                XmlMapping.FromXml(Basic_XmlMapped_RuntimeType.Xml, typeof(Basic_XmlMapped_RuntimeType.RuntimeCustomer).Assembly));
+            var items = provider.GetTable<Basic_XmlMapped_RuntimeType.ICustomer>().ToList();
+
+            Assert.Equal(91, items.Count);
+
+            foreach (var item in items)
+            {
+                Assert.NotEqual(null, item.ID);
+                Assert.NotEqual(null, item.Name);
+                Assert.NotEqual(null, item.Phone);
+            }
+        }
         #endregion
 
         #region Associations

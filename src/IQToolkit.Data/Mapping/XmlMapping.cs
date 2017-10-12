@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace IQToolkit.Data.Mapping
@@ -11,19 +12,27 @@ namespace IQToolkit.Data.Mapping
     using Common;
 
     /// <summary>
-    /// A <see cref="QueryMapping"/> stored in XML.
+    /// A <see cref="QueryMapping"/> stored in XML elements.
     /// </summary>
     public class XmlMapping : AttributeMapping
     {
+        private readonly IReadOnlyList<Assembly> assemblies;
         private readonly Dictionary<string, XElement> entities;
+
         private static readonly XName EntityElementName = XName.Get("Entity");
         private static readonly XName NestedEntityElementName = XName.Get("NestedEntity");
         private static readonly XName EntityIdPropertyName = XName.Get(nameof(EntityAttribute.Id));
         private static readonly XName NestedEntityMemberName = XName.Get(nameof(MemberAttribute.Member));
-        
-        public XmlMapping(XElement root)
+
+        /// <summary>
+        /// Constructs a new instance of <see cref="XmlMapping"/>
+        /// </summary>
+        /// <param name="root">The root node of the xml mapping tree that contains the entity elements.</param>
+        /// <param name="assemblies">A list of zero or more assemblies that will be used to find types mentioned in the mapping.</param>
+        public XmlMapping(XElement root, IEnumerable<Assembly> assemblies)
             : base(contextType: null)
         {
+            this.assemblies = assemblies.ToReadOnly();
             this.entities = root.Descendants()
                                 .Where(e => e.Name == EntityElementName || e.Name == NestedEntityElementName)
                                 .ToDictionary(GetEntityId);
@@ -53,13 +62,24 @@ namespace IQToolkit.Data.Mapping
             }
         }
 
+        /// <summary>
+        /// Creates a <see cref="XmlMapping"/> from xml text.
+        /// </summary>
+        /// <param name="xml">The text of the xml mapping.</param>
+        /// <param name="assemblies">A list of zero or more assemblies that will be used to find types mentioned in the mapping.</param>
+        public static XmlMapping FromXml(string xml, IEnumerable<Assembly> assemblies)
+        {
+            return new XmlMapping(XElement.Parse(xml), assemblies.ToReadOnly());
+        }
 
         /// <summary>
         /// Creates a <see cref="XmlMapping"/> from xml text.
         /// </summary>
-        public static XmlMapping FromXml(string xml)
+        /// <param name="xml">The text of the xml mapping.</param>
+        /// <param name="assemblies">A list of zero or more assemblies that will be used to find types mentioned in the mapping.</param>
+        public static XmlMapping FromXml(string xml, params Assembly[] assemblies)
         {
-            return new XmlMapping(XElement.Parse(xml));
+            return FromXml(xml, (IEnumerable<Assembly>)assemblies);
         }
 
         protected override void GetDeclaredMappingAttributes(Type entityType, string entityId, ParentEntity parent, List<MappingAttribute> list)
@@ -127,7 +147,7 @@ namespace IQToolkit.Data.Mapping
 
         private Type FindType(string name)
         {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var assembly in this.assemblies)
             {
                 Type type = assembly.GetType(name);
                 if (type != null)

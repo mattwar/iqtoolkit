@@ -25,6 +25,7 @@ namespace IQToolkit
                     roc = new List<T>(sequence).AsReadOnly();
                 }
             }
+
             return roc;
         }
 

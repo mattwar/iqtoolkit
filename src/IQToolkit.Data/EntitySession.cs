@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace IQToolkit.Data
 {
@@ -348,12 +349,26 @@ namespace IQToolkit.Data
                     case SubmitAction.Delete:
                         this.Table.Delete(item.Instance);
                         return true;
+
                     case SubmitAction.Insert:
-                        this.Table.Insert(item.Instance);
+                        var generatedKeySelector = this.GetGeneratedKeySelector();
+
+                        if (generatedKeySelector != null)
+                        {
+                            var keyValues = this.Table.Insert((T)item.Instance, generatedKeySelector);
+                            ApplyGeneratedKeyValues(item, keyValues);
+                        }
+                        else
+                        {
+                            this.Table.Insert((T)item.Instance);
+                        }
+
                         return true;
+
                     case SubmitAction.InsertOrUpdate:
                         this.Table.InsertOrUpdate(item.Instance);
                         return true;
+
                     case SubmitAction.PossibleUpdate:
                         if (item.Original != null &&
                             this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
@@ -362,9 +377,11 @@ namespace IQToolkit.Data
                             return true;
                         }
                         break;
+
                     case SubmitAction.Update:
                         this.Table.Update(item.Instance);
                         return true;
+
                     default:
                         break; // do nothing
                 }
@@ -375,6 +392,64 @@ namespace IQToolkit.Data
             bool ITrackedTable.SubmitChanges(TrackedItem item)
             {
                 return this.SubmitChanges(item);
+            }
+
+            private void ApplyGeneratedKeyValues(TrackedItem item, object[] keyValues)
+            {
+                // remove from tracked item
+                this.tracked.Remove((T) item.Instance);
+ 
+                var generatedKeys = GetGeneratedKeys();
+                for (int i = 0; i < generatedKeys.Length; i++)
+                {
+                    generatedKeys[i].SetValue((T) item.Instance, keyValues[i]);
+                }
+ 
+                // re-add tracked item to update its key
+                this.tracked[(T)item.Instance] = item;
+            }
+ 
+            private MemberInfo[] generatedKeys;
+            private MemberInfo[] GetGeneratedKeys()
+            {
+                if (generatedKeys == null)
+                {
+                    generatedKeys = this.Mapping.GetPrimaryKeyMembers(this.Entity)
+                                        .Where(k => this.Mapping.IsGenerated(this.Entity, k)).ToArray();
+                }
+ 
+                return generatedKeys;
+            }
+ 
+            private Expression<Func<T, object[]>> generatedKeySelector;
+            private Expression<Func<T, object[]>> GetGeneratedKeySelector()
+            {
+                var generatedKeys = GetGeneratedKeys();
+                if (generatedKeys.Length > 0)
+                {
+                    var e = Expression.Parameter(typeof(T), "entity");
+                    var arrayConstruction = Expression.NewArrayInit(typeof(object), generatedKeys.Select(gk => Expression.Convert(GetMemberAccess(e, gk), typeof(object))).ToArray());
+                    generatedKeySelector = Expression.Lambda<Func<T, object[]>>(arrayConstruction, e);
+                }
+ 
+                return generatedKeySelector;
+            }
+ 
+            private Expression GetMemberAccess(Expression expression, MemberInfo member)
+            {
+                var fi = member as FieldInfo;
+                if (fi != null)
+                {
+                    return Expression.Field(expression, fi);
+                }
+
+                var pi = member as PropertyInfo;
+                if (pi != null)
+                {
+                    return Expression.Property(expression, pi);
+                }
+
+                throw new InvalidOperationException();
             }
 
             private void AcceptChanges(TrackedItem item)

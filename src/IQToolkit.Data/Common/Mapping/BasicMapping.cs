@@ -102,38 +102,6 @@ namespace IQToolkit.Data.Common
         }
 
         /// <summary>
-        /// Determines if a property is computed after insert or update
-        /// </summary>
-        public virtual bool IsComputed(MappingEntity entity, MemberInfo member)
-        {
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if a property is generated on the server during insert
-        /// </summary>
-        public virtual bool IsGenerated(MappingEntity entity, MemberInfo member)
-        {
-            return false;
-        }
-        
-        /// <summary>
-        /// Determines if a property should not be written back to database
-        /// </summary>
-        public virtual bool IsReadOnly(MappingEntity entity, MemberInfo member)
-        {
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if a property can be part of an update operation
-        /// </summary>
-        public virtual bool IsUpdatable(MappingEntity entity, MemberInfo member)
-        {
-            return !this.IsPrimaryKey(entity, member) && !this.IsReadOnly(entity, member);   
-        }
-
-        /// <summary>
         /// The type of the entity on the other side of the relationship
         /// </summary>
         public virtual MappingEntity GetRelatedEntity(MappingEntity entity, MemberInfo member)

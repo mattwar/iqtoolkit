@@ -77,6 +77,38 @@ namespace IQToolkit.Data.Common
         }
 
         /// <summary>
+        /// True if a property is computed after insert or update.
+        /// </summary>
+        public virtual bool IsComputed(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// True if a property value is generated on the server during insert.
+        /// </summary>
+        public virtual bool IsGenerated(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// True if a property should not be updated.
+        /// </summary>
+        public virtual bool IsReadOnly(MappingEntity entity, MemberInfo member)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// True if a property can be part of an update operation
+        /// </summary>
+        public virtual bool IsUpdatable(MappingEntity entity, MemberInfo member)
+        {
+            return !this.IsPrimaryKey(entity, member) && !this.IsReadOnly(entity, member);
+        }
+
+        /// <summary>
         /// Determines whether a given expression can be executed locally. 
         /// (It contains no parts that should be translated to the target environment.)
         /// </summary>

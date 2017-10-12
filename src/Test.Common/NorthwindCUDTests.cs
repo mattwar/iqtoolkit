@@ -909,5 +909,26 @@ namespace Test
             cust2.City = "ChicagoX";
             Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
         }
+
+         [ExcludeProvider("Access")] // Access does not auto generate the OrderID
+         public void TestSessionGeneratedId()
+         {
+             this.TestInsertCustomerNoResult(); // create customer "XX1"
+ 
+             NorthwindSession ns = new NorthwindSession(this.GetProvider());
+ 
+             var order = new Order
+             {
+                 CustomerID = "XX1",
+                 OrderDate = DateTime.Today,
+             };
+ 
+             ns.Orders.InsertOnSubmit(order);
+ 
+             Assert.Equal(0, order.OrderID);
+             ns.SubmitChanges();
+ 
+             Assert.NotEqual(0, order.OrderID);
+         }
     }
 }

@@ -15,9 +15,9 @@
     <files>
         <file src="..\bin\Release\IQToolkit\IQToolkit.dll" target="lib\net45\IQToolkit.dll" />
         <file src="..\bin\Release\IQToolkit\IQToolkit.XML" target="lib\net45\IQToolkit.xml" />
-        <file src="..\bin\Release\IQToolkit\IQToolkit.Data.dll" target="lib\net45\IQToolkit.Data.dll" />
-        <file src="..\bin\Release\IQToolkit\IQToolkit.Data.XML" target="lib\net45\IQToolkit.Data.xml" />
-        <file src="..\bin\Release\IQToolkit\IQToolkit.Data.Ado.dll" target="lib\net45\IQToolkit.Data.dll" />
-        <file src="..\bin\Release\IQToolkit\IQToolkit.Data.Ado.XML" target="lib\net45\IQToolkit.Data.xml" />
+        <file src="..\bin\Release\IQToolkit.Data\IQToolkit.Data.dll" target="lib\net45\IQToolkit.Data.dll" />
+        <file src="..\bin\Release\IQToolkit.Data\IQToolkit.Data.XML" target="lib\net45\IQToolkit.Data.xml" />
+        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.dll" target="lib\net45\IQToolkit.Data.dll" />
+        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.XML" target="lib\net45\IQToolkit.Data.xml" />
     </files>
 </package>

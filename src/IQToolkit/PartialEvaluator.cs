@@ -99,6 +99,7 @@ namespace IQToolkit
             private Expression Evaluate(Expression e)
             {
                 Type type = e.Type;
+
                 if (e.NodeType == ExpressionType.Convert)
                 {
                     // check for unnecessary convert & strip them
@@ -108,6 +109,7 @@ namespace IQToolkit
                         e = ((UnaryExpression)e).Operand;
                     }
                 }
+
                 if (e.NodeType == ExpressionType.Constant)
                 {
                     // in case we actually threw out a nullable conversion above, simulate it here
@@ -121,6 +123,7 @@ namespace IQToolkit
                         return Expression.Constant(((ConstantExpression)e).Value, type);
                     }
                 }
+
                 var me = e as MemberExpression;
                 if (me != null)
                 {
@@ -133,10 +136,12 @@ namespace IQToolkit
                         return this.PostEval(Expression.Constant(me.Member.GetValue(ce.Value), type));
                     }
                 }
-                if (type.IsValueType)
+
+                if (type.GetTypeInfo().IsValueType)
                 {
                     e = Expression.Convert(e, typeof(object));
                 }
+
                 Expression<Func<object>> lambda = Expression.Lambda<Func<object>>(e);
 #if NOREFEMIT
                 Func<object> fn = ExpressionEvaluator.CreateDelegate(lambda);

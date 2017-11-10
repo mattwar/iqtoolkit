@@ -137,7 +137,7 @@ namespace IQToolkit.Data.Common
 
         private bool IsNumeric(Type type)
         {
-            switch (Type.GetTypeCode(type)) {
+            switch (TypeHelper.GetTypeCode(type)) {
                 case TypeCode.Boolean:
                 case TypeCode.Byte:
                 case TypeCode.Decimal:

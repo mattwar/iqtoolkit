@@ -111,10 +111,10 @@ namespace IQToolkit.Data.Access
 
             protected override OleDbType GetOleDbType(QueryType type)
             {
-                DbQueryType sqlType = type as DbQueryType;
+                SqlQueryType sqlType = type as SqlQueryType;
                 if (sqlType != null)
                 {
-                    return ToOleDbType(sqlType.SqlDbType);
+                    return ToOleDbType(sqlType.SqlType);
                 }
 
                 return base.GetOleDbType(type);

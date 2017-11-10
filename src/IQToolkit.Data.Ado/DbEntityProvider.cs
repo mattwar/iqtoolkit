@@ -267,7 +267,7 @@ namespace IQToolkit.Data
 
                 if (type != vtype)
                 {
-                    if (type.IsEnum)
+                    if (type.GetTypeInfo().IsEnum)
                     {
                         if (vtype == typeof(string))
                         {
@@ -324,6 +324,7 @@ namespace IQToolkit.Data
             {
                 var reader = command.ExecuteReader();
 
+#if false
                 if (this.BufferResultRows)
                 {
                     // use data table to buffer results
@@ -335,6 +336,7 @@ namespace IQToolkit.Data
                     table.Load(reader);
                     reader = table.CreateDataReader();
                 }
+#endif
 
                 return reader;
             }
@@ -353,7 +355,7 @@ namespace IQToolkit.Data
                 {
                     if (closeReader)
                     {
-                        reader.Close();
+                        ((IDataReader)reader).Close();
                     }
                 }
             }
@@ -456,7 +458,7 @@ namespace IQToolkit.Data
                     }
                     finally
                     {
-                        reader.Close();
+                        ((IDataReader)reader).Close();
                     }
                 }
             }
@@ -479,7 +481,7 @@ namespace IQToolkit.Data
                     }
                     finally
                     {
-                        reader.Close();
+                        ((IDataReader)reader).Close();
                     }
                 }
                 finally

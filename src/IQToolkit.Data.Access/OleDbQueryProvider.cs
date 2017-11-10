@@ -56,68 +56,68 @@ namespace IQToolkit.Data.OleDb
 
             protected virtual OleDbType GetOleDbType(QueryType type)
             {
-                return ToOleDbType(((DbQueryType)type).SqlDbType);
+                return ToOleDbType(((SqlQueryType)type).SqlType);
             }
         }
 
-        public static OleDbType ToOleDbType(SqlDbType dbType)
+        public static OleDbType ToOleDbType(SqlType dbType)
         {
             switch (dbType)
             {
-                case SqlDbType.BigInt:
+                case SqlType.BigInt:
                     return OleDbType.BigInt;
-                case SqlDbType.Binary:
+                case SqlType.Binary:
                     return OleDbType.Binary;
-                case SqlDbType.Bit:
+                case SqlType.Bit:
                     return OleDbType.Boolean;
-                case SqlDbType.Char:
+                case SqlType.Char:
                     return OleDbType.Char;
-                case SqlDbType.Date:
+                case SqlType.Date:
                     return OleDbType.Date;
-                case SqlDbType.DateTime:
-                case SqlDbType.SmallDateTime:
-                case SqlDbType.DateTime2:
-                case SqlDbType.DateTimeOffset:
+                case SqlType.DateTime:
+                case SqlType.SmallDateTime:
+                case SqlType.DateTime2:
+                case SqlType.DateTimeOffset:
                     return OleDbType.DBTimeStamp;
-                case SqlDbType.Decimal:
+                case SqlType.Decimal:
                     return OleDbType.Decimal;
-                case SqlDbType.Float:
-                case SqlDbType.Real:
+                case SqlType.Float:
+                case SqlType.Real:
                     return OleDbType.Double;
-                case SqlDbType.Image:
+                case SqlType.Image:
                     return OleDbType.LongVarBinary;
-                case SqlDbType.Int:
+                case SqlType.Int:
                     return OleDbType.Integer;
-                case SqlDbType.Money:
-                case SqlDbType.SmallMoney:
+                case SqlType.Money:
+                case SqlType.SmallMoney:
                     return OleDbType.Currency;
-                case SqlDbType.NChar:
+                case SqlType.NChar:
                     return OleDbType.WChar;
-                case SqlDbType.NText:
+                case SqlType.NText:
                     return OleDbType.LongVarChar;
-                case SqlDbType.NVarChar:
+                case SqlType.NVarChar:
                     return OleDbType.VarWChar;
-                case SqlDbType.SmallInt:
+                case SqlType.SmallInt:
                     return OleDbType.SmallInt;
-                case SqlDbType.Text:
+                case SqlType.Text:
                     return OleDbType.LongVarChar;
-                case SqlDbType.Time:
+                case SqlType.Time:
                     return OleDbType.DBTime;
-                case SqlDbType.Timestamp:
+                case SqlType.Timestamp:
                     return OleDbType.Binary;
-                case SqlDbType.TinyInt:
+                case SqlType.TinyInt:
                     return OleDbType.TinyInt;
-                case SqlDbType.Udt:
+                case SqlType.Udt:
                     return OleDbType.Variant;
-                case SqlDbType.UniqueIdentifier:
+                case SqlType.UniqueIdentifier:
                     return OleDbType.Guid;
-                case SqlDbType.VarBinary:
+                case SqlType.VarBinary:
                     return OleDbType.VarBinary;
-                case SqlDbType.VarChar:
+                case SqlType.VarChar:
                     return OleDbType.VarChar;
-                case SqlDbType.Variant:
+                case SqlType.Variant:
                     return OleDbType.Variant;
-                case SqlDbType.Xml:
+                case SqlType.Xml:
                     return OleDbType.VarWChar;
                 default:
                     throw new InvalidOperationException(string.Format("Unhandled sql type: {0}", dbType));

@@ -6,38 +6,34 @@ using System.Data;
 namespace IQToolkit.Data
 {
     using Common;
+    using System;
 
     /// <summary>
-    /// A <see cref="QueryType"/> defined over <see cref="SqlDbType"/>.
+    /// A <see cref="QueryType"/> defined over <see cref="SqlType"/>.
     /// </summary>
-    public class DbQueryType : QueryType
+    public class SqlQueryType : QueryType
     {
-        private readonly SqlDbType dbType;
+        private readonly SqlType sqlType;
         private readonly bool notNull;
         private readonly int length;
         private readonly short precision;
         private readonly short scale;
 
         /// <summary>
-        /// Construct a <see cref="DbQueryType"/>
+        /// Construct a <see cref="SqlQueryType"/>
         /// </summary>
-        public DbQueryType(SqlDbType dbType, bool notNull, int length, short precision, short scale)
+        public SqlQueryType(SqlType sqlType, bool notNull, int length, short precision, short scale)
         {
-            this.dbType = dbType;
+            this.sqlType = sqlType;
             this.notNull = notNull;
             this.length = length;
             this.precision = precision;
             this.scale = scale;
         }
 
-        public DbType DbType
+        public SqlType SqlType
         {
-            get { return DbTypeSystem.GetDbType(this.dbType); }
-        }
-
-        public SqlDbType SqlDbType
-        {
-            get { return this.dbType; }
+            get { return this.sqlType; }
         }
 
         public override int Length

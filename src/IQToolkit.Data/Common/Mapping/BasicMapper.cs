@@ -63,7 +63,7 @@ namespace IQToolkit.Data.Common
                 pc.Projector
                 );
 
-            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.StaticType);
+            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.StaticType.GetTypeInfo());
         }
 
         public override EntityExpression GetEntityExpression(Expression root, MappingEntity entity)
@@ -108,7 +108,7 @@ namespace IQToolkit.Data.Common
 
             // handle cases where members are not directly assignable
             EntityAssignment[] readonlyMembers = assignments.Where(b => TypeHelper.IsReadOnly(b.Member)).ToArray();
-            ConstructorInfo[] cons = entity.RuntimeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            ConstructorInfo[] cons = entity.RuntimeType.GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic && !c.IsStatic).ToArray();
             bool hasNoArgConstructor = cons.Any(c => c.GetParameters().Length == 0);
 
             if (readonlyMembers.Length > 0 || !hasNoArgConstructor)
@@ -140,7 +140,7 @@ namespace IQToolkit.Data.Common
             Expression result;
             if (assignments.Count > 0)
             {
-                if (entity.StaticType.IsInterface)
+                if (entity.StaticType.GetTypeInfo().IsInterface)
                 {
                     assignments = this.RemapAssignments(assignments, entity.RuntimeType).ToList();
                 }
@@ -164,10 +164,10 @@ namespace IQToolkit.Data.Common
         {
             foreach (var assign in assignments)
             {
-                MemberInfo[] members = entityType.GetMember(assign.Member.Name, BindingFlags.Instance | BindingFlags.Public);
-                if (members != null && members.Length > 0)
+                var member = TypeHelper.GetDataMember(entityType, assign.Member.Name);
+                if (member != null)
                 {
-                    yield return new EntityAssignment(members[0], assign.Expression);
+                    yield return new EntityAssignment(member, assign.Expression);
                 }
                 else
                 {
@@ -205,11 +205,12 @@ namespace IQToolkit.Data.Common
                 }
                 else
                 {
-                    MemberInfo[] mems = cons.DeclaringType.GetMember(p.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
-                    if (mems != null && mems.Length > 0)
+                    // find member with same name as parameter and associate it in object initializer
+                    MemberInfo mem = TypeHelper.GetDataMembers(cons.DeclaringType).Where(m => string.Compare(m.Name, p.Name, ignoreCase: true) == 0).FirstOrDefault();
+                    if (mem != null)
                     {
                         args[i] = Expression.Constant(TypeHelper.GetDefault(p.ParameterType), p.ParameterType);
-                        mis[i] = mems[0];
+                        mis[i] = mem;
                     }
                     else
                     {

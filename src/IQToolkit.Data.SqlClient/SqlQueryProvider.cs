@@ -104,19 +104,20 @@ namespace IQToolkit.Data.SqlClient
 
             protected override void AddParameter(DbCommand command, QueryParameter parameter, object value)
             {
-                DbQueryType sqlType = (DbQueryType)parameter.QueryType;
+                SqlQueryType sqlType = (SqlQueryType)parameter.QueryType;
+
                 if (sqlType == null)
                 {
-                    sqlType = (DbQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                    sqlType = (SqlQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
                 }
 
                 int len = sqlType.Length;
-                if (len == 0 && DbTypeSystem.IsVariableLength(sqlType.SqlDbType))
+                if (len == 0 && SqlTypeSystem.IsVariableLength(sqlType.SqlType))
                 {
                     len = Int32.MaxValue;
                 }
 
-                var p = ((SqlCommand)command).Parameters.Add("@" + parameter.Name, sqlType.SqlDbType, len);
+                var p = ((SqlCommand)command).Parameters.Add("@" + parameter.Name, (System.Data.SqlDbType)(int)sqlType.SqlType, len);
                 if (sqlType.Precision != 0)
                 {
                     p.Precision = (byte)sqlType.Precision;
@@ -130,6 +131,7 @@ namespace IQToolkit.Data.SqlClient
                 p.Value = value ?? DBNull.Value;
             }
 
+#if false // missing support in .NetStandard version of API
             public override IEnumerable<int> ExecuteBatch(QueryCommand query, IEnumerable<object[]> paramSets, int batchSize, bool stream)
             {
                 this.StartUsingConnection();
@@ -203,6 +205,7 @@ namespace IQToolkit.Data.SqlClient
                 this.LogMessage(string.Format("-- End SQL Batching --"));
                 this.LogMessage("");
             }
+#endif
         }
     }
 }

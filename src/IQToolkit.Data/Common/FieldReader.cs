@@ -681,7 +681,7 @@ namespace IQToolkit.Data.Common
                 switch (typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = Type.GetTypeCode(this.GetFieldType(ordinal));
+                        typeCodes[ordinal] = TypeHelper.GetTypeCode(this.GetFieldType(ordinal));
                         continue;
                     case TypeCode.Byte:
                         return this.GetByte(ordinal).ToString();
@@ -758,7 +758,7 @@ namespace IQToolkit.Data.Common
         private TypeCode GetTypeCode(int ordinal)
         {
             Type type = this.GetFieldType(ordinal);
-            TypeCode tc = Type.GetTypeCode(type);
+            TypeCode tc = TypeHelper.GetTypeCode(type);
             if (tc == TypeCode.Object)
             {
                 if (type == typeof(Guid))
@@ -775,7 +775,7 @@ namespace IQToolkit.Data.Common
         {
             if (_readerMethods == null)
             {
-                var meths = typeof(FieldReader).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name.StartsWith("Read")).ToList();
+                var meths = typeof(FieldReader).GetTypeInfo().DeclaredMethods.Where(m => m.IsPublic && !m.IsStatic && m.Name.StartsWith("Read")).ToList();
                 _readerMethods = meths.ToDictionary(m => m.ReturnType);
                 _miReadValue = meths.Single(m => m.Name == "ReadValue");
                 _miReadNullableValue = meths.Single(m => m.Name == "ReadNullableValue");

@@ -35,14 +35,17 @@ namespace IQToolkit.Data.Access
             if (names.Count > 0)
             {
                 this.Write("PARAMETERS ");
+
                 for (int i = 0, n = names.Count; i < n; i++)
                 {
                     if (i > 0)
                         this.Write(", ");
+
                     this.WriteParameterName(names[i].Name);
                     this.Write(" ");
                     this.Write(this.Language.TypeSystem.Format(names[i].QueryType, true));
                 }
+
                 this.Write(";");
                 this.WriteLine(Indentation.Same);
             }

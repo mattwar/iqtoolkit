@@ -215,10 +215,9 @@ namespace IQToolkit.Data.Common
         public virtual bool IsScalar(Type type)
         {
             type = TypeHelper.GetNonNullableType(type);
-            switch (Type.GetTypeCode(type))
+            switch (TypeHelper.GetTypeCode(type))
             {
                 case TypeCode.Empty:
-                case TypeCode.DBNull:
                     return false;
                 case TypeCode.Object:
                     return

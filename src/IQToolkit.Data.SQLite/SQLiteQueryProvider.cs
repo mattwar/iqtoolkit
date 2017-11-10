@@ -139,9 +139,12 @@ namespace IQToolkit.Data.SQLite
             protected override void AddParameter(DbCommand command, QueryParameter parameter, object value)
             {
                 QueryType qt = parameter.QueryType;
+
                 if (qt == null)
                     qt = this.provider.Language.TypeSystem.GetColumnType(parameter.Type);
-                var p = ((SQLiteCommand)command).Parameters.Add(parameter.Name, ((DbQueryType)qt).DbType, qt.Length);
+
+                var p = ((SQLiteCommand)command).Parameters.Add(parameter.Name, ((SqlQueryType)qt).SqlType.ToDbType(), qt.Length);
+
                 if (qt.Length != 0)
                 {
                     p.Size = qt.Length;
@@ -150,6 +153,7 @@ namespace IQToolkit.Data.SQLite
                 {
                     p.Size = qt.Scale;
                 }
+
                 p.Value = value ?? DBNull.Value;
             }
         }

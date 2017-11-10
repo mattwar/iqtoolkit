@@ -8,9 +8,9 @@ namespace IQToolkit.Data.SQLite
 {
     using IQToolkit.Data.Common;
 
-    public class SQLiteTypeSystem : DbTypeSystem
+    public class SQLiteTypeSystem : SqlTypeSystem
     {
-        public override SqlDbType GetSqlType(string typeName)
+        public override SqlType GetSqlType(string typeName)
         {
             if (string.Compare(typeName, "TEXT", true) == 0 ||
                 string.Compare(typeName, "CHAR", true) == 0 ||
@@ -18,24 +18,24 @@ namespace IQToolkit.Data.SQLite
                 string.Compare(typeName, "VARYINGCHARACTER", true) == 0 ||
                 string.Compare(typeName, "NATIONALVARYINGCHARACTER", true) == 0)
             {
-                return SqlDbType.VarChar;
+                return SqlType.VarChar;
             }
             else if (string.Compare(typeName, "INT", true) == 0 ||
                 string.Compare(typeName, "INTEGER", true) == 0)
             {
-                return SqlDbType.BigInt;
+                return SqlType.BigInt;
             }
             else if (string.Compare(typeName, "BLOB", true) == 0)
             {
-                return SqlDbType.Binary;
+                return SqlType.Binary;
             }
             else if (string.Compare(typeName, "BOOLEAN", true) == 0)
             {
-                return SqlDbType.Bit;
+                return SqlType.Bit;
             }
             else if (string.Compare(typeName, "NUMERIC", true) == 0)
             {
-                return SqlDbType.Decimal;
+                return SqlType.Decimal;
             }
             else
             {
@@ -46,25 +46,25 @@ namespace IQToolkit.Data.SQLite
         public override string Format(QueryType type, bool suppressSize)
         {
             StringBuilder sb = new StringBuilder();
-            DbQueryType sqlType = (DbQueryType)type;
-            SqlDbType sqlDbType = sqlType.SqlDbType;
+            SqlQueryType sqlType = (SqlQueryType)type;
+            SqlType sqlDbType = sqlType.SqlType;
 
             switch (sqlDbType)
             {
-                case SqlDbType.BigInt:
-                case SqlDbType.SmallInt:
-                case SqlDbType.Int:
-                case SqlDbType.TinyInt:
+                case SqlType.BigInt:
+                case SqlType.SmallInt:
+                case SqlType.Int:
+                case SqlType.TinyInt:
                     sb.Append("INTEGER");
                     break;
-                case SqlDbType.Bit:
+                case SqlType.Bit:
                     sb.Append("BOOLEAN");
                     break;
-                case SqlDbType.SmallDateTime:
+                case SqlType.SmallDateTime:
                     sb.Append("DATETIME");
                     break;
-                case SqlDbType.Char:
-                case SqlDbType.NChar:
+                case SqlType.Char:
+                case SqlType.NChar:
                     sb.Append("CHAR");
                     if (type.Length > 0 && !suppressSize)
                     {
@@ -73,10 +73,10 @@ namespace IQToolkit.Data.SQLite
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Variant:
-                case SqlDbType.Binary:
-                case SqlDbType.Image:
-                case SqlDbType.UniqueIdentifier: //There is a setting to make it string, look at later
+                case SqlType.Variant:
+                case SqlType.Binary:
+                case SqlType.Image:
+                case SqlType.UniqueIdentifier: //There is a setting to make it string, look at later
                     sb.Append("BLOB");
                     if (type.Length > 0 && !suppressSize)
                     {
@@ -85,12 +85,12 @@ namespace IQToolkit.Data.SQLite
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Xml:
-                case SqlDbType.NText:
-                case SqlDbType.NVarChar:
-                case SqlDbType.Text:
-                case SqlDbType.VarBinary:
-                case SqlDbType.VarChar:
+                case SqlType.Xml:
+                case SqlType.NText:
+                case SqlType.NVarChar:
+                case SqlType.Text:
+                case SqlType.VarBinary:
+                case SqlType.VarChar:
                     sb.Append("TEXT");
                     if (type.Length > 0 && !suppressSize)
                     {
@@ -99,9 +99,9 @@ namespace IQToolkit.Data.SQLite
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Decimal:
-                case SqlDbType.Money:
-                case SqlDbType.SmallMoney:
+                case SqlType.Decimal:
+                case SqlType.Money:
+                case SqlType.SmallMoney:
                     sb.Append("NUMERIC");
                     if (type.Precision != 0)
                     {
@@ -110,8 +110,8 @@ namespace IQToolkit.Data.SQLite
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Float:
-                case SqlDbType.Real:
+                case SqlType.Float:
+                case SqlType.Real:
                     sb.Append("FLOAT");
                     if (type.Precision != 0)
                     {
@@ -120,9 +120,9 @@ namespace IQToolkit.Data.SQLite
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Date:
-                case SqlDbType.DateTime:
-                case SqlDbType.Timestamp:
+                case SqlType.Date:
+                case SqlType.DateTime:
+                case SqlType.Timestamp:
                 default:
                     sb.Append(sqlDbType);
                     break;

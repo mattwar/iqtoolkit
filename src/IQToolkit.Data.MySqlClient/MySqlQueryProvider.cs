@@ -58,13 +58,13 @@ namespace IQToolkit.Data.MySqlClient
 
             protected override void AddParameter(DbCommand command, QueryParameter parameter, object value)
             {
-                DbQueryType sqlType = (DbQueryType)parameter.QueryType;
+                SqlQueryType sqlType = (SqlQueryType)parameter.QueryType;
                 if (sqlType == null)
                 {
-                    sqlType = (DbQueryType)this.provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                    sqlType = (SqlQueryType)this.provider.Language.TypeSystem.GetColumnType(parameter.Type);
                 }
 
-                var p = ((MySqlCommand)command).Parameters.Add(parameter.Name, ToMySqlDbType(sqlType.SqlDbType), sqlType.Length);
+                var p = ((MySqlCommand)command).Parameters.Add(parameter.Name, ToMySqlDbType(sqlType.SqlType), sqlType.Length);
                 if (sqlType.Precision != 0)
                 {
                     p.Precision = (byte)sqlType.Precision;
@@ -79,54 +79,54 @@ namespace IQToolkit.Data.MySqlClient
             }
         }
 
-        public static MySqlDbType ToMySqlDbType(SqlDbType dbType)
+        public static MySqlDbType ToMySqlDbType(SqlType dbType)
         {
             switch (dbType)
             {
-                case SqlDbType.BigInt:
+                case SqlType.BigInt:
                     return MySqlDbType.Int64;
-                case SqlDbType.Binary:
+                case SqlType.Binary:
                     return MySqlDbType.Binary;
-                case SqlDbType.Bit:
+                case SqlType.Bit:
                     return MySqlDbType.Bit;
-                case SqlDbType.NChar:
-                case SqlDbType.Char:
+                case SqlType.NChar:
+                case SqlType.Char:
                     return MySqlDbType.Text;
-                case SqlDbType.Date:
+                case SqlType.Date:
                     return MySqlDbType.Date;
-                case SqlDbType.DateTime:
-                case SqlDbType.SmallDateTime:
+                case SqlType.DateTime:
+                case SqlType.SmallDateTime:
                     return MySqlDbType.DateTime;
-                case SqlDbType.Decimal:
+                case SqlType.Decimal:
                     return MySqlDbType.Decimal;
-                case SqlDbType.Float:
+                case SqlType.Float:
                     return MySqlDbType.Float;
-                case SqlDbType.Image:
+                case SqlType.Image:
                     return MySqlDbType.LongBlob;
-                case SqlDbType.Int:
+                case SqlType.Int:
                     return MySqlDbType.Int32;
-                case SqlDbType.Money:
-                case SqlDbType.SmallMoney:
+                case SqlType.Money:
+                case SqlType.SmallMoney:
                     return MySqlDbType.Decimal;
-                case SqlDbType.NVarChar:
-                case SqlDbType.VarChar:
+                case SqlType.NVarChar:
+                case SqlType.VarChar:
                     return MySqlDbType.VarChar;
-                case SqlDbType.SmallInt:
+                case SqlType.SmallInt:
                     return MySqlDbType.Int16;
-                case SqlDbType.NText:
-                case SqlDbType.Text:
+                case SqlType.NText:
+                case SqlType.Text:
                     return MySqlDbType.LongText;
-                case SqlDbType.Time:
+                case SqlType.Time:
                     return MySqlDbType.Time;
-                case SqlDbType.Timestamp:
+                case SqlType.Timestamp:
                     return MySqlDbType.Timestamp;
-                case SqlDbType.TinyInt:
+                case SqlType.TinyInt:
                     return MySqlDbType.Byte;
-                case SqlDbType.UniqueIdentifier:
+                case SqlType.UniqueIdentifier:
                     return MySqlDbType.Guid;
-                case SqlDbType.VarBinary:
+                case SqlType.VarBinary:
                     return MySqlDbType.VarBinary;
-                case SqlDbType.Xml:
+                case SqlType.Xml:
                     return MySqlDbType.Text;
                 default:
                     throw new NotSupportedException(string.Format("The SQL type '{0}' is not supported", dbType));

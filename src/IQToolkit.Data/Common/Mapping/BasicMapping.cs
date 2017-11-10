@@ -166,14 +166,14 @@ namespace IQToolkit.Data.Common
         public override IEnumerable<MemberInfo> GetMappedMembers(MappingEntity entity)
         {
             Type type = entity.StaticType;
-            HashSet<MemberInfo> members = new HashSet<MemberInfo>(type.GetFields().Cast<MemberInfo>().Where(m => this.IsMapped(entity, m)));
-            members.UnionWith(type.GetProperties().Cast<MemberInfo>().Where(m => this.IsMapped(entity, m)));
+            HashSet<MemberInfo> members = new HashSet<MemberInfo>(type.GetTypeInfo().DeclaredFields.Where(m => this.IsMapped(entity, m)));
+            members.UnionWith(type.GetTypeInfo().DeclaredProperties.Where(m => this.IsMapped(entity, m)));
             return members.OrderBy(m => m.Name);
         }
 
         public override object CloneEntity(MappingEntity entity, object instance)
         {
-            var clone = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(entity.RuntimeType);
+            var clone = TypeHelper.GetUninitializedObject(entity.RuntimeType);
 
             foreach (var mi in this.GetMappedMembers(entity))
             {

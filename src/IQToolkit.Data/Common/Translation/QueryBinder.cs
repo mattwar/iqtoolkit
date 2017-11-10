@@ -194,7 +194,7 @@ namespace IQToolkit.Data.Common
                         break;
                 }
             }
-            else if (typeof(Updatable).IsAssignableFrom(m.Method.DeclaringType)) 
+            else if (typeof(Updatable).GetTypeInfo().IsAssignableFrom(m.Method.DeclaringType.GetTypeInfo())) 
             {
                 IEntityTable upd = this.batchUpd != null
                     ? this.batchUpd
@@ -279,7 +279,7 @@ namespace IQToolkit.Data.Common
                     return (ProjectionExpression)expr;
                 case ExpressionType.New:
                     NewExpression nex = (NewExpression)expr;
-                    if (expr.Type.IsGenericType && expr.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+                    if (expr.Type.GetTypeInfo().IsGenericType && expr.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
                     {
                         return (ProjectionExpression)nex.Arguments[1];
                     }
@@ -588,7 +588,7 @@ namespace IQToolkit.Data.Common
                 // result must be IGrouping<K,E>
                 resultExpr = 
                     Expression.New(
-                        typeof(Grouping<,>).MakeGenericType(keyExpr.Type, subqueryElemExpr.Type).GetConstructors()[0],
+                        typeof(Grouping<,>).MakeGenericType(keyExpr.Type, subqueryElemExpr.Type).GetTypeInfo().DeclaredConstructors.First(),
                         new Expression[] { keyExpr, elementSubquery }
                         );
 
@@ -599,7 +599,7 @@ namespace IQToolkit.Data.Common
 
             // make it possible to tie aggregates back to this group-by
             NewExpression newResult = this.GetNewExpression(pc.Projector);
-            if (newResult != null && newResult.Type.IsGenericType && newResult.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+            if (newResult != null && newResult.Type.GetTypeInfo().IsGenericType && newResult.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
             {
                 Expression projectedElementSubquery = newResult.Arguments[1];
                 this.groupByMap.Add(projectedElementSubquery, info);
@@ -1121,7 +1121,7 @@ namespace IQToolkit.Data.Common
                             }
                         }
                     }
-                    else if (nex.Type.IsGenericType && nex.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+                    else if (nex.Type.GetTypeInfo().IsGenericType && nex.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
                     {
                         if (member.Name == "Key")
                         {
@@ -1182,7 +1182,7 @@ namespace IQToolkit.Data.Common
 
         private static object GetDefault(Type type)
         {
-            if (!type.IsValueType || TypeHelper.IsNullableType(type))
+            if (!type.GetTypeInfo().IsValueType || TypeHelper.IsNullableType(type))
             {
                 return null;
             }
@@ -1198,14 +1198,16 @@ namespace IQToolkit.Data.Common
             {
                 return true;
             }
+
             if (a is MethodInfo && b is PropertyInfo)
             {
-                return a.Name == ((PropertyInfo)b).GetGetMethod().Name;
+                return a.Name == ((PropertyInfo)b).GetMethod.Name;
             }
             else if (a is PropertyInfo && b is MethodInfo)
             {
-                return ((PropertyInfo)a).GetGetMethod().Name == b.Name;
+                return ((PropertyInfo)a).GetMethod.Name == b.Name;
             }
+
             return false;
         }
     }

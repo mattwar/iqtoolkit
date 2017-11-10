@@ -146,7 +146,7 @@ namespace IQToolkit.Data
         public virtual bool CanBeParameter(Expression expression)
         {
             Type type = TypeHelper.GetNonNullableType(expression.Type);
-            switch (Type.GetTypeCode(type))
+            switch (TypeHelper.GetTypeCode(type))
             {
                 case TypeCode.Object:
                     if (expression.Type == typeof(Byte[]) ||
@@ -302,7 +302,7 @@ namespace IQToolkit.Data
             if (provider == null)
             {
                 Expression rootQueryable = this.Find(expression, parameters, typeof(IQueryable));
-                provider = Expression.Property(rootQueryable, typeof(IQueryable).GetProperty("Provider"));
+                provider = Expression.Property(rootQueryable, typeof(IQueryable).GetTypeInfo().GetDeclaredProperty("Provider"));
             }
 
             return translator.Police.BuildExecutionPlan(translation, provider);

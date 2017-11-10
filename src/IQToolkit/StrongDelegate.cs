@@ -26,10 +26,8 @@ namespace IQToolkit
             // find all the various M<> methods
             _meths = new MethodInfo[9];
 
-            var meths = typeof(StrongDelegate).GetMethods();
-            for (int i = 0, n = meths.Length; i < n; i++)
+            foreach (var gm in typeof(StrongDelegate).GetTypeInfo().DeclaredMethods)
             {
-                var gm = meths[i];
                 if (gm.Name.StartsWith("M"))
                 {
                     var tas = gm.GetGenericArguments();
@@ -50,7 +48,7 @@ namespace IQToolkit
             if (delegateType == null)
                 throw new ArgumentNullException(nameof(delegateType));
 
-            if (!delegateType.IsSubclassOf(typeof(Delegate)))
+            if (!delegateType.GetTypeInfo().IsSubclassOf(typeof(Delegate)))
                 throw new ArgumentException(string.Format("The type '{0}' is not a delegate type.", delegateType.FullName));
 
             if (method == null)
@@ -59,7 +57,7 @@ namespace IQToolkit
             if (target == null && !method.IsStatic)
                 throw new ArgumentException(string.Format("The method '{0}' requires a non-null target.", method.Name));
 
-            return CreateDelegate(delegateType, (Func<object[], object>)Delegate.CreateDelegate(typeof(Func<object[], object>), target, method));
+            return CreateDelegate(delegateType, (Func<object[], object>)method.CreateDelegate(typeof(Func<object[], object>), target));
         }
 
         /// <summary>
@@ -73,13 +71,13 @@ namespace IQToolkit
             if (delegateType == null)
                 throw new ArgumentNullException(nameof(delegateType));
 
-            if (!delegateType.IsSubclassOf(typeof(Delegate)))
+            if (!delegateType.GetTypeInfo().IsSubclassOf(typeof(Delegate)))
                 throw new ArgumentException(string.Format("The type '{0}' is not a delegate type.", delegateType.FullName));
 
             if (fn == null)
                 throw new ArgumentNullException(nameof(fn));
 
-            MethodInfo invoke = delegateType.GetMethod("Invoke");
+            MethodInfo invoke = delegateType.GetTypeInfo().GetDeclaredMethod("Invoke");
             var parameters = invoke.GetParameters();
             Type[] typeArgs = new Type[1 + parameters.Length];
 
@@ -94,7 +92,7 @@ namespace IQToolkit
             {
                 var gm = _meths[typeArgs.Length - 1];
                 var m = gm.MakeGenericMethod(typeArgs);
-                return Delegate.CreateDelegate(delegateType, new StrongDelegate(fn), m);
+                return m.CreateDelegate(delegateType, new StrongDelegate(fn));
             }
 
             throw new NotSupportedException(string.Format("The function has more than {0} arguments.", _meths.Length - 1));

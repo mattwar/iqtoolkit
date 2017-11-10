@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace IQToolkit.Data.Common
@@ -769,13 +770,13 @@ namespace IQToolkit.Data.Common
             {
                 this.Write("NULL");
             }
-            else if (value.GetType().IsEnum)
+            else if (value.GetType().GetTypeInfo().IsEnum)
             {
                 this.Write(Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType())));
             }
             else
             {
-                switch (Type.GetTypeCode(value.GetType()))
+                switch (TypeHelper.GetTypeCode(value.GetType()))
                 {
                     case TypeCode.Boolean:
                         this.Write(((bool)value) ? 1 : 0);

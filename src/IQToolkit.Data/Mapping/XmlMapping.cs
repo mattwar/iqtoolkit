@@ -127,7 +127,7 @@ namespace IQToolkit.Data.Mapping
         private MappingAttribute GetMappingAttribute(Type attrType, XElement element)
         {
             var ma = (MappingAttribute)Activator.CreateInstance(attrType);
-            foreach (var prop in attrType.GetProperties())
+            foreach (var prop in attrType.GetInheritedProperites())
             {
                 var xa = element.Attribute(prop.Name);
                 if (xa != null)

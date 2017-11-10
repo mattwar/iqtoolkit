@@ -38,7 +38,7 @@ namespace IQToolkit
             Expression node = base.Visit(exp);
 
             // remember the first sub-expression that is of an appropriate type
-            if (this.found == null && node != null && this.type.IsAssignableFrom(node.Type))
+            if (this.found == null && node != null && this.type.GetTypeInfo().IsAssignableFrom(node.Type.GetTypeInfo()))
             {
                 this.found = node;
             }

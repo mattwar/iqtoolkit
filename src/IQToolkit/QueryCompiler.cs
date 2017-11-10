@@ -194,13 +194,14 @@ namespace IQToolkit
                 {
                     this.checkedForInvoker = true;
                     Type fnType = this.fnQuery.GetType();
+
                     if (fnType.FullName.StartsWith("System.Func`"))
                     {
-                        var typeArgs = fnType.GetGenericArguments();
-                        MethodInfo method = this.GetType().GetMethod("FastInvoke"+typeArgs.Length, BindingFlags.Public|BindingFlags.Instance);
+                        var typeArgs = fnType.GetTypeInfo().GenericTypeArguments;
+                        MethodInfo method = this.GetType().GetTypeInfo().GetDeclaredMethod("FastInvoke"+typeArgs.Length);
                         if (method != null)
                         {
-                            this.invoker = (Func<object[], object>)Delegate.CreateDelegate(typeof(Func<object[], object>), this, method.MakeGenericMethod(typeArgs));
+                            this.invoker = (Func<object[], object>)method.MakeGenericMethod(typeArgs).CreateDelegate(typeof(Func<object[], object>), this);
                         }
                     }
                 }

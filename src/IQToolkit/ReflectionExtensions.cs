@@ -13,15 +13,19 @@ namespace IQToolkit
         /// </summary>
         public static object GetValue(this MemberInfo member, object instance)
         {
-            switch (member.MemberType)
+            PropertyInfo pi = member as PropertyInfo;
+            if (pi != null)
             {
-                case MemberTypes.Property:
-                    return ((PropertyInfo)member).GetValue(instance, null);
-                case MemberTypes.Field:
-                    return ((FieldInfo)member).GetValue(instance);
-                default:
-                    throw new InvalidOperationException();
+                return pi.GetValue(instance, null);
             }
+
+            FieldInfo fi = member as FieldInfo;
+            if (fi != null)
+            {
+                return fi.GetValue(instance);
+            }
+
+            throw new InvalidOperationException();
         }
 
         /// <summary>
@@ -29,19 +33,21 @@ namespace IQToolkit
         /// </summary>
         public static void SetValue(this MemberInfo member, object instance, object value)
         {
-            switch (member.MemberType)
+            var pi = member as PropertyInfo;
+            if (pi != null)
             {
-                case MemberTypes.Property:
-                    var pi = (PropertyInfo)member;
-                    pi.SetValue(instance, value, null);
-                    break;
-                case MemberTypes.Field:
-                    var fi = (FieldInfo)member;
-                    fi.SetValue(instance, value);
-                    break;
-                default:
-                    throw new InvalidOperationException();
+                pi.SetValue(instance, value, null);
+                return;
             }
-        }
+
+            var fi = member as FieldInfo;
+            if (fi != null)
+            {
+                fi.SetValue(instance, value);
+                return;
+            }
+
+            throw new InvalidOperationException();
+         }
     }
 }

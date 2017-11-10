@@ -31,7 +31,7 @@ namespace IQToolkit.Data
                 throw new ArgumentNullException("fnApply");
             if (fnApply.Parameters.Count != 1)
                 throw new ArgumentException("Apply function has wrong number of arguments.");
-            this.AddOperation(TypeHelper.GetElementType(fnApply.Parameters[0].Type), fnApply);
+            this.AddOperation(TypeHelper.GetElementType(fnApply.Parameters[0].Type).GetTypeInfo(), fnApply);
         }
 
         /// <summary>
@@ -118,16 +118,18 @@ namespace IQToolkit.Data
         private void Defer(MemberInfo member)
         {
             Type mType = TypeHelper.GetMemberType(member);
-            if (mType.IsGenericType)
+
+            if (mType.GetTypeInfo().IsGenericType)
             {
                 var gType = mType.GetGenericTypeDefinition();
                 if (gType != typeof(IEnumerable<>)
                     && gType != typeof(IList<>)
-                    && !typeof(IDeferLoadable).IsAssignableFrom(mType))
+                    && !typeof(IDeferLoadable).GetTypeInfo().IsAssignableFrom(mType.GetTypeInfo()))
                 {
                     throw new InvalidOperationException(string.Format("The member '{0}' cannot be deferred due to its type.", member));
                 }
             }
+
             this.deferred.Add(member);
         }
 
@@ -138,8 +140,10 @@ namespace IQToolkit.Data
         public void AssociateWith(LambdaExpression memberQuery)
         {
             var rootMember = RootMemberFinder.Find(memberQuery, memberQuery.Parameters[0]);
+
             if (rootMember == null)
                 throw new InvalidOperationException("Subquery does not originate with a member access");
+
             if (rootMember != memberQuery.Body)
             {
                 var memberParam = Expression.Parameter(rootMember.Type, "root");
@@ -160,11 +164,13 @@ namespace IQToolkit.Data
         private void AddOperation(MemberInfo member, LambdaExpression operation)
         {
             List<LambdaExpression> memberOps;
+
             if (!this.operations.TryGetValue(member, out memberOps))
             {
                 memberOps = new List<LambdaExpression>();
                 this.operations.Add(member, memberOps);
             }
+
             memberOps.Add(operation);
         }
 
@@ -198,6 +204,7 @@ namespace IQToolkit.Data
                 {
                     this.Visit(m.Arguments[0]);
                 }
+
                 return m;
             }
 

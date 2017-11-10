@@ -12,6 +12,7 @@ using System.Text;
 
 namespace IQToolkit
 {
+#if false
     /// <summary>
     /// Evaluates an expression without using Reflection.Emit.
     /// </summary>
@@ -60,7 +61,7 @@ namespace IQToolkit
 
         public static Delegate CreateDelegate(Type delegateType, EvaluatorState outer, int nArgs, Evaluator evaluator)
         {
-            MethodInfo miInvoke = delegateType.GetMethod("Invoke");
+            MethodInfo miInvoke = delegateType.GetTypeInfo().GetDeclaredMethod("Invoke");
             var host = new EvaluatorHost(outer, nArgs, evaluator);
             return StrongDelegate.CreateDelegate(delegateType, host.Eval);
         }
@@ -312,7 +313,7 @@ namespace IQToolkit
                                 // no conversion necessary
                                 return operand;
                             }
-                            else if (!sourceType.IsValueType || !targetType.IsValueType)
+                            else if (!sourceType.GetTypeInfo().IsValueType || !targetType.GetTypeInfo().IsValueType)
                             {
                                 // reference or boxing conversion
                                 return (Evaluator)Activator.CreateInstance(
@@ -341,7 +342,7 @@ namespace IQToolkit
                             else
                             {
                                 MethodInfo mi = FindBestMethod(Operators.GetOperatorMethods(u.NodeType + "To" + targetType.Name), new Type[] { sourceType }, targetType);
-                                Delegate fn = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(sourceType, targetType), null, mi);
+                                Delegate fn = mi.CreateDelegate(typeof(Func<,>).MakeGenericType(sourceType, targetType), null);
                                 if (!isSourceTypeNullable && !isTargetTypeNullable)
                                 {
                                     return (Evaluator)Activator.CreateInstance(
@@ -394,7 +395,7 @@ namespace IQToolkit
 
             private Evaluator GetUnaryOperator(UnaryExpression u, Type sourceType, Type targetType, MethodInfo method, Evaluator operand)
             {
-                Delegate opFunc = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(sourceType, targetType), null, method);
+                Delegate opFunc = method.CreateDelegate(typeof(Func<,>).MakeGenericType(sourceType, targetType), null);
                 if (u.IsLiftedToNull)
                 {
                     return (Evaluator)Activator.CreateInstance(
@@ -556,7 +557,7 @@ namespace IQToolkit
 
             public Evaluator GetBinaryOperator(BinaryExpression b, Type sourceType, Type targetType, MethodInfo method, Evaluator opLeft, Evaluator opRight)
             {
-                Delegate opFunc = Delegate.CreateDelegate(typeof(Func<,,>).MakeGenericType(sourceType, sourceType, targetType), null, method);
+                Delegate opFunc = method.CreateDelegate(typeof(Func<,,>).MakeGenericType(sourceType, sourceType, targetType), null);
                 if (b.IsLiftedToNull)
                 {
                     return (Evaluator)Activator.CreateInstance(
@@ -652,7 +653,7 @@ namespace IQToolkit
                 else if (method.IsStatic && opArgs.Length == 1)
                 {
                     var types = new Type[] { parameters[0].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,>).MakeGenericType(types),
                         new object[] { opArgs[0], fn }
@@ -661,7 +662,7 @@ namespace IQToolkit
                 else if (!method.IsStatic && opArgs.Length == 0)
                 {
                     var types = new Type[] { opInst.ReturnType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,>).MakeGenericType(types),
                         new object[] { opInst, fn }
@@ -670,7 +671,7 @@ namespace IQToolkit
                 else if (method.IsStatic && opArgs.Length == 2)
                 {
                     var types = new Type[] { parameters[0].ParameterType, parameters[1].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,,>).MakeGenericType(types),
                         new object[] { opArgs[0], opArgs[1], fn }
@@ -679,7 +680,7 @@ namespace IQToolkit
                 else if (!method.IsStatic && opArgs.Length == 1)
                 {
                     var types = new Type[] { opInst.ReturnType, parameters[0].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,,>).MakeGenericType(types),
                         new object[] { opInst, opArgs[0], fn }
@@ -688,7 +689,7 @@ namespace IQToolkit
                 else if (method.IsStatic && opArgs.Length == 3)
                 {
                     var types = new Type[] { parameters[0].ParameterType, parameters[1].ParameterType, parameters[2].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,,,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,,,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,,,>).MakeGenericType(types),
                         new object[] { opArgs[0], opArgs[1], opArgs[2], fn }
@@ -697,7 +698,7 @@ namespace IQToolkit
                 else if (!method.IsStatic && opArgs.Length == 2)
                 {
                     var types = new Type[] { opInst.ReturnType, parameters[0].ParameterType, parameters[1].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,,,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,,,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,,,>).MakeGenericType(types),
                         new object[] { opInst, opArgs[0], opArgs[1], fn }
@@ -706,7 +707,7 @@ namespace IQToolkit
                 else if (method.IsStatic && opArgs.Length == 4)
                 {
                     var types = new Type[] { parameters[0].ParameterType, parameters[1].ParameterType, parameters[2].ParameterType, parameters[3].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,,,,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,,,,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,,,,>).MakeGenericType(types),
                         new object[] { opArgs[0], opArgs[1], opArgs[2], opArgs[3], fn }
@@ -715,7 +716,7 @@ namespace IQToolkit
                 else if (!method.IsStatic && opArgs.Length == 3)
                 {
                     var types = new Type[] { opInst.ReturnType, parameters[0].ParameterType, parameters[1].ParameterType, parameters[2].ParameterType, method.ReturnType };
-                    var fn = Delegate.CreateDelegate(typeof(Func<,,,,>).MakeGenericType(types), null, method);
+                    var fn = method.CreateDelegate(typeof(Func<,,,,>).MakeGenericType(types), null);
                     return (Evaluator)Activator.CreateInstance(
                         typeof(FuncEvaluator<,,,,>).MakeGenericType(types),
                         new object[] { opInst, opArgs[0], opArgs[1], opArgs[2], fn }
@@ -955,7 +956,7 @@ namespace IQToolkit
                 Evaluator evaluator = Build(ma.Expression);
                 if (ma.Member is FieldInfo)
                 {
-                    if (type.IsValueType)
+                    if (type.GetTypeInfo().IsValueType)
                     {
                         return (Initializer)Activator.CreateInstance(
                             typeof(ValueTypeFieldAssignmentInitializer<>).MakeGenericType(type),
@@ -973,7 +974,7 @@ namespace IQToolkit
                 else
                 {
                     var property = (PropertyInfo)ma.Member;
-                    if (type.IsValueType)
+                    if (type.GetTypeInfo().IsValueType)
                     {
                         return (Initializer)Activator.CreateInstance(
                             typeof(ValueTypePropertyAssignmentInitializer<,>).MakeGenericType(type, property.PropertyType),
@@ -996,7 +997,7 @@ namespace IQToolkit
                 if (fi != null)
                 {
                     var initializers = mb.Bindings.Select(b => MemberBinding(fi.FieldType, b)).ToArray();
-                    if (type.IsValueType)
+                    if (type.GetTypeInfo().IsValueType)
                     {
                         return (Initializer)Activator.CreateInstance(
                             typeof(ValueTypeFieldMemberInitializer<,>).MakeGenericType(type, fi.FieldType),
@@ -1015,7 +1016,7 @@ namespace IQToolkit
                 if (pi != null)
                 {
                     var initializers = mb.Bindings.Select(b => MemberBinding(pi.PropertyType, b)).ToArray();
-                    if (type.IsValueType)
+                    if (type.GetTypeInfo().IsValueType)
                     {
                         return (Initializer)Activator.CreateInstance(
                             typeof(ValueTypePropertyMemberInitializer<,>).MakeGenericType(type, pi.PropertyType),
@@ -1039,7 +1040,7 @@ namespace IQToolkit
                 if (fi != null)
                 {
                     var initializers = mb.Initializers.Select(e => Element(fi.FieldType, e)).ToArray();
-                    if (type.IsValueType)
+                    if (type.GetTypeInfo().IsValueType)
                     {
                         return (Initializer)Activator.CreateInstance(
                             typeof(ValueTypeFieldMemberInitializer<,>).MakeGenericType(type, fi.FieldType),
@@ -1058,7 +1059,7 @@ namespace IQToolkit
                 if (pi != null)
                 {
                     var initializers = mb.Initializers.Select(e => Element(pi.PropertyType, e)).ToArray();
-                    if (type.IsValueType)
+                    if (type.GetTypeInfo().IsValueType)
                     {
                         return (Initializer)Activator.CreateInstance(
                             typeof(ValueTypePropertyMemberInitializer<,>).MakeGenericType(type, pi.PropertyType),
@@ -1129,14 +1130,14 @@ namespace IQToolkit
 
             private bool MethodMatches(MethodInfo method, Type[] argTypes, Type returnType)
             {
-                if (returnType != method.ReturnType && !method.ReflectedType.IsSubclassOf(returnType))
+                if (returnType != method.ReturnType && !method.DeclaringType.GetTypeInfo().IsSubclassOf(returnType))
                     return false;
                 var parameters = method.GetParameters();
                 if (parameters.Length != argTypes.Length)
                     return false;
                 for (int i = 0, n = parameters.Length; i < n; i++)
                 {
-                    if (parameters[i].ParameterType != argTypes[i] && !argTypes[i].IsSubclassOf(parameters[i].ParameterType))
+                    if (parameters[i].ParameterType != argTypes[i] && !argTypes[i].GetTypeInfo().IsSubclassOf(parameters[i].ParameterType))
                         return false;
                 }
                 return true;
@@ -1144,16 +1145,17 @@ namespace IQToolkit
 
             private static Type GetNonNullType(Type type)
             {
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                var typeInfo = type.GetTypeInfo();
+                if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    return type.GetGenericArguments()[0];
+                    return typeInfo.GenericTypeArguments[0];
                 }
                 return type;
             }
 
             private static bool IsNullable(Type type)
             {
-                return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+                return type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
             }
         }
 
@@ -1765,7 +1767,7 @@ namespace IQToolkit
                 try
                 {
                     object result;
-                    if (opInst != null && opInst.ReturnType.IsValueType)
+                    if (opInst != null && opInst.ReturnType.GetTypeInfo().IsValueType)
                     {
                         Address addrInstr = opInst.EvalAddressBoxed(state);
                         object instance = addrInstr.GetBoxedValue(state);
@@ -1909,7 +1911,7 @@ namespace IQToolkit
                     object[] args;
                     object result;
 
-                    if (opInst != null && opInst.ReturnType.IsValueType)
+                    if (opInst != null && opInst.ReturnType.GetTypeInfo().IsValueType)
                     {
                         addrInstr = opInst.EvalAddressBoxed(state);
                         instance = addrInstr.GetBoxedValue(state);
@@ -2065,7 +2067,7 @@ namespace IQToolkit
             public PropertyAccessEvaluator(Evaluator<T> operand, PropertyInfo property)
             {
                 this.operand = operand;
-                this.fnGetter = (Func<T,V>)Delegate.CreateDelegate(typeof(Func<T, V>), property.GetGetMethod(true));
+                this.fnGetter = (Func<T,V>)property.GetMethod.CreateDelegate(typeof(Func<T, V>));
             }
 
             public override V Eval(EvaluatorState state)
@@ -2110,7 +2112,7 @@ namespace IQToolkit
                 var result = thing.EvalBoxed(state);
                 if (result == null) return false;
                 Type resultType = result.GetType();
-                return (resultType == type || resultType.IsSubclassOf(type));
+                return (resultType == type || resultType.GetTypeInfo().IsSubclassOf(type));
             }
         }
 
@@ -2137,14 +2139,20 @@ namespace IQToolkit
             if (fnCreateDelegate == null)
             {
                 MethodInfo miCreateDelegate =
-                    typeof(Delegate).GetMethod(
-                        "CreateDelegate", BindingFlags.Static | BindingFlags.NonPublic, null,
-                        new Type[] { typeof(Type), typeof(object), typeof(RuntimeMethodHandle) }, null
-                        );
+                    TypeHelper.FindDeclaredMethod(
+                        typeof(Delegate),
+                        "CreateDelegate",
+                        null,
+                        new Type[] { typeof(Type), typeof(object), typeof(RuntimeMethodHandle) });
+
                 fnCreateDelegate = (Func<Type, object, RuntimeMethodHandle, Delegate>)
-                    Delegate.CreateDelegate(typeof(Func<Type, object, RuntimeMethodHandle, Delegate>), miCreateDelegate);
+                    miCreateDelegate.CreateDelegate(typeof(Func<Type, object, RuntimeMethodHandle, Delegate>));
             }
-            return fnCreateDelegate(delegateType, null, constructor.MethodHandle);
+
+            var piMethodHandle = typeof(ConstructorInfo).GetTypeInfo().GetDeclaredProperty("MethodHandle");
+            var methodHandle = (RuntimeMethodHandle)piMethodHandle.GetValue(constructor);
+
+            return fnCreateDelegate(delegateType, null, methodHandle);
         }
 
         public class NewEvaluator<T> : Evaluator<T>
@@ -2637,7 +2645,7 @@ namespace IQToolkit
             {
                 this.field = field;
                 this.initializers = initializers.Select(i => (Initializer<V>)i).ToArray();
-                this.valueIsValueType = field.FieldType.IsValueType;
+                this.valueIsValueType = field.FieldType.GetTypeInfo().IsValueType;
             }
 
             public override void Init(EvaluatorState state, ref T instance)
@@ -2662,7 +2670,7 @@ namespace IQToolkit
 
             public PropertyMemberInitializer(PropertyInfo property, Initializer[] initializers)
             {
-                this.fnGetter = (Func<T, V>)Delegate.CreateDelegate(typeof(Func<T, V>), property.GetGetMethod(true));
+                this.fnGetter = (Func<T, V>)property.GetMethod.CreateDelegate(typeof(Func<T, V>));
                 this.initializers = initializers.Select(i => (Initializer<V>)i).ToArray();
             }
 
@@ -3290,4 +3298,5 @@ namespace IQToolkit
             }
         }
     }
+#endif
 }

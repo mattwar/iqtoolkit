@@ -127,7 +127,7 @@ namespace IQToolkit.Data.Common
                 pc.Projector
                 );
 
-            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.StaticType);
+            return (ProjectionExpression)this.Translator.Police.ApplyPolicy(proj, entity.StaticType.GetTypeInfo());
         }
 
         private void GetColumns(MappingEntity entity, Dictionary<string, TableAlias> aliases, List<ColumnDeclaration> columns)

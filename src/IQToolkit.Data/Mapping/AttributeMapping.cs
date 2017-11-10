@@ -275,16 +275,14 @@ namespace IQToolkit.Data.Mapping
             var membersAlreadyMapped = new HashSet<string>(list.OfType<MemberAttribute>().Select(m => m.Member));
 
             // look for members that are not explicitly mapped and create column mappings for them.
-            var members = entityType.GetMembers(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var member in members)
-            {
-                // only interested in data members (fields and properties)
-                if (!(member is FieldInfo || member is PropertyInfo))
-                {
-                    continue;
-                }
+            var entityTypeInfo = entityType.GetTypeInfo();
 
-                // member already declared explicity - don't infer an attribute
+            var dataMembers = entityTypeInfo.DeclaredProperties.Where(p => p.GetMethod.IsPublic && !p.GetMethod.IsStatic).Cast<MemberInfo>()
+                            .Concat(entityTypeInfo.DeclaredFields.Where(f => f.IsPublic && !f.IsStatic));
+                            
+            foreach (var member in dataMembers)
+            {
+                 // member already declared explicity - don't infer an attribute
                 if (membersAlreadyMapped.Contains(member.Name))
                 {
                     continue;
@@ -309,10 +307,9 @@ namespace IQToolkit.Data.Mapping
         private static bool IsScalar(Type type)
         {
             type = TypeHelper.GetNonNullableType(type);
-            switch (Type.GetTypeCode(type))
+            switch (TypeHelper.GetTypeCode(type))
             {
                 case TypeCode.Empty:
-                case TypeCode.DBNull:
                     return false;
                 case TypeCode.Object:
                     return
@@ -433,7 +430,7 @@ namespace IQToolkit.Data.Mapping
             Type memberType = TypeHelper.GetMemberType(member);
             var path = member.Name + ".";
 
-            foreach (var ma in (MappingAttribute[])Attribute.GetCustomAttributes(member, typeof(MappingAttribute)))
+            foreach (var ma in (MappingAttribute[])member.GetCustomAttributes(typeof(MappingAttribute)))
             {
                 var entity = ma as EntityAttribute;
                 if (entity != null && entity.RuntimeType == null)
@@ -469,7 +466,7 @@ namespace IQToolkit.Data.Mapping
         private void GetTypeMappingAttributes(Type entityType, List<MappingAttribute> list)
         {
             // get attributes from entity type itself
-            foreach (var ma in entityType.GetCustomAttributes<MappingAttribute>())
+            foreach (var ma in entityType.GetTypeInfo().GetCustomAttributes<MappingAttribute>())
             {
                 var entity = ma as EntityAttribute;
                 if (entity != null && entity.RuntimeType == null)
@@ -486,7 +483,7 @@ namespace IQToolkit.Data.Mapping
                 list.Add(ma);
             }
 
-            foreach (var member in entityType.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            foreach (var member in TypeHelper.GetDataMembers(entityType, includeNonPublic: true))
             {
                 this.GetMemberMappingAttributes(member, list);
             }
@@ -514,7 +511,7 @@ namespace IQToolkit.Data.Mapping
             else
             {
                 // look for entity id specified on table attribute 
-                var entityAttr = entityType.GetCustomAttribute<EntityAttribute>();
+                var entityAttr = entityType.GetTypeInfo().GetCustomAttribute<EntityAttribute>();
                 if (entityAttr != null && entityAttr.Id != null)
                 {
                     return entityAttr.Id;
@@ -573,7 +570,7 @@ namespace IQToolkit.Data.Mapping
         /// </summary>
         private IEnumerable<MemberInfo> GetContextCollectionMembers()
         {
-            foreach (var mi in this.contextType.GetMembers(BindingFlags.Instance | BindingFlags.Public))
+            foreach (var mi in TypeHelper.GetDataMembers(this.contextType, includeNonPublic: true))
             {
                 FieldInfo fi = mi as FieldInfo;
                 if (fi != null && TypeHelper.IsSequenceType(fi.FieldType))
@@ -690,7 +687,7 @@ namespace IQToolkit.Data.Mapping
             string[] names = path.Split(dotSeparator);
             foreach (string name in names)
             {
-                member = type.GetMember(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase).FirstOrDefault();
+                member = TypeHelper.GetDataMember(type, name, includeNonPublic: true);
 
                 if (member == null)
                 {

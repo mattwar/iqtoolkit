@@ -224,31 +224,37 @@ namespace IQToolkit
         {
             string name = type.Name;
             name = name.Replace('+', '.');
+
             int iGeneneric = name.IndexOf('`');
             if (iGeneneric > 0)
             {
                 name = name.Substring(0, iGeneneric);
             }
-            if (type.IsGenericType || type.IsGenericTypeDefinition)
+
+            var info = type.GetTypeInfo();
+            if (info.IsGenericType || info.IsGenericTypeDefinition)
             {
                 StringBuilder sb = new StringBuilder();
                 sb.Append(name);
                 sb.Append("<");
-                var args = type.GetGenericArguments();
+                var args = info.GenericTypeArguments;
                 for (int i = 0, n = args.Length; i < n; i++)
                 {
                     if (i > 0)
                     {
                         sb.Append(",");
                     }
-                    if (type.IsGenericType)
+
+                    if (info.IsGenericType)
                     {
                         sb.Append(this.GetTypeName(args[i]));
                     }
                 }
+
                 sb.Append(">");
                 name = sb.ToString();
             }
+
             return name;
         }
 

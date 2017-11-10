@@ -73,13 +73,13 @@ namespace IQToolkit.Data.SqlServerCe
 
             protected override void AddParameter(DbCommand command, QueryParameter parameter, object value)
             {
-                DbQueryType sqlType = (DbQueryType)parameter.QueryType;
+                SqlQueryType sqlType = (SqlQueryType)parameter.QueryType;
                 if (sqlType == null)
                 {
-                    sqlType = (DbQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                    sqlType = (SqlQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
                 }
 
-                var p = ((SqlCeCommand)command).Parameters.Add("@" + parameter.Name, sqlType.SqlDbType, sqlType.Length);
+                var p = ((SqlCeCommand)command).Parameters.Add("@" + parameter.Name, (System.Data.SqlDbType)(int)sqlType.SqlType, sqlType.Length);
                 if (sqlType.Precision != 0)
                 {
                     p.Precision = (byte)sqlType.Precision;

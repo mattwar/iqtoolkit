@@ -55,10 +55,11 @@ namespace IQToolkit
                 throw new ArgumentNullException("expression");
             }
 
-            if (!typeof(IQueryable<T>).IsAssignableFrom(expression.Type))
+            if (!typeof(IQueryable<T>).GetTypeInfo().IsAssignableFrom(expression.Type.GetTypeInfo()))
             {
                 throw new ArgumentOutOfRangeException("expression");
             }
+
             this.provider = provider;
             this.expression = expression;
         }

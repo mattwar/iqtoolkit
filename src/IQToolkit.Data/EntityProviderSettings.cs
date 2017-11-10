@@ -41,10 +41,13 @@ namespace IQToolkit.Data
         /// </summary>
         public static EntityProviderSettings FromApplicationSettings()
         {
+            throw new System.NotSupportedException();
+#if false
             return new EntityProviderSettings(
                 provider: System.Configuration.ConfigurationManager.AppSettings["Provider"],
                 connection: System.Configuration.ConfigurationManager.AppSettings["Connection"],
                 mapping: System.Configuration.ConfigurationManager.AppSettings["Mapping"]);
+#endif
         }
     }
 }

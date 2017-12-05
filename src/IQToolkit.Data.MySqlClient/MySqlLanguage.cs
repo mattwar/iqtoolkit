@@ -16,7 +16,7 @@ namespace IQToolkit.Data.MySqlClient
 
     public class MySqlLanguage : QueryLanguage
     {
-        DbTypeSystem typeSystem = new DbTypeSystem();
+        readonly DbTypeSystem typeSystem = new DbTypeSystem();
 
         public MySqlLanguage()
         {

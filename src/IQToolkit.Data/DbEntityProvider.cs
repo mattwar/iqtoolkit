@@ -20,7 +20,7 @@ namespace IQToolkit.Data
 
     public class DbEntityProvider : EntityProvider
     {
-        DbConnection connection;
+        readonly DbConnection connection;
         DbTransaction transaction;
         IsolationLevel isolation = IsolationLevel.ReadCommitted;
 
@@ -284,7 +284,7 @@ namespace IQToolkit.Data
 
         public class Executor : QueryExecutor
         {
-            DbEntityProvider provider;
+            readonly DbEntityProvider provider;
             int rowsAffected;
 
             public Executor(DbEntityProvider provider)
@@ -656,8 +656,8 @@ namespace IQToolkit.Data
 
         protected class DbFieldReader : FieldReader
         {
-            QueryExecutor executor;
-            DbDataReader reader;
+            readonly QueryExecutor executor;
+            readonly DbDataReader reader;
 
             public DbFieldReader(QueryExecutor executor, DbDataReader reader)
             {

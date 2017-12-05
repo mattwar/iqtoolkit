@@ -27,7 +27,7 @@ namespace Test
 
     public class MultiTableContext
     {
-        private IEntityProvider provider;
+        private readonly IEntityProvider provider;
 
         public MultiTableContext(IEntityProvider provider)
         {

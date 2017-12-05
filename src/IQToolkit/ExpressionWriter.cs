@@ -18,7 +18,7 @@ namespace IQToolkit
     /// </summary>
     public class ExpressionWriter : ExpressionVisitor
     {
-        TextWriter writer;
+        readonly TextWriter writer;
         int indent = 2;
         int depth;
 
@@ -34,9 +34,11 @@ namespace IQToolkit
 
         public static string WriteToString(Expression expression)
         {
-            StringWriter sw = new StringWriter();
-            Write(sw, expression);
-            return sw.ToString();
+            using (StringWriter sw = new StringWriter())
+            {
+                Write(sw, expression);
+                return sw.ToString();
+            }
         }
 
         protected enum Indentation

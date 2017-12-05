@@ -17,10 +17,10 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class QueryBinder : DbExpressionVisitor
     {
-        QueryMapper mapper;
-        QueryLanguage language;
-        Dictionary<ParameterExpression, Expression> map;
-        Dictionary<Expression, GroupByInfo> groupByMap;
+        readonly QueryMapper mapper;
+        readonly QueryLanguage language;
+        readonly Dictionary<ParameterExpression, Expression> map;
+        readonly Dictionary<Expression, GroupByInfo> groupByMap;
         Expression root;
         IEntityTable batchUpd;
 

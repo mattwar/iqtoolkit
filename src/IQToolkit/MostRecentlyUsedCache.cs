@@ -10,7 +10,7 @@ namespace IQToolkit
     /// <summary>
     /// Implements a cache over a most recently used list
     /// </summary>
-    public class MostRecentlyUsedCache<T>
+    public sealed class MostRecentlyUsedCache<T> : IDisposable
     {
         private readonly int maxSize;
         private readonly List<T> list;
@@ -34,6 +34,12 @@ namespace IQToolkit
             this.maxSize = maxSize;
             this.fnEquals = fnEquals;
             this.rwlock = new ReaderWriterLockSlim();
+        }
+
+        public void Dispose()
+        {
+            this.rwlock?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public int Count

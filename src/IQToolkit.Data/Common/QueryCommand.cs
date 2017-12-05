@@ -10,8 +10,8 @@ namespace IQToolkit.Data.Common
 {
     public class QueryCommand
     {
-        string commandText;
-        ReadOnlyCollection<QueryParameter> parameters;
+        readonly string commandText;
+        readonly ReadOnlyCollection<QueryParameter> parameters;
 
         public QueryCommand(string commandText, IEnumerable<QueryParameter> parameters)
         {
@@ -32,9 +32,9 @@ namespace IQToolkit.Data.Common
 
     public class QueryParameter
     {
-        string name;
-        Type type;
-        QueryType queryType;
+        readonly string name;
+        readonly Type type;
+        readonly QueryType queryType;
 
         public QueryParameter(string name, Type type, QueryType queryType)
         {

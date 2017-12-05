@@ -17,8 +17,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ClientJoinedProjectionRewriter : DbExpressionVisitor
     {
-        QueryPolicy policy;
-        QueryLanguage language;
+        readonly QueryPolicy policy;
+        readonly QueryLanguage language;
         bool isTopLevel = true;
         SelectExpression currentSelect;
         MemberInfo currentMember;

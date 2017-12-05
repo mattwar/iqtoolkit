@@ -37,7 +37,7 @@ namespace IQToolkit.Data.MySqlClient
 
         new class Executor : DbEntityProvider.Executor
         {
-            MySqlQueryProvider provider;
+            readonly MySqlQueryProvider provider;
 
             public Executor(MySqlQueryProvider provider)
                 : base(provider)

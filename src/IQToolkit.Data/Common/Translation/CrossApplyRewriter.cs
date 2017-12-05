@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class CrossApplyRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
+        readonly QueryLanguage language;
 
         private CrossApplyRewriter(QueryLanguage language)
         {

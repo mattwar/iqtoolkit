@@ -16,9 +16,9 @@ namespace Test
 {
     public class TestRunner
     {
-        private string[] commandLineArgs;
-        private List<Assembly> testAssemblies;
-        private List<string> testNames;
+        private readonly string[] commandLineArgs;
+        private readonly List<Assembly> testAssemblies;
+        private readonly List<string> testNames;
         private bool verbose;
 
         public TestRunner(string[] commandLineArgs, params Assembly[] testAssemblies)
@@ -138,16 +138,16 @@ namespace Test
 
         private class TestTypeRunner
         {
-            private TestRunner runner;
-            private Type testType;
-            private IEnumerable<MethodInfo> testMethods;
-            private object testIntance;
+            private readonly TestRunner runner;
+            private readonly Type testType;
+            private readonly IEnumerable<MethodInfo> testMethods;
+            private readonly object testIntance;
 
-            private MethodInfo[] allMethods;
-            private Func<MethodInfo, bool> canRunTest;
-            private Action<Action> runTest;
-            private Action<string[]> setup;
-            private Action teardown;
+            private readonly MethodInfo[] allMethods;
+            private readonly Func<MethodInfo, bool> canRunTest;
+            private readonly Action<Action> runTest;
+            private readonly Action<string[]> setup;
+            private readonly Action teardown;
 
             private int passed;
             private int failed;

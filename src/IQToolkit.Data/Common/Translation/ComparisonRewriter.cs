@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Common
 {
     public class ComparisonRewriter : DbExpressionVisitor
     {
-        QueryMapping mapping;
+        readonly QueryMapping mapping;
 
         private ComparisonRewriter(QueryMapping mapping)
         {

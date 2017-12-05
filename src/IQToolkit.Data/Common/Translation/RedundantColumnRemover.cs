@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class RedundantColumnRemover : DbExpressionVisitor
     {
-        Dictionary<ColumnExpression, ColumnExpression> map;
+        readonly Dictionary<ColumnExpression, ColumnExpression> map;
 
         private RedundantColumnRemover()
         {

@@ -13,7 +13,7 @@ namespace IQToolkit
     /// </summary>
     public class Grouping<TKey, TElement> : IGrouping<TKey, TElement>
     {
-        TKey key;
+        readonly TKey key;
         IEnumerable<TElement> group;
 
         public Grouping(TKey key, IEnumerable<TElement> group)

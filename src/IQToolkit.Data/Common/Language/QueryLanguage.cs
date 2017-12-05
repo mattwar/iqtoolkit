@@ -111,8 +111,8 @@ namespace IQToolkit.Data.Common
 
         class JoinColumnGatherer
         {
-            HashSet<TableAlias> aliases;
-            HashSet<ColumnExpression> columns = new HashSet<ColumnExpression>();
+            readonly HashSet<TableAlias> aliases;
+            readonly HashSet<ColumnExpression> columns = new HashSet<ColumnExpression>();
 
             private JoinColumnGatherer(HashSet<TableAlias> aliases)
             {
@@ -265,8 +265,8 @@ namespace IQToolkit.Data.Common
 
     public class QueryLinguist
     {
-        QueryLanguage language;
-        QueryTranslator translator;
+        readonly QueryLanguage language;
+        readonly QueryTranslator translator;
 
         public QueryLinguist(QueryLanguage language, QueryTranslator translator)
         {

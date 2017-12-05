@@ -24,8 +24,8 @@ namespace IQToolkit
     /// </summary>
     public class Query<T> : IQueryable<T>, IQueryable, IEnumerable<T>, IEnumerable, IOrderedQueryable<T>, IOrderedQueryable
     {
-        IQueryProvider provider;
-        Expression expression;
+        readonly IQueryProvider provider;
+        readonly Expression expression;
 
         public Query(IQueryProvider provider)
             : this(provider, null)

@@ -17,9 +17,9 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class Parameterizer : DbExpressionVisitor
     {
-        QueryLanguage language;
-        Dictionary<TypeAndValue, NamedValueExpression> map = new Dictionary<TypeAndValue, NamedValueExpression>();
-        Dictionary<HashedExpression, NamedValueExpression> pmap = new Dictionary<HashedExpression, NamedValueExpression>();
+        readonly QueryLanguage language;
+        readonly Dictionary<TypeAndValue, NamedValueExpression> map = new Dictionary<TypeAndValue, NamedValueExpression>();
+        readonly Dictionary<HashedExpression, NamedValueExpression> pmap = new Dictionary<HashedExpression, NamedValueExpression>();
 
         private Parameterizer(QueryLanguage language)
         {
@@ -158,9 +158,9 @@ namespace IQToolkit.Data.Common
 
         struct TypeAndValue : IEquatable<TypeAndValue>
         {
-            Type type;
-            object value;
-            int hash;
+            readonly Type type;
+            readonly object value;
+            readonly int hash;
 
             public TypeAndValue(Type type, object value)
             {
@@ -189,8 +189,8 @@ namespace IQToolkit.Data.Common
 
         struct HashedExpression : IEquatable<HashedExpression>
         {
-            Expression expression;
-            int hashCode;
+            readonly Expression expression;
+            readonly int hashCode;
 
             public HashedExpression(Expression expression)
             {

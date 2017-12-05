@@ -21,7 +21,7 @@ namespace IQToolkit.Data.Access
     /// </summary>
     public class AccessLanguage : QueryLanguage
     {
-        AccessTypeSystem typeSystem = new AccessTypeSystem();
+        readonly AccessTypeSystem typeSystem = new AccessTypeSystem();
 
         public override QueryTypeSystem TypeSystem
         {

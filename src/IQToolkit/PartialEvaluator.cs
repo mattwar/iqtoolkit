@@ -52,8 +52,8 @@ namespace IQToolkit
         /// </summary>
         class SubtreeEvaluator : ExpressionVisitor
         {
-            HashSet<Expression> candidates;
-            Func<ConstantExpression, Expression> onEval;
+            readonly HashSet<Expression> candidates;
+            readonly Func<ConstantExpression, Expression> onEval;
 
             private SubtreeEvaluator(HashSet<Expression> candidates, Func<ConstantExpression, Expression> onEval)
             {
@@ -145,8 +145,8 @@ namespace IQToolkit
         /// </summary>
         class Nominator : ExpressionVisitor
         {
-            Func<Expression, bool> fnCanBeEvaluated;
-            HashSet<Expression> candidates;
+            readonly Func<Expression, bool> fnCanBeEvaluated;
+            readonly HashSet<Expression> candidates;
             bool cannotBeEvaluated;
 
             private Nominator(Func<Expression, bool> fnCanBeEvaluated)

@@ -69,9 +69,9 @@ namespace IQToolkit.Data.Mapping
 
     public class AttributeMapping : AdvancedMapping
     {
-        Type contextType;
-        Dictionary<string, MappingEntity> entities = new Dictionary<string, MappingEntity>();
-        ReaderWriterLock rwLock = new ReaderWriterLock();
+        readonly Type contextType;
+        readonly Dictionary<string, MappingEntity> entities = new Dictionary<string, MappingEntity>();
+        readonly ReaderWriterLock rwLock = new ReaderWriterLock();
 
         public AttributeMapping(Type contextType)
         {
@@ -467,9 +467,9 @@ namespace IQToolkit.Data.Mapping
 
         class AttributeMappingMember
         {
-            MemberInfo member;
-            MemberAttribute attribute;
-            AttributeMappingEntity nested;
+            readonly MemberInfo member;
+            readonly MemberAttribute attribute;
+            readonly AttributeMappingEntity nested;
 
             internal AttributeMappingMember(MemberInfo member, MemberAttribute attribute, AttributeMappingEntity nested)
             {
@@ -501,8 +501,8 @@ namespace IQToolkit.Data.Mapping
 
         class AttributeMappingTable : MappingTable
         {
-            AttributeMappingEntity entity;
-            TableBaseAttribute attribute;
+            readonly AttributeMappingEntity entity;
+            readonly TableBaseAttribute attribute;
 
             internal AttributeMappingTable(AttributeMappingEntity entity, TableBaseAttribute attribute)
             {
@@ -523,11 +523,11 @@ namespace IQToolkit.Data.Mapping
 
         class AttributeMappingEntity : MappingEntity
         {
-            string tableId;
-            Type elementType;
-            Type entityType;
-            ReadOnlyCollection<MappingTable> tables;
-            Dictionary<string, AttributeMappingMember> mappingMembers;
+            readonly string tableId;
+            readonly Type elementType;
+            readonly Type entityType;
+            readonly ReadOnlyCollection<MappingTable> tables;
+            readonly Dictionary<string, AttributeMappingMember> mappingMembers;
 
             internal AttributeMappingEntity(Type elementType, string tableId, Type entityType, IEnumerable<TableBaseAttribute> attrs, IEnumerable<AttributeMappingMember> mappingMembers)
             {

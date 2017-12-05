@@ -18,14 +18,14 @@ namespace IQToolkit
     /// </summary>
     public class StrongDelegate
     {
-        Func<object[], object> fn;
+        readonly Func<object[], object> fn;
 
         private StrongDelegate(Func<object[], object> fn)
         {
             this.fn = fn;
         }
 
-        private static MethodInfo[] _meths;
+        private static readonly MethodInfo[] _meths;
 
         static StrongDelegate()
         {

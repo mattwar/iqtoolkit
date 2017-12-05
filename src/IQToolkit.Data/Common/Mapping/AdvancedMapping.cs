@@ -88,7 +88,7 @@ namespace IQToolkit.Data.Common
 
     public class AdvancedMapper : BasicMapper
     {
-        AdvancedMapping mapping;
+        readonly AdvancedMapping mapping;
 
         public AdvancedMapper(AdvancedMapping mapping, QueryTranslator translator)
             : base(mapping, translator)
@@ -136,7 +136,7 @@ namespace IQToolkit.Data.Common
                 MappingEntity subEntity = this.mapping.GetRelatedEntity(entity, member);
                 return this.GetEntityExpression(root, subEntity);
             }
-            else 
+            else
             {
                 return base.GetMemberExpression(root, entity, member);
             }
@@ -354,10 +354,10 @@ namespace IQToolkit.Data.Common
                 else if (this.mapping.IsNestedEntity(entity, m))
                 {
                     var assignments = this.GetColumnAssignments(
-                        table, 
-                        Expression.MakeMemberAccess(instance, m), 
-                        this.mapping.GetRelatedEntity(entity, m), 
-                        fnIncludeColumn, 
+                        table,
+                        Expression.MakeMemberAccess(instance, m),
+                        this.mapping.GetRelatedEntity(entity, m),
+                        fnIncludeColumn,
                         map
                         );
                     foreach (var ca in assignments)

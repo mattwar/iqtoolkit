@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class QueryDuplicator : DbExpressionVisitor
     {
-        Dictionary<TableAlias, TableAlias> map = new Dictionary<TableAlias, TableAlias>();
+        readonly Dictionary<TableAlias, TableAlias> map = new Dictionary<TableAlias, TableAlias>();
 
         public static Expression Duplicate(Expression expression)
         {

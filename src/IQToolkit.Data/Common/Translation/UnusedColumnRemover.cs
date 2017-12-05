@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class UnusedColumnRemover : DbExpressionVisitor
     {
-        Dictionary<TableAlias, HashSet<string>> allColumnsUsed;
+        readonly Dictionary<TableAlias, HashSet<string>> allColumnsUsed;
         bool retainAllColumns;
 
         private UnusedColumnRemover()

@@ -33,8 +33,8 @@ namespace IQToolkit.Data.Common
 
         class BasicMappingEntity : MappingEntity
         {
-            string entityID;
-            Type type;
+            readonly string entityID;
+            readonly Type type;
 
             public BasicMappingEntity(Type type, string entityID)
             {
@@ -355,8 +355,8 @@ namespace IQToolkit.Data.Common
 
     public class BasicMapper : QueryMapper
     {
-        BasicMapping mapping;
-        QueryTranslator translator;
+        readonly BasicMapping mapping;
+        readonly QueryTranslator translator;
 
         public BasicMapper(BasicMapping mapping, QueryTranslator translator)
         {

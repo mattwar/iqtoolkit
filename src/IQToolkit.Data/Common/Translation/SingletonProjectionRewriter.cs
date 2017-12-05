@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class SingletonProjectionRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
+        readonly QueryLanguage language;
         bool isTopLevel = true;
         SelectExpression currentSelect;
 

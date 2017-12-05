@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class OrderByRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
+        readonly QueryLanguage language;
         IList<OrderExpression> gatheredOrderings;
         bool isOuterMostSelect;
 
@@ -179,8 +179,8 @@ namespace IQToolkit.Data.Common
 
         protected class BindResult
         {
-            ReadOnlyCollection<ColumnDeclaration> columns;
-            ReadOnlyCollection<OrderExpression> orderings;
+            readonly ReadOnlyCollection<ColumnDeclaration> columns;
+            readonly ReadOnlyCollection<OrderExpression> orderings;
             public BindResult(IEnumerable<ColumnDeclaration> columns, IEnumerable<OrderExpression> orderings)
             {
                 this.columns = columns as ReadOnlyCollection<ColumnDeclaration>;

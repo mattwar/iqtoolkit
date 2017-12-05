@@ -14,9 +14,9 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class AggregateRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
-        ILookup<TableAlias, AggregateSubqueryExpression> lookup;
-        Dictionary<AggregateSubqueryExpression, Expression> map;
+        readonly QueryLanguage language;
+        readonly ILookup<TableAlias, AggregateSubqueryExpression> lookup;
+        readonly Dictionary<AggregateSubqueryExpression, Expression> map;
 
         private AggregateRewriter(QueryLanguage language, Expression expr)
         {
@@ -61,7 +61,7 @@ namespace IQToolkit.Data.Common
 
         class AggregateGatherer : DbExpressionVisitor
         {
-            List<AggregateSubqueryExpression> aggregates = new List<AggregateSubqueryExpression>();
+            readonly List<AggregateSubqueryExpression> aggregates = new List<AggregateSubqueryExpression>();
             private AggregateGatherer()
             {
             }

@@ -21,11 +21,11 @@ namespace IQToolkit.Data
     /// </summary>
     public abstract class EntityProvider : QueryProvider, IEntityProvider, ICreateExecutor
     {
-        QueryLanguage language;
-        QueryMapping mapping;
+        readonly QueryLanguage language;
+        readonly QueryMapping mapping;
         QueryPolicy policy;
         TextWriter log;
-        Dictionary<MappingEntity, IEntityTable> tables;
+        readonly Dictionary<MappingEntity, IEntityTable> tables;
         QueryCache cache;
 
         public EntityProvider(QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
@@ -149,8 +149,8 @@ namespace IQToolkit.Data
 
         public class EntityTable<T> : Query<T>, IEntityTable<T>, IHaveMappingEntity
         {
-            MappingEntity entity;
-            EntityProvider provider;
+            readonly MappingEntity entity;
+            readonly EntityProvider provider;
 
             public EntityTable(EntityProvider provider, MappingEntity entity)
                 : base(provider, typeof(IEntityTable<T>))
@@ -248,7 +248,7 @@ namespace IQToolkit.Data
 
         class CommandGatherer : DbExpressionVisitor
         {
-            List<QueryCommand> commands = new List<QueryCommand>();
+            readonly List<QueryCommand> commands = new List<QueryCommand>();
 
             public static ReadOnlyCollection<QueryCommand> Gather(Expression expression)
             {

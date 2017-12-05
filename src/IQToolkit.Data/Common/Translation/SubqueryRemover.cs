@@ -19,8 +19,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class SubqueryRemover : DbExpressionVisitor
     {
-        HashSet<SelectExpression> selectsToRemove;
-        Dictionary<TableAlias, Dictionary<string, Expression>> map;
+        readonly HashSet<SelectExpression> selectsToRemove;
+        readonly Dictionary<TableAlias, Dictionary<string, Expression>> map;
 
         private SubqueryRemover(IEnumerable<SelectExpression> selectsToRemove)
         {

@@ -30,7 +30,7 @@ namespace IQToolkit
     /// <typeparam name="T"></typeparam>
     public class DeferredList<T> : IDeferredList<T>, ICollection<T>, IEnumerable<T>, IList, ICollection, IEnumerable, IDeferLoadable
     {
-        IEnumerable<T> source;
+        readonly IEnumerable<T> source;
         List<T> values;
 
         public DeferredList(IEnumerable<T> source)

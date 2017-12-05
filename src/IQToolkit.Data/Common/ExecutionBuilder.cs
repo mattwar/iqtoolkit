@@ -18,15 +18,15 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ExecutionBuilder : DbExpressionVisitor
     {
-        QueryPolicy policy;
-        QueryLinguist linguist;
-        Expression executor;
+        readonly QueryPolicy policy;
+        readonly QueryLinguist linguist;
+        readonly Expression executor;
         Scope scope;
         bool isTop = true;
         MemberInfo receivingMember;
         int nReaders = 0;
-        List<ParameterExpression> variables = new List<ParameterExpression>();
-        List<Expression> initializers = new List<Expression>();
+        readonly List<ParameterExpression> variables = new List<ParameterExpression>();
+        readonly List<Expression> initializers = new List<Expression>();
         Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
 
         private ExecutionBuilder(QueryLinguist linguist, QueryPolicy policy, Expression executor)
@@ -81,7 +81,7 @@ namespace IQToolkit.Data.Common
             return Expression.Convert(Expression.Call(typeof(ExecutionBuilder), "Sequence", null, Expression.NewArrayInit(typeof(object), expressions)), last.Type);
         }
 
-        public static object Sequence(params object[] values) 
+        public static object Sequence(params object[] values)
         {
             return values[values.Length - 1];
         }
@@ -248,8 +248,8 @@ namespace IQToolkit.Data.Common
 
             var entity = EntityFinder.Find(projection.Projector);
 
-            string methExecute = okayToDefer 
-                ? "ExecuteDeferred" 
+            string methExecute = okayToDefer
+                ? "ExecuteDeferred"
                 : "Execute";
 
             // call low-level execute directly on supplied DbQueryProvider
@@ -383,14 +383,14 @@ namespace IQToolkit.Data.Common
 
         protected override Expression VisitIf(IFCommand ifx)
         {
-            var test = 
+            var test =
                 Expression.Condition(
-                    ifx.Check, 
-                    ifx.IfTrue, 
-                    ifx.IfFalse != null 
-                        ? ifx.IfFalse 
-                        : ifx.IfTrue.Type == typeof(int) 
-                            ? (Expression)Expression.Property(this.executor, "RowsAffected") 
+                    ifx.Check,
+                    ifx.IfTrue,
+                    ifx.IfFalse != null
+                        ? ifx.IfFalse
+                        : ifx.IfTrue.Type == typeof(int)
+                            ? (Expression)Expression.Property(this.executor, "RowsAffected")
                             : (Expression)Expression.Constant(TypeHelper.GetDefault(ifx.IfTrue.Type), ifx.IfTrue.Type)
                             );
             return this.Visit(test);
@@ -413,7 +413,7 @@ namespace IQToolkit.Data.Common
                 new[] { new ColumnDeclaration("value", new AggregateExpression(typeof(int), "Count", null, false), colType) }
                 );
 
-            var projection = 
+            var projection =
                 new ProjectionExpression(
                     newSelect,
                     new ColumnExpression(typeof(int), colType, newSelect.Alias, "value"),
@@ -464,7 +464,7 @@ namespace IQToolkit.Data.Common
             // probably bad if we get here since we must not allow mulitple commands
             throw new InvalidOperationException("Declaration query not allowed for this langauge");
         }
-        
+
         protected virtual Expression BuildExecuteCommand(CommandExpression command)
         {
             // parameterize query
@@ -529,10 +529,10 @@ namespace IQToolkit.Data.Common
 
         class Scope
         {
-            Scope outer;
-            ParameterExpression fieldReader;
+            readonly Scope outer;
+            readonly ParameterExpression fieldReader;
             internal TableAlias Alias { get; private set; }
-            Dictionary<string, int> nameMap;
+            readonly Dictionary<string, int> nameMap;
 
             internal Scope(Scope outer, ParameterExpression fieldReader, TableAlias alias, IEnumerable<ColumnDeclaration> columns)
             {
@@ -565,7 +565,7 @@ namespace IQToolkit.Data.Common
         {
             int iParam;
             TableAlias outerAlias;
-            Dictionary<ColumnExpression, NamedValueExpression> map = new Dictionary<ColumnExpression, NamedValueExpression>();
+            readonly Dictionary<ColumnExpression, NamedValueExpression> map = new Dictionary<ColumnExpression, NamedValueExpression>();
 
             internal static Expression Parameterize(TableAlias outerAlias, Expression expr)
             {
@@ -585,7 +585,7 @@ namespace IQToolkit.Data.Common
                 if (column.Alias == this.outerAlias)
                 {
                     NamedValueExpression nv;
-                    if (!this.map.TryGetValue(column, out nv)) 
+                    if (!this.map.TryGetValue(column, out nv))
                     {
                         nv = new NamedValueExpression("n" + (iParam++), column.QueryType, column);
                         this.map.Add(column, nv);
@@ -598,7 +598,7 @@ namespace IQToolkit.Data.Common
 
         class ColumnGatherer : DbExpressionVisitor
         {
-            Dictionary<string, ColumnExpression> columns = new Dictionary<string, ColumnExpression>();
+            readonly Dictionary<string, ColumnExpression> columns = new Dictionary<string, ColumnExpression>();
 
             internal static IEnumerable<ColumnExpression> Gather(Expression expression)
             {
@@ -637,7 +637,7 @@ namespace IQToolkit.Data.Common
 
         class VariableSubstitutor : DbExpressionVisitor
         {
-            Dictionary<string, Expression> map;
+            readonly Dictionary<string, Expression> map;
 
             private VariableSubstitutor(Dictionary<string, Expression> map)
             {

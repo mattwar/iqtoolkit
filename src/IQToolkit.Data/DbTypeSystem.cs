@@ -329,11 +329,11 @@ namespace IQToolkit.Data
 
     public class DbQueryType : QueryType
     {
-        SqlDbType dbType;
-        bool notNull;
-        int length;
-        short precision;
-        short scale;
+        readonly SqlDbType dbType;
+        readonly bool notNull;
+        readonly int length;
+        readonly short precision;
+        readonly short scale;
 
         public DbQueryType(SqlDbType dbType, bool notNull, int length, short precision, short scale)
         {

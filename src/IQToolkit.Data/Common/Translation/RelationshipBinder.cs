@@ -17,9 +17,9 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class RelationshipBinder : DbExpressionVisitor
     {
-        QueryMapper mapper;
-        QueryMapping mapping;
-        QueryLanguage language;
+        readonly QueryMapper mapper;
+        readonly QueryMapping mapping;
+        readonly QueryLanguage language;
         Expression currentFrom;
 
         private RelationshipBinder(QueryMapper mapper)

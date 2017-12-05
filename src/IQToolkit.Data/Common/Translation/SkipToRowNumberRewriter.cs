@@ -15,7 +15,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class SkipToRowNumberRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
+        readonly QueryLanguage language;
 
         private SkipToRowNumberRewriter(QueryLanguage language)
         {

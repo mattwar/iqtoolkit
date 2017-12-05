@@ -64,7 +64,7 @@ namespace IQToolkit.Data.Access
 
         public new class Executor : OleDbQueryProvider.Executor
         {
-            AccessQueryProvider provider;
+            readonly AccessQueryProvider provider;
 
             public Executor(AccessQueryProvider provider)
                 : base(provider)

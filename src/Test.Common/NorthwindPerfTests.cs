@@ -50,10 +50,10 @@ namespace Test
             var adoTime = RunTimedTest(iterations, i =>
             {
                 var cmd = this.GetProvider().Connection.CreateCommand();
-                
+
                 cmd.CommandText = "SELECT TOP (@p0) OrderID, ProductID FROM [Order Details] WHERE OrderID > @p1";
                 //cmd.CommandText = "PARAMETERS p1 int; SELECT TOP 50 OrderID, ProductID FROM [Order Details] WHERE OrderID > p1";
-                
+
                 var p0 = cmd.CreateParameter();
                 p0.ParameterName = "p0";
                 p0.Value = n;
@@ -65,7 +65,7 @@ namespace Test
                 cmd.Parameters.Add(p1);
 
                 var reader = cmd.ExecuteReader();
-                
+
                 var list = new List<object>();
                 while (reader.Read())
                 {
@@ -85,48 +85,49 @@ namespace Test
         public void TestQueryCache()
         {
             int iterations = 1000;
-            var cache = new QueryCache(10);
-
-            var notCached = RunTimedTest(iterations, i =>
+            using (var cache = new QueryCache(10))
             {
-                var results = db.OrderDetails.Where(d => d.OrderID > i).Take(n).ToList();
-                System.Diagnostics.Debug.Assert(results.Count == n);
-            });
+                var notCached = RunTimedTest(iterations, i =>
+                {
+                    var results = db.OrderDetails.Where(d => d.OrderID > i).Take(n).ToList();
+                    System.Diagnostics.Debug.Assert(results.Count == n);
+                });
 
-            this.GetProvider().Cache = cache;
-            var autoCached = RunTimedTest(iterations, i =>
-            {
-                var results = db.OrderDetails.Where(d => d.OrderID > i).Take(n).ToList();
-                System.Diagnostics.Debug.Assert(results.Count == n);
-            });
-            this.GetProvider().Cache = null;
+                this.GetProvider().Cache = cache;
+                var autoCached = RunTimedTest(iterations, i =>
+                {
+                    var results = db.OrderDetails.Where(d => d.OrderID > i).Take(n).ToList();
+                    System.Diagnostics.Debug.Assert(results.Count == n);
+                });
+                this.GetProvider().Cache = null;
 
-            var check = RunTimedTest(iterations, i =>
-            {
-                var query = db.OrderDetails.Where(d => d.OrderID > i).Take(n);
-                var isCached = cache.Contains(query);
-            });
+                var check = RunTimedTest(iterations, i =>
+                {
+                    var query = db.OrderDetails.Where(d => d.OrderID > i).Take(n);
+                    var isCached = cache.Contains(query);
+                });
 
-            var cached = RunTimedTest(iterations, i =>
-            {
-                var query = db.OrderDetails.Where(d => d.OrderID > i).Take(n);
-                var results = cache.Execute(query).ToList();
-                System.Diagnostics.Debug.Assert(results.Count == n);
-            });
-            System.Diagnostics.Debug.Assert(cache.Count == 1);
+                var cached = RunTimedTest(iterations, i =>
+                {
+                    var query = db.OrderDetails.Where(d => d.OrderID > i).Take(n);
+                    var results = cache.Execute(query).ToList();
+                    System.Diagnostics.Debug.Assert(results.Count == n);
+                });
+                System.Diagnostics.Debug.Assert(cache.Count == 1);
 
-            var cq = QueryCompiler.Compile((Northwind nw, int i) => nw.OrderDetails.Where(d => d.OrderID > i).Take(n));
-            var compiled = RunTimedTest(iterations, i =>
-            {
-                var results = cq(db, i).ToList();
-                System.Diagnostics.Debug.Assert(results.Count == n);
-            });
+                var cq = QueryCompiler.Compile((Northwind nw, int i) => nw.OrderDetails.Where(d => d.OrderID > i).Take(n));
+                var compiled = RunTimedTest(iterations, i =>
+                {
+                    var results = cq(db, i).ToList();
+                    System.Diagnostics.Debug.Assert(results.Count == n);
+                });
 
-            Console.WriteLine("compiled   : {0} sec", compiled);
-            Console.WriteLine("check cache: {0}", check);
-            Console.WriteLine("cached     : {0}  {1:#.##}x vs compiled", cached, cached / compiled);
-            Console.WriteLine("auto cached: {0}  {1:#.##}x vs compiled", autoCached, autoCached / compiled);
-            Console.WriteLine("not cached : {0}  {1:#.##}x vs compiled", notCached, notCached / compiled);
+                Console.WriteLine("compiled   : {0} sec", compiled);
+                Console.WriteLine("check cache: {0}", check);
+                Console.WriteLine("cached     : {0}  {1:#.##}x vs compiled", cached, cached / compiled);
+                Console.WriteLine("auto cached: {0}  {1:#.##}x vs compiled", autoCached, autoCached / compiled);
+                Console.WriteLine("not cached : {0}  {1:#.##}x vs compiled", notCached, notCached / compiled);
+            }
         }
 
         public void TestStandardQuery()

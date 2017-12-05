@@ -17,8 +17,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ColumnMapper : DbExpressionVisitor
     {
-        HashSet<TableAlias> oldAliases;
-        TableAlias newAlias;
+        readonly HashSet<TableAlias> oldAliases;
+        readonly TableAlias newAlias;
 
         private ColumnMapper(IEnumerable<TableAlias> oldAliases, TableAlias newAlias)
         {

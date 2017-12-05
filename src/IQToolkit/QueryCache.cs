@@ -7,15 +7,21 @@ using System.Threading;
 
 namespace IQToolkit
 {
-    public class QueryCache
+    public sealed class QueryCache : IDisposable
     {
-        MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
+        readonly MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
         static readonly Func<QueryCompiler.CompiledQuery, QueryCompiler.CompiledQuery, bool> fnCompareQueries = CompareQueries;
         static readonly Func<object, object, bool> fnCompareValues = CompareConstantValues;
 
         public QueryCache(int maxSize)
         {
             this.cache = new MostRecentlyUsedCache<QueryCompiler.CompiledQuery>(maxSize, fnCompareQueries);
+        }
+
+        public void Dispose()
+        {
+            this.cache.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         private static bool CompareQueries(QueryCompiler.CompiledQuery x, QueryCompiler.CompiledQuery y)
@@ -146,8 +152,8 @@ namespace IQToolkit
 
         class ExplicitToObjectArray : ExpressionVisitor
         {
-            IList<ParameterExpression> parameters;
-            ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
+            readonly IList<ParameterExpression> parameters;
+            readonly ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
 
             private ExplicitToObjectArray(IList<ParameterExpression> parameters)
             {

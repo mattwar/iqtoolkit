@@ -21,7 +21,7 @@ namespace IQToolkit.Data.SqlClient
     /// </summary>
     public class TSqlLanguage : QueryLanguage
     {
-        DbTypeSystem typeSystem = new DbTypeSystem();
+        readonly DbTypeSystem typeSystem = new DbTypeSystem();
 
         public TSqlLanguage()
         {

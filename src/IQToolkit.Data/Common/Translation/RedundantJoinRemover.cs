@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class RedundantJoinRemover : DbExpressionVisitor
     {
-        Dictionary<TableAlias, TableAlias> map;
+        readonly Dictionary<TableAlias, TableAlias> map;
 
         private RedundantJoinRemover()
         {

@@ -63,7 +63,7 @@ namespace IQToolkit.Data.SqlClient
 
         new class Executor : DbEntityProvider.Executor
         {
-            SqlQueryProvider provider;
+            readonly SqlQueryProvider provider;
 
             public Executor(SqlQueryProvider provider)
                 : base(provider)
@@ -127,49 +127,52 @@ namespace IQToolkit.Data.SqlClient
 
             private IEnumerable<int> ExecuteBatch(QueryCommand query, IEnumerable<object[]> paramSets, int batchSize)
             {
-                SqlCommand cmd = (SqlCommand)this.GetCommand(query, null);
-                DataTable dataTable = new DataTable();
-
-                for (int i = 0, n = query.Parameters.Count; i < n; i++)
+                using (SqlCommand cmd = (SqlCommand)this.GetCommand(query, null))
+                using (DataTable dataTable = new DataTable())
                 {
-                    var qp = query.Parameters[i];
-                    cmd.Parameters[i].SourceColumn = qp.Name;
-                    dataTable.Columns.Add(qp.Name, TypeHelper.GetNonNullableType(qp.Type));
-                }
-
-                SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.InsertCommand = cmd;
-                dataAdapter.InsertCommand.UpdatedRowSource = UpdateRowSource.None;
-                dataAdapter.UpdateBatchSize = batchSize;
-
-                this.LogMessage("-- Start SQL Batching --");
-                this.LogMessage("");
-                this.LogCommand(query, null);
-
-                IEnumerator<object[]> en = paramSets.GetEnumerator();
-                using (en)
-                {
-                    bool hasNext = true;
-                    while (hasNext)
+                    for (int i = 0, n = query.Parameters.Count; i < n; i++)
                     {
-                        int count = 0;
-                        for (; count < dataAdapter.UpdateBatchSize && (hasNext = en.MoveNext()); count++)
-                        {
-                            var paramValues = en.Current;
-                            dataTable.Rows.Add(paramValues);
-                            this.LogParameters(query, paramValues);
-                            this.LogMessage("");
-                        }
+                        var qp = query.Parameters[i];
+                        cmd.Parameters[i].SourceColumn = qp.Name;
+                        dataTable.Columns.Add(qp.Name, TypeHelper.GetNonNullableType(qp.Type));
+                    }
 
-                        if (count > 0)
+                    using (SqlDataAdapter dataAdapter = new SqlDataAdapter())
+                    {
+                        dataAdapter.InsertCommand = cmd;
+                        dataAdapter.InsertCommand.UpdatedRowSource = UpdateRowSource.None;
+                        dataAdapter.UpdateBatchSize = batchSize;
+
+                        this.LogMessage("-- Start SQL Batching --");
+                        this.LogMessage("");
+                        this.LogCommand(query, null);
+
+                        IEnumerator<object[]> en = paramSets.GetEnumerator();
+                        using (en)
                         {
-                            int n = dataAdapter.Update(dataTable);
-                            for (int i = 0; i < count; i++)
+                            bool hasNext = true;
+                            while (hasNext)
                             {
-                                yield return (i < n) ? 1 : 0;
-                            }
+                                int count = 0;
+                                for (; count < dataAdapter.UpdateBatchSize && (hasNext = en.MoveNext()); count++)
+                                {
+                                    var paramValues = en.Current;
+                                    dataTable.Rows.Add(paramValues);
+                                    this.LogParameters(query, paramValues);
+                                    this.LogMessage("");
+                                }
 
-                            dataTable.Rows.Clear();
+                                if (count > 0)
+                                {
+                                    int n = dataAdapter.Update(dataTable);
+                                    for (int i = 0; i < count; i++)
+                                    {
+                                        yield return (i < n) ? 1 : 0;
+                                    }
+
+                                    dataTable.Rows.Clear();
+                                }
+                            }
                         }
                     }
                 }

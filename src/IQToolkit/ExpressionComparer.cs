@@ -18,7 +18,7 @@ namespace IQToolkit
     public class ExpressionComparer
     {
         ScopedDictionary<ParameterExpression, ParameterExpression> parameterScope;
-        Func<object, object, bool> fnCompare;
+        readonly Func<object, object, bool> fnCompare;
 
         protected ExpressionComparer(
             ScopedDictionary<ParameterExpression, ParameterExpression> parameterScope,

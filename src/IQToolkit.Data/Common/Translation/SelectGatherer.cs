@@ -15,7 +15,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class SelectGatherer : DbExpressionVisitor
     {
-        List<SelectExpression> selects = new List<SelectExpression>();
+        readonly List<SelectExpression> selects = new List<SelectExpression>();
 
         public static ReadOnlyCollection<SelectExpression> Gather(Expression expression)
         {

@@ -18,7 +18,7 @@ namespace IQToolkit.Data.Mapping
 
     public class XmlMapping : AttributeMapping
     {
-        Dictionary<string, XElement> entities;
+        readonly Dictionary<string, XElement> entities;
         private static readonly XName Entity = XName.Get("Entity");
         private static readonly XName Id = XName.Get("Id");
         

@@ -12,7 +12,7 @@ namespace IQToolkit.Data.Common
 {
     public class NamedValueGatherer : DbExpressionVisitor
     {
-        HashSet<NamedValueExpression> namedValues = new HashSet<NamedValueExpression>(new NamedValueComparer());
+        readonly HashSet<NamedValueExpression> namedValues = new HashSet<NamedValueExpression>(new NamedValueComparer());
 
         private NamedValueGatherer()
         {

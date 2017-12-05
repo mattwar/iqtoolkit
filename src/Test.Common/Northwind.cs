@@ -50,7 +50,7 @@ namespace Test
         int ID { get; }
     }
 
-    public class Product : IEntity
+    public sealed class Product : IEntity
     {
         public int ID;
         public string ProductName;
@@ -89,7 +89,7 @@ namespace Test
 
     public class Northwind
     {
-        private IEntityProvider provider;
+        private readonly IEntityProvider provider;
 
         public Northwind(IEntityProvider provider)
         {
@@ -201,7 +201,7 @@ namespace Test
 
     public class NorthwindSession : INorthwindSession
     {
-        IEntitySession session;
+        readonly IEntitySession session;
 
         public NorthwindSession(EntityProvider provider)
             : this(new EntitySession(provider))
@@ -279,7 +279,7 @@ namespace Test
 
     public class NorthwindX
     {
-        EntityProvider provider;
+        readonly EntityProvider provider;
 
         public NorthwindX(EntityProvider provider)
         {

@@ -17,7 +17,7 @@ namespace IQToolkit.Data.SqlServerCe
 
     public class SqlCeLanguage : QueryLanguage
     {
-        DbTypeSystem typeSystem = new DbTypeSystem();
+        readonly DbTypeSystem typeSystem = new DbTypeSystem();
 
         public SqlCeLanguage() 
         {

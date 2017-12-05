@@ -17,7 +17,7 @@ namespace IQToolkit.Data.SqlServerCe
     /// </summary>
     public class ScalarSubqueryRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
+        readonly QueryLanguage language;
         Expression currentFrom;
 
         public ScalarSubqueryRewriter(QueryLanguage language)

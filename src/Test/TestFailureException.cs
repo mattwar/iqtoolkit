@@ -5,6 +5,7 @@ using System;
 
 namespace Test
 {
+    [Serializable]
     public class TestFailureException : Exception
     {
         public TestFailureException(string message)

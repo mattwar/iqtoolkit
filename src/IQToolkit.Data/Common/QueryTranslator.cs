@@ -17,9 +17,9 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class QueryTranslator
     {
-        QueryLinguist linguist;
-        QueryMapper mapper;
-        QueryPolice police;
+        readonly QueryLinguist linguist;
+        readonly QueryMapper mapper;
+        readonly QueryPolice police;
 
         public QueryTranslator(QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
         {

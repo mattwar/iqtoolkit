@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ReferencedAliasGatherer : DbExpressionVisitor
     {
-        HashSet<TableAlias> aliases;
+        readonly HashSet<TableAlias> aliases;
 
         private ReferencedAliasGatherer()
         {

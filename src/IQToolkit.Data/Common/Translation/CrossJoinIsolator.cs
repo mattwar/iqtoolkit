@@ -15,7 +15,7 @@ namespace IQToolkit.Data.Common
     public class CrossJoinIsolator : DbExpressionVisitor
     {
         ILookup<TableAlias, ColumnExpression> columns;
-        Dictionary<ColumnExpression, ColumnExpression> map = new Dictionary<ColumnExpression,ColumnExpression>();
+        readonly Dictionary<ColumnExpression, ColumnExpression> map = new Dictionary<ColumnExpression,ColumnExpression>();
         JoinType? lastJoin;
 
         public static Expression Isolate(Expression expression)

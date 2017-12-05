@@ -14,7 +14,7 @@ namespace IQToolkit.Data.SQLite
 
     public class SQLiteQueryProvider : DbEntityProvider
     {
-        Dictionary<QueryCommand, SQLiteCommand> commandCache = new Dictionary<QueryCommand, SQLiteCommand>();
+        readonly Dictionary<QueryCommand, SQLiteCommand> commandCache = new Dictionary<QueryCommand, SQLiteCommand>();
 
         public SQLiteQueryProvider(SQLiteConnection connection, QueryMapping mapping, QueryPolicy policy)
             : base(connection, SQLiteLanguage.Default, mapping, policy)
@@ -57,7 +57,7 @@ namespace IQToolkit.Data.SQLite
 
         new class Executor : DbEntityProvider.Executor
         {
-            SQLiteQueryProvider provider;
+            readonly SQLiteQueryProvider provider;
 
             public Executor(SQLiteQueryProvider provider)
                 : base(provider)

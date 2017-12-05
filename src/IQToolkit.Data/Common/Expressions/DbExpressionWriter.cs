@@ -18,8 +18,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class DbExpressionWriter : ExpressionWriter
     {
-        QueryLanguage language;
-        Dictionary<TableAlias, int> aliasMap = new Dictionary<TableAlias, int>();
+        readonly QueryLanguage language;
+        readonly Dictionary<TableAlias, int> aliasMap = new Dictionary<TableAlias, int>();
 
         protected DbExpressionWriter(TextWriter writer, QueryLanguage language)
             : base(writer)
@@ -44,9 +44,11 @@ namespace IQToolkit.Data.Common
 
         public static string WriteToString(QueryLanguage language, Expression expression)
         {
-            StringWriter sw = new StringWriter();
-            Write(sw, language, expression);
-            return sw.ToString();
+            using (StringWriter sw = new StringWriter())
+            {
+                Write(sw, language, expression);
+                return sw.ToString();
+            }
         }
 
         protected override Expression Visit(Expression exp)
@@ -235,7 +237,7 @@ namespace IQToolkit.Data.Common
         protected virtual Expression VisitColumn(ColumnExpression column)
         {
             int iAlias;
-            string aliasName = 
+            string aliasName =
                 this.aliasMap.TryGetValue(column.Alias, out iAlias)
                 ? "A" + iAlias
                 : "A" + (column.Alias != null ? column.Alias.GetHashCode().ToString() : "") + "?";
@@ -249,4 +251,3 @@ namespace IQToolkit.Data.Common
         }
     }
 }
- 

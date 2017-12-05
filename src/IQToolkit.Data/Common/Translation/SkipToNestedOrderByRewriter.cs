@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class SkipToNestedOrderByRewriter : DbExpressionVisitor
     {
-        QueryLanguage language;
+        readonly QueryLanguage language;
 
         private SkipToNestedOrderByRewriter(QueryLanguage language)
         {

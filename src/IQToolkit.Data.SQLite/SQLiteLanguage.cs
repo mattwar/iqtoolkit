@@ -10,7 +10,7 @@ namespace IQToolkit.Data.SQLite
 
     public sealed class SQLiteLanguage : QueryLanguage
     {
-        private SQLiteTypeSystem _typeSystem = new SQLiteTypeSystem();
+        private readonly SQLiteTypeSystem _typeSystem = new SQLiteTypeSystem();
 
         public override QueryTypeSystem TypeSystem
         {

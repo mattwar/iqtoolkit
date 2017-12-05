@@ -17,7 +17,7 @@ namespace Test
     using IQToolkit.Data;
     using IQToolkit.Data.Common;
 
-    public abstract class QueryTestBase
+    public abstract class QueryTestBase : IDisposable
     {
         private bool executeQueries;
 
@@ -30,6 +30,13 @@ namespace Test
 
         public QueryTestBase()
         {
+        }
+
+        public void Dispose()
+        {
+            this.baselineWriter?.Dispose();
+            this.baselineWriter = null;
+            GC.SuppressFinalize(this);
         }
 
         public DbEntityProvider GetProvider()
@@ -196,7 +203,7 @@ namespace Test
                             disposable.Dispose();
                     }
                 }
-                catch (Exception e) 
+                catch (Exception e)
                 {
                     caught = e;
 

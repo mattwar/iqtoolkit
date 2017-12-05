@@ -17,9 +17,9 @@ namespace IQToolkit.Data
 
     public class EntitySession : IEntitySession
     {
-        EntityProvider provider;
-        SessionProvider sessionProvider;
-        Dictionary<MappingEntity, ISessionTable> tables;
+        readonly EntityProvider provider;
+        readonly SessionProvider sessionProvider;
+        readonly Dictionary<MappingEntity, ISessionTable> tables;
 
         public EntitySession(EntityProvider provider)
         {
@@ -78,9 +78,9 @@ namespace IQToolkit.Data
 
         abstract class SessionTable<T> : Query<T>, ISessionTable<T>, ISessionTable, IEntitySessionTable
         {
-            EntitySession session;
-            MappingEntity entity;
-            IEntityTable<T> underlyingTable;
+            readonly EntitySession session;
+            readonly MappingEntity entity;
+            readonly IEntityTable<T> underlyingTable;
 
             public SessionTable(EntitySession session, MappingEntity entity)
                 : base(session.sessionProvider, typeof(ISessionTable<T>))
@@ -148,8 +148,8 @@ namespace IQToolkit.Data
 
         class SessionProvider : QueryProvider, IEntityProvider, ICreateExecutor
         {
-            EntitySession session;
-            EntityProvider provider;
+            readonly EntitySession session;
+            readonly EntityProvider provider;
 
             public SessionProvider(EntitySession session, EntityProvider provider)
             {
@@ -200,8 +200,8 @@ namespace IQToolkit.Data
 
         class SessionExecutor : QueryExecutor
         {
-            EntitySession session;
-            QueryExecutor executor;
+            readonly EntitySession session;
+            readonly QueryExecutor executor;
 
             public SessionExecutor(EntitySession session, QueryExecutor executor)
             {
@@ -292,8 +292,8 @@ namespace IQToolkit.Data
 
         class TrackedTable<T> : SessionTable<T>, ITrackedTable
         {
-            Dictionary<T, TrackedItem> tracked;
-            Dictionary<object, T> identityCache;
+            readonly Dictionary<T, TrackedItem> tracked;
+            readonly Dictionary<object, T> identityCache;
 
             public TrackedTable(EntitySession session, MappingEntity entity)
                 : base(session, entity)
@@ -508,11 +508,11 @@ namespace IQToolkit.Data
 
         class TrackedItem
         {
-            ITrackedTable table;
-            object instance;
-            object original;
-            SubmitAction state;
-            bool hookedEvent;
+            readonly ITrackedTable table;
+            readonly object instance;
+            readonly object original;
+            readonly SubmitAction state;
+            readonly bool hookedEvent;
 
             internal TrackedItem(ITrackedTable table, object instance, object original, SubmitAction state, bool hookedEvent)
             {
@@ -631,7 +631,7 @@ namespace IQToolkit.Data
         {
             internal TrackedItem Source { get; private set; }
             internal TrackedItem Target { get; private set; }
-            int hash;
+            readonly int hash;
 
             internal Edge(TrackedItem source, TrackedItem target)
             {

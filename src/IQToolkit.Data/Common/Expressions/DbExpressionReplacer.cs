@@ -16,8 +16,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class DbExpressionReplacer : DbExpressionVisitor
     {
-        Expression searchFor;
-        Expression replaceWith;
+        readonly Expression searchFor;
+        readonly Expression replaceWith;
 
         private DbExpressionReplacer(Expression searchFor, Expression replaceWith)
         {

@@ -52,8 +52,8 @@ namespace IQToolkit.Data.Common
 
     public class QueryPolice
     {
-        QueryPolicy policy;
-        QueryTranslator translator;
+        readonly QueryPolicy policy;
+        readonly QueryTranslator translator;
 
         public QueryPolice(QueryPolicy policy, QueryTranslator translator)
         {

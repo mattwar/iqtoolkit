@@ -61,7 +61,7 @@ namespace IQToolkit
 
         public class CompiledQuery
         {
-            LambdaExpression query;
+            readonly LambdaExpression query;
             Delegate fnQuery;
 
             internal CompiledQuery(LambdaExpression query)

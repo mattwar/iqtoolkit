@@ -16,15 +16,15 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class SqlFormatter : DbExpressionVisitor
     {
-        QueryLanguage language;
-        StringBuilder sb;
+        readonly QueryLanguage language;
+        readonly StringBuilder sb;
         int indent = 2;
         int depth;
-        Dictionary<TableAlias, string> aliases;
+        readonly Dictionary<TableAlias, string> aliases;
         bool hideColumnAliases;
         bool hideTableAliases;
         bool isNested;
-        bool forDebug;
+        readonly bool forDebug;
 
         private SqlFormatter(QueryLanguage language, bool forDebug)
         {

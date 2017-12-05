@@ -16,8 +16,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public sealed class ProjectedColumns
     {
-        Expression projector;
-        ReadOnlyCollection<ColumnDeclaration> columns;
+        readonly Expression projector;
+        readonly ReadOnlyCollection<ColumnDeclaration> columns;
 
         public ProjectedColumns(Expression projector, ReadOnlyCollection<ColumnDeclaration> columns)
         {
@@ -62,13 +62,13 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ColumnProjector : DbExpressionVisitor
     {
-        QueryLanguage language;
-        Dictionary<ColumnExpression, ColumnExpression> map;
-        List<ColumnDeclaration> columns;
-        HashSet<string> columnNames;
-        HashSet<Expression> candidates;
-        HashSet<TableAlias> existingAliases;
-        TableAlias newAlias;
+        readonly QueryLanguage language;
+        readonly Dictionary<ColumnExpression, ColumnExpression> map;
+        readonly List<ColumnDeclaration> columns;
+        readonly HashSet<string> columnNames;
+        readonly HashSet<Expression> candidates;
+        readonly HashSet<TableAlias> existingAliases;
+        readonly TableAlias newAlias;
         int iColumn;
 
         private ColumnProjector(QueryLanguage language, ProjectionAffinity affinity, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)

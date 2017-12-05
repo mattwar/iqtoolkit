@@ -18,9 +18,9 @@ namespace IQToolkit.Data
 
     public class EntityPolicy : QueryPolicy
     {
-        HashSet<MemberInfo> included = new HashSet<MemberInfo>();
-        HashSet<MemberInfo> deferred = new HashSet<MemberInfo>();
-        Dictionary<MemberInfo, List<LambdaExpression>> operations = new Dictionary<MemberInfo, List<LambdaExpression>>();
+        readonly HashSet<MemberInfo> included = new HashSet<MemberInfo>();
+        readonly HashSet<MemberInfo> deferred = new HashSet<MemberInfo>();
+        readonly Dictionary<MemberInfo, List<LambdaExpression>> operations = new Dictionary<MemberInfo, List<LambdaExpression>>();
 
         public void Apply(LambdaExpression fnApply)
         {
@@ -123,7 +123,7 @@ namespace IQToolkit.Data
         class RootMemberFinder : ExpressionVisitor
         {
             MemberExpression found;
-            ParameterExpression parameter;
+            readonly ParameterExpression parameter;
 
             private RootMemberFinder(ParameterExpression parameter)
             {
@@ -181,7 +181,7 @@ namespace IQToolkit.Data
 
         class Police : QueryPolice
         {
-            EntityPolicy policy;
+            readonly EntityPolicy policy;
 
             public Police(EntityPolicy policy, QueryTranslator translator)
                 : base(policy, translator)

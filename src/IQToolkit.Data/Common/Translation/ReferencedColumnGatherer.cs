@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ReferencedColumnGatherer : DbExpressionVisitor
     {
-        HashSet<ColumnExpression> columns = new HashSet<ColumnExpression>();
+        readonly HashSet<ColumnExpression> columns = new HashSet<ColumnExpression>();
         bool first = true;
 
         public static HashSet<ColumnExpression> Gather(Expression expression)

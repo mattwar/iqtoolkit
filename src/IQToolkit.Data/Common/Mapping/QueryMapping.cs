@@ -21,8 +21,8 @@ namespace IQToolkit.Data.Common
 
     public struct EntityInfo
     {
-        object instance;
-        MappingEntity mapping;
+        readonly object instance;
+        readonly MappingEntity mapping;
 
         public EntityInfo(object instance, MappingEntity mapping)
         {

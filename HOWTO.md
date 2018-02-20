@@ -699,10 +699,158 @@ but it is not possible to have the same member mapped more than once.*
 
 ### Mapping with XML Files
 
+Mapping information might need to change over the lifetime of an application. 
+I might want to choose which mapping to use each time an application starts up or I might need to update the mapping to correspond to 
+changes in the database schema without requiring my application be recompiled and redistributed.
+
+Fortunately, it is possible to keep the mapping information in a file outside the application and load it in at runtime.
+I can encode the same information that I would have otherwise put into mapping attributes my source code, into an XML file.
+
+My entity classes:
+```CSharp
+public class Customer
+{
+    public string ID;
+    public string Name;
+    public string Phone;
+}
+
+public class Order
+{
+    public int ID;
+    public string CustomerID;
+}
+```
+
+The XML is encoded using xml elements using the same names that the in-source attributes have.
+Just like with the code attributes, I only have to specify the information that cannot be inferred.
+
+There are a few differences, however. 
+Table, column and association mapping elements are nested under their `<Entity>` element, so its required
+that all entity have an entity element in the mapping, where it was optional with the attribute mapping.
+
+```XML
+<map>
+  <Entity Id="Customer">
+    <Table Name="Customers"/>
+    <Column Member="ID" Name="CustomerID"/>
+    <Association Member="Orders" KeyMembers="ID" RelatedKeyMembers="CustomerID"/>
+  </Entity>
+  <Entity Id="Order">
+    <Table Name="Orders"/>
+    <Column Member="ID" Name="OrderID"/>
+    <Association Member="Customer" KeyMembers="CustomerID" RelatedKeyMembers="ID"/>
+  </Entity>
+ </map>
+```
+
+To use the XML mapping, I can construct an `XmlMapping` instance and specify it when I construct the provider.
+
+```CSharp
+var xmlText = File.ReadAllText("MyMapping.xml");
+var provider = new AccessQueryProvider("Northwind.mdb", XmlMapping.FromXml(xmlText));
+```
+
+Now my provider is ready to go with mapping information loaded from an external mapping file.
 
 ### Runtime Entity Types
 
-### Immutable Entity Classes
+I may want the entity types constructed by my query provider to be different than the entity types I specify via the API. 
+If you have never needed this capability before, it may seem odd, but there are valid reasons to want to do this.
+
+This will only work if the entity type I use in the API, `MyEntity`, is a base class or interface, and the type I want 
+constructed and used by the query provider either implements the interface or is derived from the base class.
+
+To do this, I can simply specify the `RuntimeType` of the entity in the mapping.
+
+The `Entity` mapping attribute lets me specify the `RuntimeType`.
+
+```CSharp
+[Entity(RuntimeType = typeof(RuntimeCustomer))]
+[Table(Name = "Customers")]
+public interface ICustomer
+{
+    string CustomerID { get; set; }
+    string ContactName { get; set; }
+    string Phone { get; set; }
+}
+
+public class RuntimeCustomer : ICustomer
+{
+    public string CustomerID { get; set; }
+    public string ContactName { get; set; }
+    public string Phone { get; set; }
+}
+```
+
+I can also specify the `RuntimeType` in XML mapping.
+
+```XML
+<map>
+  <Entity Id="Customer" RuntimeType=""RuntimeCustomer"">
+    <Table Name="Customers"/>
+    <Column Member="ID" Name="CustomerID"/>
+    <Association Member="Orders" KeyMembers="ID" RelatedKeyMembers="CustomerID"/>
+  </Entity>
+ </map>
+```
+
+But if I do so I'll need to help the `XmlMapping` instance figure out the correct type, by supplying the 
+assembly that contains the runtime types when I construct the mapping.
+I can specify more than one assembly if I need to, so that the provider can find all my runtime entity types.
+
+```CSharp
+var xmlText = File.ReadAllText("MyMapping.xml");
+var provider = new AccessQueryProvider("Northwind.mdb", XmlMapping.FromXml(xmlText), typeof(RuntimeCustomer).Assembly);
+```
+<br/>
+
+### Read Only Properties
+
+I may choose to have some or all of the data properties on my entity be read only by having public fields marked as `readonly` 
+in C# or properties specified with only a `get` method.
+
+This would normally make it difficult for a tool like a query provider to instantiate my entity type with the data
+values from the database, because it would be impossible to assign them without reflection magic that is typically too slow.
+
+Instead, I can specify a constructor on my entity type that takes as parameters the values that correspond to the fields or properties.
+If such a constructor exists where the parameters correspond to my read only properties (by name), then the query provider will
+use this constructor, as opposed to the default no-parameter constructor, to instantiate the entities.
+
+For example, I might choose to define the `Customer` class like this:
+
+```CSharp
+public class Customer
+{
+    public Customer(string customerId, string contactName, string phone)
+    {
+        this.CustomerID = customerId;
+        this.ContactName = contactName;
+        this.Phone = phone;
+    }
+
+    public string CustomerID { get; }
+    public string ContactName { get; }
+    public string Phone { get; }
+}
+```
+
+I'm not required to make all data properties read only. If I have my reasons, I may choose to make only some of them read only.
+The query provider will look for constructors that have parameters that coorespond to just the read-only data properties.
+
+```CSharp
+public class Customer
+{
+    public Customer(string customerId)
+    {
+        this.CustomerID = customerId;
+    }
+
+    public string CustomerID { get; }
+    public string ContactName { get; get; }
+    public string Phone { get; set; }
+}
+```
 
 ---------
 

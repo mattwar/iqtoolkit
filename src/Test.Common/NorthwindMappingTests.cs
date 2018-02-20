@@ -270,6 +270,7 @@ namespace Test
 
         #region Associations
 
+        #region Mapping attributes on entity
         class Association_AttributesOnEntity
         {
             [Table(Name = "Customers")]
@@ -391,7 +392,9 @@ namespace Test
                 Assert.Equal(null, item.Customer); // not retrieved, no policy
             }
         }
+        #endregion
 
+        #region Mapping attributes on context
         class Association_AttributesOnContext
         {
             public class Customer
@@ -457,7 +460,154 @@ namespace Test
                 Assert.Equal(null, item.Customer); // not retrieved, no policy
             }
         }
+        #endregion
 
+        #region Mapping in XML
+        class Association_XmlMapping
+        {
+            public class Customer
+            {
+                public string CustomerID;
+                public string ContactName;
+                public string Phone;
+                public List<Order> Orders = new List<Order>();
+            }
+
+            public class Order
+            {
+                public int OrderID;
+                public string CustomerID;
+                public Customer Customer;
+            }
+
+            public static string Xml = @"
+<map>
+  <Entity Id=""Customer"">
+    <Table Name=""Customers""/>
+    <Association Member=""Orders"" KeyMembers=""CustomerID""/>
+  </Entity>
+  <Entity Id=""Order"">
+    <Table Name=""Orders""/>
+    <Association Member=""Customer"" KeyMembers=""CustomerID""/>
+  </Entity>
+ </map>
+";
+        }
+
+        public void TestAssociation_XmlMapping_Orders()
+        {
+            var provider = this.GetProvider().WithMapping(
+                XmlMapping.FromXml(Association_XmlMapping.Xml, typeof(Association_XmlMapping.Customer).Assembly));
+
+            var items = provider.GetTable<Association_XmlMapping.Customer>()
+                .Where(c => c.Orders.Count() > 1)
+                .ToList();
+
+            Assert.Equal(88, items.Count);
+
+            foreach (var item in items)
+            {
+                Assert.NotEqual(null, item.CustomerID);
+                Assert.NotEqual(null, item.ContactName);
+                Assert.NotEqual(null, item.Phone);
+                Assert.NotEqual(null, item.Orders);
+                Assert.Equal(0, item.Orders.Count); // not retrieved, no policy
+            }
+        }
+
+        public void TestAssociation_XmlMapping_Customer()
+        {
+            var provider = this.GetProvider().WithMapping(
+                XmlMapping.FromXml(Association_XmlMapping.Xml, typeof(Association_XmlMapping.Customer).Assembly));
+
+            var items = provider.GetTable<Association_XmlMapping.Order>()
+                .Where(o => o.Customer.ContactName.StartsWith("Maria"))
+                .ToList();
+
+            Assert.Equal(25, items.Count);
+
+            foreach (var item in items)
+            {
+                Assert.NotEqual(null, item.OrderID);
+                Assert.NotEqual(null, item.CustomerID);
+                Assert.Equal(null, item.Customer); // not retrieved, no policy
+            }
+        }
+
+        class Association_XmlMapping_DifferentKeys
+        {
+            public class Customer
+            {
+                public string ID;
+                public string ContactName;
+                public string Phone;
+                public List<Order> Orders = new List<Order>();
+            }
+
+            public class Order
+            {
+                public int ID;
+                public string CustomerID;
+                public Customer Customer;
+            }
+
+            public static string Xml = @"
+<map>
+  <Entity Id=""Customer"">
+    <Table Name=""Customers""/>
+    <Column Member=""ID"" Name=""CustomerID""/>
+    <Association Member=""Orders"" KeyMembers=""ID"" RelatedKeyMembers=""CustomerID""/>
+  </Entity>
+  <Entity Id=""Order"">
+    <Table Name=""Orders""/>
+    <Column Member=""ID"" Name=""OrderID""/>
+    <Association Member=""Customer"" KeyMembers=""CustomerID"" RelatedKeyMembers=""ID""/>
+  </Entity>
+ </map>
+";
+        }
+
+        public void TestAssociation_XmlMapping_DifferentKeys_Orders()
+        {
+            var provider = this.GetProvider().WithMapping(
+                XmlMapping.FromXml(Association_XmlMapping_DifferentKeys.Xml, typeof(Association_XmlMapping_DifferentKeys.Customer).Assembly));
+
+            var items = provider.GetTable<Association_XmlMapping_DifferentKeys.Customer>()
+                .Where(c => c.Orders.Count() > 1)
+                .ToList();
+
+            Assert.Equal(88, items.Count);
+
+            foreach (var item in items)
+            {
+                Assert.NotEqual(null, item.ID);
+                Assert.NotEqual(null, item.ContactName);
+                Assert.NotEqual(null, item.Phone);
+                Assert.NotEqual(null, item.Orders);
+                Assert.Equal(0, item.Orders.Count);
+            }
+        }
+
+        public void TestAssociation_XmlMapping_DifferenteKeys_Customer()
+        {
+            var provider = this.GetProvider().WithMapping(
+                XmlMapping.FromXml(Association_XmlMapping_DifferentKeys.Xml, typeof(Association_XmlMapping_DifferentKeys.Customer).Assembly));
+
+            var items = provider.GetTable<Association_XmlMapping_DifferentKeys.Order>()
+                .Where(o => o.Customer.ContactName.StartsWith("Maria"))
+                .ToList();
+
+            Assert.Equal(25, items.Count);
+
+            foreach (var item in items)
+            {
+                Assert.NotEqual(null, item.ID);
+                Assert.NotEqual(null, item.CustomerID);
+                Assert.Equal(null, item.Customer); // not retrieved, no policy
+            }
+        }
+
+        #endregion
 
         #endregion
 

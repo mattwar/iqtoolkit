@@ -118,10 +118,10 @@ namespace IQToolkit.Data.Common
                                         .Where(cbr => cbr != null && cbr.Remaining.Count == 0).ToList();
                 if (consThatApply.Count == 0)
                 {
-                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped includedMembers.", entity.RuntimeType));
+                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped and included members.", entity.RuntimeType));
                 }
 
-                // just use the first one... (Note: need better algorithm. :-)
+                // just use the first one... (Note: need better algorithm?)
                 if (readonlyMembers.Length == assignments.Count)
                 {
                     return consThatApply[0].Expression;

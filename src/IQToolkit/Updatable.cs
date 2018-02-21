@@ -92,7 +92,7 @@ namespace IQToolkit
         /// </summary>
         /// <param name="collection">The updatable collection</param>
         /// <param name="instance">The instance to update.</param>
-        /// <param name="updateCheck">A predicate testing the suitability of the object in the collection (often used that make sure assumptions have not changed.)</param>
+        /// <param name="updateCheck">A predicate testing the suitability of the object in the collection (often used to make sure assumptions have not changed.)</param>
         /// <param name="resultSelector">A function that produces a result based on the object in the collection after the update succeeds.</param>
         /// <returns>The value of the result function if the update succeeds, otherwise null.</returns>
         public static object Update(IUpdatable collection, object instance, LambdaExpression updateCheck, LambdaExpression resultSelector)
@@ -122,7 +122,7 @@ namespace IQToolkit
         /// <typeparam name="S">The type of the result.</typeparam>
         /// <param name="collection">The updatable collection</param>
         /// <param name="instance">The instance to update.</param>
-        /// <param name="updateCheck">A predicate testing the suitability of the object in the collection (often used that make sure assumptions have not changed.)</param>
+        /// <param name="updateCheck">A predicate testing the suitability of the object in the collection (often used to make sure assumptions have not changed.)</param>
         /// <param name="resultSelector">A function that produces a result based on the object in the collection after the update succeeds.</param>
         /// <returns>The value of the result function if the update succeeds, otherwise null.</returns>
         public static S Update<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>> updateCheck, Expression<Func<T, S>> resultSelector)

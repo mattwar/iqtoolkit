@@ -410,6 +410,34 @@ I can make a new instance and give it the `CustomerID` of a `Customer` I want to
 use that instance when I call the `Delete` method.
 As long as my `Customer` instance has the correct `CustomerID` the delete will execute just the same.
 
+### InsertOrUpdate (Upsert)
+
+If I do not know whether a particular entity I have change should be inserted or updated into the databasea table, I can
+choose to call the `InsertOrUpdate` method instead. This is sometimes referred to as an upsert, but I like to pretend that
+name never happened.
+
+If the entity does not currently exist in the database as a row, then it will be inserted. If it does, then that row will be updated.
+
+```CSharp
+// get a customer from the database
+var cust = GetCustomerFromSomewhere();
+
+// maybe change one or more members
+cust.Phone = "(xxx) yyy zzz";
+
+// insert or update it?
+provider.GetTable<Customer>().InsertOrUpdate(cust);
+```
+
+The exact SQL that is generated can depend on the database server, but generally what it does is first execute an update statement, and
+if that results in now rows changed it then executes an insert statement.
+
+The Access query provider executes two separate commands against the database to make this work, choosing the execute the second
+if the result back from the database indicates no rows were changed. 
+
+The SqlClient query provider sends only one command to the database server that combines both statements with an IF test.
+
+
 ## Other Topics
 
 ### Transactions
@@ -479,6 +507,122 @@ var query = from c in db.Customers
 ## Advanced Topics
 
 ## Advanced Insert, Update and Delete
+
+### Updating with Restrictions
+
+When I use the `Update` method to update an entity in a table, the provider looks for the row to update by checking to see if the 
+primary key of the row matches the primary key value of the entity. If it does, the columns in the row that can be updated are modified to
+have the same values as in the entity.
+
+If I want to restrict further when a row can be updated, I can supply a custom check, in the form of a lambda expression, as an argument to the `Update` method.
+
+For example, I might want to restrict the customer from being updated if the other columns were changed by someone else between
+the time I retrieved the customer and called the `Update` method.
+
+```CSharp
+var cust = provider.GetTable<Customer>().Single(c => c.CustomerID == "ALFKI");
+
+var newCust = new Customer {
+     CustomerId = cust.CustomerId,
+     ContactName = cust.ContactName,
+     Phone = "123-456-7890"
+     };
+
+// update the customer, but only if it was not changed by someone else
+var rowsChanged = provider.GetTable<Customer>().Update(newCust, c => c.ContactName = cust.ContactName && c.Phone == cust.Phone);
+```
+
+*I can also supply this same check when using the `InsertOrUpdate` method.*
+
+### Deleting with Restrictions
+
+Like with updates, I can supply check in the form of a lambda expression as a parameter to the `Delete` method. 
+This restriction will be in addition to the normal check that is made comparing the primary key.
+
+```CSharp
+var cust = provider.GetTable<Customer>().Single(c => c.CustomerID == "ALFKI");
+
+// delete the customer, but only if it was not changed by someone else.
+var rowsChanged = provider.GetTable<Customer>().Delete(cust, c => c.ContactName = cust.ContactName && c.Phone == cust.Phone);
+```
+
+### Inserting with Results
+
+When I use the `Insert` method to insert a new entity into a database table, the method returns an number telling me how many rows
+were inserted into the table. This is typically the value `1` for a successful insert or the value `0` if it failed for some reason.
+This is the same number that the System.Data.DbCommand object returns when calling the `ExecuteNonQuery` method.
+
+However, there is often other valuable information I might want to get back from the database after the entity has been inserted.
+For example, some values are computed by the database during insert. Often the primary key value of the row is handled this way.
+
+To get back this information, I can request it by supplying a lambda function as a parameter to the `Insert` method that specifies
+the values I want return back given the entity as it would exist after the insert.
+
+For the sake of example, assume that the `CustomerID` column of the `Customers` table is generated on insert by the database.
+
+```CSharp
+var cust = CreateNewCustomer();
+
+// insert the customer, and get back the id that was generated.
+var generatedId = provider.GetTable<Customer>().Insert(cust, c => c.CustomerID);
+```
+
+If I wanted to return multiple values I could do that in the lambda expression by constructing an anonymous type, tuple or an array.
+
+```CSharp
+var cust = CreateNewCustomer();
+
+// insert the customer, and get back both the generated id and the computed hash code.
+var values = provider.GetTable<Customer>().Insert(cust, c => new {c.CustomerID, c.Hash});
+```
+
+### Updating with Results
+
+Like with inserting, updating can sometimes cause more changes to the row and entity than the changed I made before calling the `Update`.
+Computed columns can get recomputed based on the other changes I made.
+
+So just like with the `Insert` method, I can supply a lambda expression that specifies the value I want the database to return back given the
+entity after the update has occured.
+
+```CSharp
+var cust = GetCustomer();
+
+cust.Phone = "123 456 7890";
+
+// insert the customer, and get back the recomputed hash code
+var newHash = provider.GetTable<Customer>().Update(cust, null, c => c.Hash);
+```
+
+Note, that the lambda is specified as the third argument. The second argument is the update restriction check.
+
+*I can also supply this same result returning lambda expression when calling the `InsertOrUpdate` method.*
+
+### Batching
+
+Sometimes I have more than a single entity to insert, update or delete. I might have many new customers I want to 
+insert in a single transaction. I could just write a loop, inserting each one individually. However, doing so will
+cause separate insert commands to be individually executed against the database, giving the provider no opportunity 
+to optimize them into a potentially speedier bulk operation.
+
+The `Batch` method can be used to tell the provider I want to do the same operation over multiple entities at once.
+
+```CSharp
+List<Customer> customersToInsert = GetCustomersToInsert();
+
+provider.GetTable<Customer>().Batch(customersToInsert, (u, c) => u.Insert(c));
+````
+
+The first argument is the collection of entities I want the batch operation to be executed for, and the second is a 
+lambda expression specifying the operation I want done. The lambda has two parameters itself, the first is an updatable source
+typed as `IUpdatable` which has the same `Insert`, `Update`, `InsertOrUpdate` and `Delete` methods that I would otherwise be calling
+individually. The second parameter is a single entity reference that can be used as an argument to one of those methods.
+
+*1. The first argument to the `Batch` call does not actually need to be a collection of entity values, it can be a collection of any type, as long
+as the lambda function for the operation converts its second argument into correct entity types to feed into the chosen`IUpdatabe` method.*
+
+*2. The lambda expression may only specify a call to one of the `IUpdatable` methods. Any attempt to do otherwise, will lead to a runtime exception from
+the confused query provider.*
+
 
 ## Advanced Mapping
 

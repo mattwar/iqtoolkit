@@ -242,6 +242,7 @@ namespace IQToolkit.Data.Common
                             );
                 }
             }
+
             if (this.language.IsAggregate(m.Method))
             {
                 return this.BindAggregate(
@@ -252,6 +253,7 @@ namespace IQToolkit.Data.Common
                     m == this.root
                     );
             }
+
             return base.VisitMethodCall(m);
         }
 
@@ -262,6 +264,7 @@ namespace IQToolkit.Data.Common
             {
                 this.root = u.Operand;
             }
+
             return base.VisitUnary(u);
         }
 
@@ -1016,24 +1019,29 @@ namespace IQToolkit.Data.Common
         protected override Expression VisitParameter(ParameterExpression p)
         {
             Expression e;
+
             if (this.map.TryGetValue(p, out e))
             {
                 return e;
             }
+
             return p;
         }
 
         protected override Expression VisitInvocation(InvocationExpression iv)
         {
             LambdaExpression lambda = iv.Expression as LambdaExpression;
+
             if (lambda != null)
             {
                 for (int i = 0, n = lambda.Parameters.Count; i < n; i++)
                 {
                     this.map[lambda.Parameters[i]] = iv.Arguments[i];
                 }
+
                 return this.Visit(lambda.Body);
             }
+
             return base.VisitInvocation(iv);
         }
 
@@ -1046,17 +1054,22 @@ namespace IQToolkit.Data.Common
             {
                 return this.VisitSequence(this.mapper.GetQueryExpression(this.mapper.Mapping.GetEntity(m.Member)));
             }
+
             Expression source = this.Visit(m.Expression);
+
             if (this.language.IsAggregate(m.Member) && IsRemoteQuery(source))
             {
                 return this.BindAggregate(m.Expression, m.Member.Name, TypeHelper.GetMemberType(m.Member), null, m == this.root);
             }
+
             Expression result = BindMember(source, m.Member);
             MemberExpression mex = result as MemberExpression;
+
             if (mex != null && mex.Member == m.Member && mex.Expression == m.Expression)
             {
                 return m;
             }
+
             return result;
         }
 
@@ -1064,6 +1077,7 @@ namespace IQToolkit.Data.Common
         {
             if (expression.NodeType.IsDbExpression())
                 return true;
+
             switch (expression.NodeType)
             {
                 case ExpressionType.MemberAccess:
@@ -1076,6 +1090,7 @@ namespace IQToolkit.Data.Common
                         return IsRemoteQuery(mc.Arguments[0]);
                     break;
             }
+
             return false;
         }
 
@@ -1162,6 +1177,7 @@ namespace IQToolkit.Data.Common
                         return Expression.Constant(GetValue(con.Value, member), memberType);
                     }
             }
+
             return Expression.MakeMemberAccess(source, member);
         }
 
@@ -1172,11 +1188,13 @@ namespace IQToolkit.Data.Common
             {
                 return fi.GetValue(instance);
             }
+
             PropertyInfo pi = member as PropertyInfo;
             if (pi != null)
             {
                 return pi.GetValue(instance, null);
             }
+
             return null;
         }
 

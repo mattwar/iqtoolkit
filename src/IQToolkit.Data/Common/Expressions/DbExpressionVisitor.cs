@@ -70,6 +70,10 @@ namespace IQToolkit.Data.Common
                     return this.VisitFunction((FunctionExpression)exp);
                 case DbExpressionType.Entity:
                     return this.VisitEntity((EntityExpression)exp);
+                case DbExpressionType.With:
+                    return this.VisitWithExpression((WithExpression)exp);
+                case DbExpressionType.DataMemberAccess:
+                    return this.VisitDataMemberAccess((DataMemberAccess)exp);
                 default:
                     return base.Visit(exp);
             }
@@ -533,64 +537,78 @@ namespace IQToolkit.Data.Common
         protected virtual ReadOnlyCollection<ColumnAssignment> VisitColumnAssignments(ReadOnlyCollection<ColumnAssignment> assignments)
         {
             List<ColumnAssignment> alternate = null;
+
             for (int i = 0, n = assignments.Count; i < n; i++)
             {
                 ColumnAssignment assignment = this.VisitColumnAssignment(assignments[i]);
+
                 if (alternate == null && assignment != assignments[i])
                 {
                     alternate = assignments.Take(i).ToList();
                 }
+
                 if (alternate != null)
                 {
                     alternate.Add(assignment);
                 }
             }
+
             if (alternate != null)
             {
                 return alternate.AsReadOnly();
             }
+
             return assignments;
         }
 
         protected virtual ReadOnlyCollection<ColumnDeclaration> VisitColumnDeclarations(ReadOnlyCollection<ColumnDeclaration> columns)
         {
             List<ColumnDeclaration> alternate = null;
+
             for (int i = 0, n = columns.Count; i < n; i++)
             {
                 ColumnDeclaration column = columns[i];
                 Expression e = this.Visit(column.Expression);
+
                 if (alternate == null && e != column.Expression)
                 {
                     alternate = columns.Take(i).ToList();
                 }
+
                 if (alternate != null)
                 {
                     alternate.Add(new ColumnDeclaration(column.Name, e, column.QueryType));
                 }
             }
+
             if (alternate != null)
             {
                 return alternate.AsReadOnly();
             }
+
             return columns;
         }
 
         protected virtual ReadOnlyCollection<VariableDeclaration> VisitVariableDeclarations(ReadOnlyCollection<VariableDeclaration> decls)
         {
             List<VariableDeclaration> alternate = null;
+
             for (int i = 0, n = decls.Count; i < n; i++)
             {
                 VariableDeclaration decl = decls[i];
                 Expression e = this.Visit(decl.Expression);
+
                 if (alternate == null && e != decl.Expression)
                 {
                     alternate = decls.Take(i).ToList();
                 }
+
                 if (alternate != null)
                 {
                     alternate.Add(new VariableDeclaration(decl.Name, decl.QueryType, e));
                 }
             }
+
             if (alternate != null)
             {
                 return alternate.AsReadOnly();
@@ -622,6 +640,88 @@ namespace IQToolkit.Data.Common
                 }
             }
             return expressions;
+        }
+
+        protected virtual Expression VisitWithExpression(WithExpression with)
+        {
+            var expr = this.Visit(with.Expression);
+            var assignments = this.VisitDataMemberAssignments(with.Assignments);
+            return this.UpdateWithExpression(with, expr, assignments);
+        }
+
+        protected WithExpression UpdateWithExpression(WithExpression wx, Expression expression, IEnumerable<DataMemberAssignment> assignments)
+        {
+            if (wx.Expression != expression || wx.Assignments != assignments)
+            {
+                return new WithExpression(expression, assignments);
+            }
+            else
+            {
+                return wx;
+            }
+        }
+
+        protected virtual DataMemberAssignment VisitDataMemberAssignment(DataMemberAssignment assignment)
+        {
+            var exp = this.Visit(assignment.Expression);
+            return this.UpdateDataMemberAssignment(assignment, assignment.Member, exp);
+        }
+
+        protected DataMemberAssignment UpdateDataMemberAssignment(DataMemberAssignment assignment, DataMember member, Expression expression)
+        {
+            if (assignment.Member != member || assignment.Expression != expression)
+            {
+                return new DataMemberAssignment(member, expression);
+            }
+            else
+            {
+                return assignment;
+            }
+        }
+
+        protected virtual IReadOnlyList<DataMemberAssignment> VisitDataMemberAssignments(IReadOnlyList<DataMemberAssignment> assignments)
+        {
+            List<DataMemberAssignment> alternate = null;
+
+            for (int i = 0, n = assignments.Count; i < n; i++)
+            {
+                var assignment = this.VisitDataMemberAssignment(assignments[i]);
+
+                if (alternate == null && assignment != assignments[i])
+                {
+                    alternate = assignments.Take(i).ToList();
+                }
+
+                if (alternate != null)
+                {
+                    alternate.Add(assignment);
+                }
+            }
+
+            if (alternate != null)
+            {
+                return alternate.AsReadOnly();
+            }
+
+            return assignments;
+        }
+
+        protected virtual Expression VisitDataMemberAccess(DataMemberAccess access)
+        {
+            var exp = this.Visit(access.Expression);
+            return this.UpdateDataMemberAccess(access, exp, access.Member);
+        }
+
+        protected DataMemberAccess UpdateDataMemberAccess(DataMemberAccess access, Expression expression, DataMember member)
+        {
+            if (access.Expression != expression || access.Member != member)
+            {
+                return new DataMemberAccess(expression, member);
+            }
+            else
+            {
+                return access;
+            }
         }
     }
 }

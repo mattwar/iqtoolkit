@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace IQToolkit.Data.Common
 {
@@ -39,7 +41,9 @@ namespace IQToolkit.Data.Common
         Block,
         If,
         Declaration,
-        Variable
+        Variable,
+        With,
+        DataMemberAccess
     }
 
     public static class DbExpressionTypeExtensions
@@ -683,5 +687,151 @@ namespace IQToolkit.Data.Common
         }
 
         public override ExpressionType NodeType => (ExpressionType)DbExpressionType.Variable;
+    }
+
+    public class WithExpression : DbExpression
+    {
+        public Expression Expression { get; }
+        public IReadOnlyList<DataMemberAssignment> Assignments { get; }
+
+        public WithExpression(Expression expression, IEnumerable<DataMemberAssignment> assignments)
+            : base(DbExpressionType.With, expression.Type)
+        {
+            this.Expression = expression;
+            this.Assignments = assignments.ToReadOnly();
+        }
+    }
+
+    public class DataMemberAccess : DbExpression
+    {
+        public Expression Expression { get; }
+        public DataMember Member { get; }
+
+        public DataMemberAccess(Expression expression, DataMember member)
+            : base(DbExpressionType.DataMemberAccess, member.Type)
+        {
+            this.Expression = expression;
+            this.Member = member;
+        }
+    }
+
+    public class DataMemberAssignment
+    {
+        public DataMember Member { get; }
+        public Expression Expression { get; }
+
+        public DataMemberAssignment(DataMember member, Expression expression)
+        {
+            this.Member = member;
+            this.Expression = expression;
+        }
+    }
+
+    public abstract class DataMember
+    {
+        public abstract string Name { get; }
+        public abstract Type Type { get; }
+
+        public abstract object GetValue(object instance);
+        public abstract void SetValue(object instance, object value);
+
+        private static readonly ConditionalWeakTable<MemberInfo, DataMember> memberMap
+            = new ConditionalWeakTable<MemberInfo, DataMember>();
+
+        public static DataMember From(MemberInfo member)
+        {
+            if (!memberMap.TryGetValue(member, out var dataMember))
+            {
+                switch (member)
+                {
+                    case PropertyInfo pi:
+                        dataMember = memberMap.GetValue(member, _member => new PropertyDataMember((PropertyInfo)_member));
+                        break;
+
+                    case FieldInfo fi:
+                        dataMember = memberMap.GetValue(member, _member => new FieldDataMember((FieldInfo)_member));
+                        break;
+                }
+            }
+
+            return dataMember;
+        }
+
+        public static implicit operator DataMember(MemberInfo member)
+        {
+            return From(member);
+        }
+    }
+
+    public class PropertyDataMember : DataMember
+    {
+        public PropertyInfo Property { get; }
+
+        public PropertyDataMember(PropertyInfo property)
+        {
+            this.Property = property;
+        }
+
+        public override string Name => this.Property.Name;
+        public override Type Type => this.Property.PropertyType;
+
+        public override object GetValue(object instance)
+        {
+            return this.Property.GetValue(instance);
+        }
+
+        public override void SetValue(object instance, object value)
+        {
+            this.Property.SetValue(instance, value);
+        }
+    }
+
+    public class FieldDataMember : DataMember
+    {
+        public FieldInfo Field { get; }
+
+        public FieldDataMember(FieldInfo field)
+        {
+            this.Field = field;
+        }
+
+        public override string Name => this.Field.Name;
+        public override Type Type => this.Field.FieldType;
+
+        public override object GetValue(object instance)
+        {
+            return this.Field.GetValue(instance);
+        }
+
+        public override void SetValue(object instance, object value)
+        {
+            this.Field.SetValue(instance, value);
+        }
+    }
+
+    public class DynamicDataMember : DataMember
+    {
+        public override string Name { get; }
+        public override Type Type { get; }
+
+        private readonly ConditionalWeakTable<object, object> dataMap;
+
+        public DynamicDataMember(string name, Type type)
+        {
+            this.Name = name;
+            this.Type = type;
+            this.dataMap = new ConditionalWeakTable<object, object>();
+        }
+
+        public override object GetValue(object instance)
+        {
+            this.dataMap.TryGetValue(instance, out var value);
+            return value;
+        }
+
+        public override void SetValue(object instance, object value)
+        {
+            this.dataMap.Add(instance, value);
+        }
     }
 }

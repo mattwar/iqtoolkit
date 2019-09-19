@@ -14,20 +14,20 @@ using System.Text;
 namespace IQToolkit.Data.Common
 {
     /// <summary>
-    /// Builds an execution plan for a query expression
+    /// Builds an execution plan for a query expression.
     /// </summary>
     public class ExecutionBuilder : DbExpressionVisitor
     {
-        QueryPolicy policy;
-        QueryLinguist linguist;
-        Expression executor;
-        Scope scope;
-        bool isTop = true;
-        MemberInfo receivingMember;
-        int nReaders = 0;
-        List<ParameterExpression> variables = new List<ParameterExpression>();
-        List<Expression> initializers = new List<Expression>();
-        Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
+        private readonly QueryPolicy policy;
+        private readonly QueryLinguist linguist;
+        private readonly Expression executor;
+        private Scope scope;
+        private bool isTop = true;
+        private MemberInfo receivingMember;
+        private int nReaders = 0;
+        private readonly List<ParameterExpression> variables = new List<ParameterExpression>();
+        private readonly List<Expression> initializers = new List<Expression>();
+        private Dictionary<string, Expression> variableMap = new Dictionary<string, Expression>();
 
         private ExecutionBuilder(QueryLinguist linguist, QueryPolicy policy, Expression executor)
         {
@@ -41,7 +41,7 @@ namespace IQToolkit.Data.Common
             var executor = Expression.Parameter(typeof(QueryExecutor), "executor");
             var builder = new ExecutionBuilder(linguist, policy, executor);
             builder.variables.Add(executor);
-            builder.initializers.Add(Expression.Call(Expression.Convert(provider, typeof(ICreateExecutor)), "CreateExecutor", null, null));
+            builder.initializers.Add(Expression.Call(Expression.Convert(provider, typeof(IQueryExecutorFactory)), "CreateExecutor", null, null));
             var result = builder.Build(expression);
             return result;
         }
@@ -77,7 +77,7 @@ namespace IQToolkit.Data.Common
         private static Expression MakeSequence(IList<Expression> expressions)
         {
             Expression last = expressions[expressions.Count - 1];
-            expressions = expressions.Select(e => e.Type.IsValueType ? Expression.Convert(e, typeof(object)) : e).ToList();
+            expressions = expressions.Select(e => e.Type.GetTypeInfo().IsValueType ? Expression.Convert(e, typeof(object)) : e).ToList();
             return Expression.Convert(Expression.Call(typeof(ExecutionBuilder), "Sequence", null, Expression.NewArrayInit(typeof(object), expressions)), last.Type);
         }
 
@@ -140,8 +140,10 @@ namespace IQToolkit.Data.Common
             }
             else
             {
+                var constructor = TypeHelper.FindConstructor(typeof(CompoundKey), new[] { typeof(object[]) });
+
                 return Expression.New(
-                    typeof(CompoundKey).GetConstructors()[0],
+                    constructor,
                     Expression.NewArrayInit(typeof(object), key.Select(k => (Expression)Expression.Convert(k, typeof(object))))
                     );
             }
@@ -155,7 +157,7 @@ namespace IQToolkit.Data.Common
             Expression innerKey = MakeJoinKey(join.InnerKey);
             Expression outerKey = MakeJoinKey(join.OuterKey);
 
-            ConstructorInfo kvpConstructor = typeof(KeyValuePair<,>).MakeGenericType(innerKey.Type, join.Projection.Projector.Type).GetConstructor(new Type[] { innerKey.Type, join.Projection.Projector.Type });
+            ConstructorInfo kvpConstructor = TypeHelper.FindConstructor(typeof(KeyValuePair<,>).MakeGenericType(innerKey.Type, join.Projection.Projector.Type), new Type[] { innerKey.Type, join.Projection.Projector.Type });
             Expression constructKVPair = Expression.New(kvpConstructor, innerKey, join.Projection.Projector);
             ProjectionExpression newProjection = new ProjectionExpression(join.Projection.Select, constructKVPair);
 
@@ -181,8 +183,8 @@ namespace IQToolkit.Data.Common
 
             // 2) agg(lookup[outer])
             ParameterExpression lookup = Expression.Parameter(toLookup.Type, "lookup" + iLookup);
-            PropertyInfo property = lookup.Type.GetProperty("Item");
-            Expression access = Expression.Call(lookup, property.GetGetMethod(), this.Visit(outerKey));
+            PropertyInfo property = lookup.Type.GetTypeInfo().GetDeclaredProperty("Item");
+            Expression access = Expression.Call(lookup, property.GetMethod, this.Visit(outerKey));
             if (join.Projection.Aggregator != null)
             {
                 // apply aggregator
@@ -434,7 +436,7 @@ namespace IQToolkit.Data.Common
                     decl.Source,
                     Expression.NewArrayInit(
                         typeof(object),
-                        decl.Variables.Select(v => v.Expression.Type.IsValueType
+                        decl.Variables.Select(v => v.Expression.Type.GetTypeInfo().IsValueType
                             ? Expression.Convert(v.Expression, typeof(object))
                             : v.Expression).ToArray()
                         ),

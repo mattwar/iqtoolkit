@@ -16,7 +16,7 @@ namespace IQToolkit.Data.Access
 {
     using IQToolkit.Data.Common;
 
-    public class AccessTypeSystem : DbTypeSystem
+    public class AccessTypeSystem : SqlTypeSystem
     {
         public override int StringDefaultSize
         {
@@ -34,34 +34,35 @@ namespace IQToolkit.Data.Access
             {
                 return base.GetQueryType("varchar", new [] {"max"}, isNotNull);
             }
+
             return base.GetQueryType(typeName, args, isNotNull);
         }
 
-        public override SqlDbType GetSqlType(string typeName)
+        public override SqlType GetSqlType(string typeName)
         {
             if (string.Compare(typeName, "Memo", true) == 0)
             {
-                return SqlDbType.VarChar;
+                return SqlType.VarChar;
             }
             else if (string.Compare(typeName, "Currency", true) == 0)
             {
-                return SqlDbType.Decimal;
+                return SqlType.Decimal;
             }
             else if (string.Compare(typeName, "ReplicationID", true) == 0)
             {
-                return SqlDbType.UniqueIdentifier;
+                return SqlType.UniqueIdentifier;
             }
             else if (string.Compare(typeName, "YesNo", true) == 0)
             {
-                return SqlDbType.Bit;
+                return SqlType.Bit;
             }
             else if (string.Compare(typeName, "LongInteger", true) == 0)
             {
-                return SqlDbType.BigInt;
+                return SqlType.BigInt;
             }
             else if (string.Compare(typeName, "VarWChar", true) == 0)
             {
-                return SqlDbType.NVarChar;
+                return SqlType.NVarChar;
             }
             else
             {
@@ -69,33 +70,32 @@ namespace IQToolkit.Data.Access
             }
         }
 
-        public override string GetVariableDeclaration(QueryType type, bool suppressSize)
+        public override string Format(QueryType type, bool suppressSize)
         {
             StringBuilder sb = new StringBuilder();
-            DbQueryType sqlType = (DbQueryType)type;
-            SqlDbType sqlDbType = sqlType.SqlDbType;
+            SqlType sqlType = ((SqlQueryType)type).SqlType;
 
-            switch (sqlDbType)
+            switch (sqlType)
             {
-                case SqlDbType.BigInt:
-                case SqlDbType.Bit:
-                case SqlDbType.DateTime:
-                case SqlDbType.Int:
-                case SqlDbType.Money:
-                case SqlDbType.SmallDateTime:
-                case SqlDbType.SmallInt:
-                case SqlDbType.SmallMoney:
-                case SqlDbType.Timestamp:
-                case SqlDbType.TinyInt:
-                case SqlDbType.UniqueIdentifier:
-                case SqlDbType.Variant:
-                case SqlDbType.Xml:
-                    sb.Append(sqlDbType);
+                case SqlType.BigInt:
+                case SqlType.Bit:
+                case SqlType.DateTime:
+                case SqlType.Int:
+                case SqlType.Money:
+                case SqlType.SmallDateTime:
+                case SqlType.SmallInt:
+                case SqlType.SmallMoney:
+                case SqlType.Timestamp:
+                case SqlType.TinyInt:
+                case SqlType.UniqueIdentifier:
+                case SqlType.Variant:
+                case SqlType.Xml:
+                    sb.Append(sqlType);
                     break;
-                case SqlDbType.Binary:
-                case SqlDbType.Char:
-                case SqlDbType.NChar:
-                    sb.Append(sqlDbType);
+                case SqlType.Binary:
+                case SqlType.Char:
+                case SqlType.NChar:
+                    sb.Append(sqlType);
                     if (type.Length > 0 && !suppressSize)
                     {
                         sb.Append("(");
@@ -103,13 +103,13 @@ namespace IQToolkit.Data.Access
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Image:
-                case SqlDbType.NText:
-                case SqlDbType.NVarChar:
-                case SqlDbType.Text:
-                case SqlDbType.VarBinary:
-                case SqlDbType.VarChar:
-                    sb.Append(sqlDbType);
+                case SqlType.Image:
+                case SqlType.NText:
+                case SqlType.NVarChar:
+                case SqlType.Text:
+                case SqlType.VarBinary:
+                case SqlType.VarChar:
+                    sb.Append(sqlType);
                     if (type.Length > 0 && !suppressSize)
                     {
                         sb.Append("(");
@@ -117,12 +117,12 @@ namespace IQToolkit.Data.Access
                         sb.Append(")");
                     }
                     break;
-                case SqlDbType.Decimal:
+                case SqlType.Decimal:
                     sb.Append("Currency");
                     break;
-                case SqlDbType.Float:
-                case SqlDbType.Real:
-                    sb.Append(sqlDbType);  
+                case SqlType.Float:
+                case SqlType.Real:
+                    sb.Append(sqlType);  
                     if (type.Precision != 0)
                     {
                         sb.Append("(");
@@ -136,6 +136,7 @@ namespace IQToolkit.Data.Access
                     }
                     break;
             }
+
             return sb.ToString();
         }
     }

@@ -1,14 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using IQToolkit;
 using IQToolkit.Data;
 using IQToolkit.Data.Mapping;
+using IQToolkit.Data.SqlServerCe;
+using System;
 
 namespace Test
 {
@@ -19,9 +15,17 @@ namespace Test
             new TestRunner(args, System.Reflection.Assembly.GetEntryAssembly()).RunTests();
         }
 
-        private static DbEntityProvider CreateNorthwindProvider(string mapping = "Test.NorthwindWithAttributes")
+        private static DbEntityProvider CreateNorthwindProvider(Type contextType = null)
         {
-            return DbEntityProvider.From(@"Northwind40.sdf", mapping);
+            return new SqlCeQueryProvider("Northwind40.sdf", new AttributeMapping(contextType ?? typeof(Test.NorthwindWithAttributes)));
+        }
+
+        public class NorthwindMappingTests : Test.NorthwindMappingTests
+        {
+            protected override DbEntityProvider CreateProvider()
+            {
+                return CreateNorthwindProvider();
+            }
         }
 
         public class NorthwindTranslationTests : Test.NorthwindTranslationTests

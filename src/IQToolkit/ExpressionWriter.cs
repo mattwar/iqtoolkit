@@ -14,24 +14,31 @@ using System.IO;
 namespace IQToolkit
 {
     /// <summary>
-    /// Writes out an expression tree in a C#-ish syntax
+    /// Writes out an expression tree in a C#-ish syntax.
+    /// Useful for debugging expression trees.
     /// </summary>
     public class ExpressionWriter : ExpressionVisitor
     {
-        TextWriter writer;
-        int indent = 2;
-        int depth;
+        private readonly TextWriter writer;
+        private int indent = 2;
+        private int depth;
 
         protected ExpressionWriter(TextWriter writer)
         {
             this.writer = writer;
         }
 
+        /// <summary>
+        /// Write an expression to the text writer.
+        /// </summary>
         public static void Write(TextWriter writer, Expression expression)
         {
             new ExpressionWriter(writer).Visit(expression);
         }
 
+        /// <summary>
+        /// Gets the written text of an expression tree in a C#-ish syntax.
+        /// </summary>
         public static string WriteToString(Expression expression)
         {
             StringWriter sw = new StringWriter();
@@ -217,31 +224,37 @@ namespace IQToolkit
         {
             string name = type.Name;
             name = name.Replace('+', '.');
+
             int iGeneneric = name.IndexOf('`');
             if (iGeneneric > 0)
             {
                 name = name.Substring(0, iGeneneric);
             }
-            if (type.IsGenericType || type.IsGenericTypeDefinition)
+
+            var info = type.GetTypeInfo();
+            if (info.IsGenericType || info.IsGenericTypeDefinition)
             {
                 StringBuilder sb = new StringBuilder();
                 sb.Append(name);
                 sb.Append("<");
-                var args = type.GetGenericArguments();
+                var args = info.GenericTypeArguments;
                 for (int i = 0, n = args.Length; i < n; i++)
                 {
                     if (i > 0)
                     {
                         sb.Append(",");
                     }
-                    if (type.IsGenericType)
+
+                    if (info.IsGenericType)
                     {
                         sb.Append(this.GetTypeName(args[i]));
                     }
                 }
+
                 sb.Append(">");
                 name = sb.ToString();
             }
+
             return name;
         }
 

@@ -18,8 +18,8 @@ namespace IQToolkit
     /// </summary>
     public class TypedSubtreeFinder : ExpressionVisitor
     {
-        Expression root;
-        Type type;
+        private readonly Type type;
+        private Expression found;
 
         private TypedSubtreeFinder(Type type)
         {
@@ -30,21 +30,20 @@ namespace IQToolkit
         {
             TypedSubtreeFinder finder = new TypedSubtreeFinder(type);
             finder.Visit(expression);
-            return finder.root;
+            return finder.found;
         }
 
         protected override Expression Visit(Expression exp)
         {
-            Expression result = base.Visit(exp);
+            Expression node = base.Visit(exp);
 
-            // remember the first sub-expression that produces an IQueryable
-            if (this.root == null && result != null)
+            // remember the first sub-expression that is of an appropriate type
+            if (this.found == null && node != null && this.type.GetTypeInfo().IsAssignableFrom(node.Type.GetTypeInfo()))
             {
-                if (this.type.IsAssignableFrom(result.Type))
-                    this.root = result;
+                this.found = node;
             }
 
-            return result;
+            return node;
         }
     }
 }

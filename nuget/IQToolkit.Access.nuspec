@@ -16,5 +16,6 @@
     </metadata>
     <files>
         <file src="..\bin\Release\Access\IQToolkit.Data.Access.dll" target="lib\net45\IQToolkit.Data.Access.dll" />
+        <file src="..\bin\Release\Access\IQToolkit.Data.Access.dll" target="lib\net45\IQToolkit.Data.Access.xml" />
     </files>
 </package>

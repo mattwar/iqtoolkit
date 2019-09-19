@@ -17,5 +17,6 @@
     </metadata>
     <files>
         <file src="..\bin\Release\SqlServerCe\IQToolkit.Data.SqlServerCe.dll" target="lib\net45\IQToolkit.Data.SqlServerCe.dll" />
+        <file src="..\bin\Release\SqlServerCe\IQToolkit.Data.SqlServerCe.dll" target="lib\net45\IQToolkit.Data.SqlServerCe.xml" />
     </files>
 </package>

@@ -2,12 +2,7 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -15,13 +10,18 @@ namespace IQToolkit.Data
 {
     using Common;
 
-    public class DbTypeSystem : QueryTypeSystem
-    {        
+    /// <summary>
+    /// A <see cref="QueryTypeSystem"/> for types based on <see cref="SqlType"/>.
+    /// Default parser, format implementations assume a type system similar to TSQL.
+    /// </summary>
+    public class SqlTypeSystem : QueryTypeSystem
+    {
         public override QueryType Parse(string typeDeclaration)
         {
             string[] args = null;
             string typeName = null;
             string remainder = null;
+
             int openParen = typeDeclaration.IndexOf('(');
             if (openParen >= 0)
             {
@@ -53,6 +53,14 @@ namespace IQToolkit.Data
             return this.GetQueryType(typeName, args, isNotNull);
         }
 
+        /// <summary>
+        /// Gets the <see cref="QueryType"/> for a know database type.
+        /// This API does not parse the type name.
+        /// Arguments to the type are specified by the <see cref="P:args"/> parameter.
+        /// </summary>
+        /// <param name="typeName">The base name of a type in the databases language.</param>
+        /// <param name="args">Any additional arguments (like length of a text type)</param>
+        /// <param name="isNotNull">Determines if the type cannot be null.</param>
         public virtual QueryType GetQueryType(string typeName, string[] args, bool isNotNull)
         {
             if (String.Compare(typeName, "rowversion", StringComparison.OrdinalIgnoreCase) == 0)
@@ -70,7 +78,7 @@ namespace IQToolkit.Data
                 typeName = "Variant";
             }
 
-            SqlDbType dbType = this.GetSqlType(typeName);
+            SqlType dbType = this.GetSqlType(typeName);
 
             int length = 0;
             short precision = 0;
@@ -78,13 +86,13 @@ namespace IQToolkit.Data
 
             switch (dbType)
             {
-                case SqlDbType.Binary:
-                case SqlDbType.Char:
-                case SqlDbType.Image:
-                case SqlDbType.NChar:
-                case SqlDbType.NVarChar:
-                case SqlDbType.VarBinary:
-                case SqlDbType.VarChar:
+                case SqlType.Binary:
+                case SqlType.Char:
+                case SqlType.Image:
+                case SqlType.NChar:
+                case SqlType.NVarChar:
+                case SqlType.VarBinary:
+                case SqlType.VarChar:
                     if (args == null || args.Length < 1)
                     {
                         length = 80;
@@ -98,7 +106,7 @@ namespace IQToolkit.Data
                         length = Int32.Parse(args[0]);
                     }
                     break;
-                case SqlDbType.Money:
+                case SqlType.Money:
                     if (args == null || args.Length < 1)
                     {
                         precision = 29;
@@ -116,7 +124,7 @@ namespace IQToolkit.Data
                         scale = Int16.Parse(args[1]);
                     }
                     break;
-                case SqlDbType.Decimal:
+                case SqlType.Decimal:
                     if (args == null || args.Length < 1)
                     {
                         precision = 29;
@@ -134,8 +142,8 @@ namespace IQToolkit.Data
                         scale = Int16.Parse(args[1]);
                     }
                     break;
-                case SqlDbType.Float:
-                case SqlDbType.Real:
+                case SqlType.Float:
+                case SqlType.Real:
                     if (args == null || args.Length < 1)
                     {
                         precision = 29;
@@ -150,157 +158,118 @@ namespace IQToolkit.Data
             return NewType(dbType, isNotNull, length, precision, scale);
         }
 
-        public virtual QueryType NewType(SqlDbType type, bool isNotNull, int length, short precision, short scale)
+        /// <summary>
+        /// Construct a new <see cref="QueryType"/> instance from 
+        /// </summary>
+        protected virtual QueryType NewType(SqlType type, bool isNotNull, int length, short precision, short scale)
         {
-            return new DbQueryType(type, isNotNull, length, precision, scale);
+            return new SqlQueryType(type, isNotNull, length, precision, scale);
         }
 
-        public virtual SqlDbType GetSqlType(string typeName)
+        /// <summary>
+        /// Gets the <see cref="SqlType"/> given the type name (same name as <see cref="SqlType"/> members)
+        /// </summary>
+        public virtual SqlType GetSqlType(string typeName)
         {
-            return (SqlDbType)Enum.Parse(typeof(SqlDbType), typeName, true);
+            return (SqlType)Enum.Parse(typeof(SqlType), typeName, true);
         }
 
+        /// <summary>
+        /// Default maximum size of a text data type.
+        /// </summary>
         public virtual int StringDefaultSize
         {
             get { return Int32.MaxValue; }
         }
 
+        /// <summary>
+        /// Default maximum size of a binary data type.
+        /// </summary>
         public virtual int BinaryDefaultSize
         {
             get { return Int32.MaxValue; }
         }
 
+        /// <summary>
+        /// Gets the <see cref="QueryType"/> associated with a CLR type.
+        /// </summary>
         public override QueryType GetColumnType(Type type)
         {
-            bool isNotNull = type.IsValueType && !TypeHelper.IsNullableType(type);
+            bool isNotNull = type.GetTypeInfo().IsValueType && !TypeHelper.IsNullableType(type);
             type = TypeHelper.GetNonNullableType(type);
-            switch (Type.GetTypeCode(type))
+
+            switch (TypeHelper.GetTypeCode(type))
             {
                 case TypeCode.Boolean:
-                    return NewType(SqlDbType.Bit, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.Bit, isNotNull, 0, 0, 0);
                 case TypeCode.SByte:
                 case TypeCode.Byte:
-                    return NewType(SqlDbType.TinyInt, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.TinyInt, isNotNull, 0, 0, 0);
                 case TypeCode.Int16:
                 case TypeCode.UInt16:
-                    return NewType(SqlDbType.SmallInt, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.SmallInt, isNotNull, 0, 0, 0);
                 case TypeCode.Int32:
                 case TypeCode.UInt32:
-                    return NewType(SqlDbType.Int, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.Int, isNotNull, 0, 0, 0);
                 case TypeCode.Int64:
                 case TypeCode.UInt64:
-                    return NewType(SqlDbType.BigInt, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.BigInt, isNotNull, 0, 0, 0);
                 case TypeCode.Single:
                 case TypeCode.Double:
-                    return NewType(SqlDbType.Float, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.Float, isNotNull, 0, 0, 0);
                 case TypeCode.String:
-                    return NewType(SqlDbType.NVarChar, isNotNull, this.StringDefaultSize, 0, 0);
+                    return NewType(SqlType.NVarChar, isNotNull, this.StringDefaultSize, 0, 0);
                 case TypeCode.Char:
-                    return NewType(SqlDbType.NChar, isNotNull, 1, 0, 0);
+                    return NewType(SqlType.NChar, isNotNull, 1, 0, 0);
                 case TypeCode.DateTime:
-                    return NewType(SqlDbType.DateTime, isNotNull, 0, 0, 0);
+                    return NewType(SqlType.DateTime, isNotNull, 0, 0, 0);
                 case TypeCode.Decimal:
-                    return NewType(SqlDbType.Decimal, isNotNull, 0, 29, 4);
+                    return NewType(SqlType.Decimal, isNotNull, 0, 29, 4);
                 default:
                     if (type == typeof(byte[]))
-                        return NewType(SqlDbType.VarBinary, isNotNull, this.BinaryDefaultSize, 0, 0);
+                        return NewType(SqlType.VarBinary, isNotNull, this.BinaryDefaultSize, 0, 0);
                     else if (type == typeof(Guid))
-                        return NewType(SqlDbType.UniqueIdentifier, isNotNull, 0, 0, 0);
+                        return NewType(SqlType.UniqueIdentifier, isNotNull, 0, 0, 0);
                     else if (type == typeof(DateTimeOffset))
-                        return NewType(SqlDbType.DateTimeOffset, isNotNull, 0, 0, 0);
+                        return NewType(SqlType.DateTimeOffset, isNotNull, 0, 0, 0);
                     else if (type == typeof(TimeSpan))
-                        return NewType(SqlDbType.Time, isNotNull, 0, 0, 0);
-                    return null;
+                        return NewType(SqlType.Time, isNotNull, 0, 0, 0);
+                    else if (type.GetTypeInfo().IsEnum)
+                        return NewType(SqlType.Int, isNotNull, 0, 0, 0);
+                    else
+                        return null;
             }
         }
 
-        public static DbType GetDbType(SqlDbType dbType)
+        /// <summary>
+        /// True if the <see cref="SqlType"/> is a variable length type.
+        /// </summary>
+        public static bool IsVariableLength(SqlType dbType)
         {
             switch (dbType)
             {
-                case SqlDbType.BigInt:
-                    return DbType.Int64;
-                case SqlDbType.Binary:
-                    return DbType.Binary;
-                case SqlDbType.Bit:
-                    return DbType.Boolean;
-                case SqlDbType.Char:
-                    return DbType.AnsiStringFixedLength;
-                case SqlDbType.Date:
-                    return DbType.Date;
-                case SqlDbType.DateTime:
-                case SqlDbType.SmallDateTime:
-                    return DbType.DateTime;
-                case SqlDbType.DateTime2:
-                    return DbType.DateTime2;
-                case SqlDbType.DateTimeOffset:
-                    return DbType.DateTimeOffset;
-                case SqlDbType.Decimal:
-                    return DbType.Decimal;
-                case SqlDbType.Float:
-                case SqlDbType.Real:
-                    return DbType.Double;
-                case SqlDbType.Image:
-                    return DbType.Binary;
-                case SqlDbType.Int:
-                    return DbType.Int32;
-                case SqlDbType.Money:
-                case SqlDbType.SmallMoney:
-                    return DbType.Currency;
-                case SqlDbType.NChar:
-                    return DbType.StringFixedLength;
-                case SqlDbType.NText:
-                case SqlDbType.NVarChar:
-                    return DbType.String;
-                case SqlDbType.SmallInt:
-                    return DbType.Int16;
-                case SqlDbType.Text:
-                    return DbType.AnsiString;
-                case SqlDbType.Time:
-                    return DbType.Time;
-                case SqlDbType.Timestamp:
-                    return DbType.Binary;
-                case SqlDbType.TinyInt:
-                    return DbType.SByte;
-                case SqlDbType.Udt:
-                    return DbType.Object;
-                case SqlDbType.UniqueIdentifier:
-                    return DbType.Guid;
-                case SqlDbType.VarBinary:
-                    return DbType.Binary;
-                case SqlDbType.VarChar:
-                    return DbType.AnsiString;
-                case SqlDbType.Variant:
-                    return DbType.Object;
-                case SqlDbType.Xml:
-                    return DbType.String;
-                default:
-                    throw new InvalidOperationException(string.Format("Unhandled sql type: {0}", dbType));
-            }
-        }
-
-        public static bool IsVariableLength(SqlDbType dbType)
-        {
-            switch (dbType)
-            {
-                case SqlDbType.Image:
-                case SqlDbType.NText:
-                case SqlDbType.NVarChar:
-                case SqlDbType.Text:
-                case SqlDbType.VarBinary:
-                case SqlDbType.VarChar:
-                case SqlDbType.Xml:
+                case SqlType.Image:
+                case SqlType.NText:
+                case SqlType.NVarChar:
+                case SqlType.Text:
+                case SqlType.VarBinary:
+                case SqlType.VarChar:
+                case SqlType.Xml:
                     return true;
                 default:
                     return false;
             }
         }
 
-        public override string GetVariableDeclaration(QueryType type, bool suppressSize)
+        /// <summary>
+        /// Format the <see cref="QueryType"/> as if specified in the database language.
+        /// </summary>
+        public override string Format(QueryType type, bool suppressSize)
         {
-            var sqlType = (DbQueryType)type;
+            var sqlType = (SqlQueryType)type;
             StringBuilder sb = new StringBuilder();
-            sb.Append(sqlType.SqlDbType.ToString().ToUpper());
+            sb.Append(sqlType.SqlType.ToString().ToUpper());
+
             if (sqlType.Length > 0 && !suppressSize)
             {
                 if (sqlType.Length == Int32.MaxValue)
@@ -323,55 +292,8 @@ namespace IQToolkit.Data
                     sb.AppendFormat("({0})", sqlType.Precision);
                 }
             }
+
             return sb.ToString();
         }
     }
-
-    public class DbQueryType : QueryType
-    {
-        SqlDbType dbType;
-        bool notNull;
-        int length;
-        short precision;
-        short scale;
-
-        public DbQueryType(SqlDbType dbType, bool notNull, int length, short precision, short scale)
-        {
-            this.dbType = dbType;
-            this.notNull = notNull;
-            this.length = length;
-            this.precision = precision;
-            this.scale = scale;
-        }
-
-        public DbType DbType
-        {
-            get { return DbTypeSystem.GetDbType(this.dbType); }
-        }
-
-        public SqlDbType SqlDbType
-        {
-            get { return this.dbType; }
-        }
-
-        public override int Length
-        {
-            get { return this.length; }
-        }
-
-        public override bool NotNull
-        {
-            get { return this.notNull; }
-        }
-
-        public override short Precision
-        {
-            get { return this.precision; }
-        }
-
-        public override short Scale
-        {
-            get { return this.scale; }
-        }
-    } 
 }

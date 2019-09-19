@@ -2,25 +2,28 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data
 {
     using Common;
 
+    /// <summary>
+    /// Implements the <see cref="IEntitySession"/> contract over an <see cref="EntityProvider"/>.
+    /// </summary>
     public class EntitySession : IEntitySession
     {
-        EntityProvider provider;
-        SessionProvider sessionProvider;
-        Dictionary<MappingEntity, ISessionTable> tables;
+        private readonly EntityProvider provider;
+        private readonly SessionProvider sessionProvider;
+        private readonly Dictionary<MappingEntity, ISessionTable> tables;
 
+        /// <summary>
+        /// Construct a <see cref="EntitySession"/>
+        /// </summary>
         public EntitySession(EntityProvider provider)
         {
             this.provider = provider;
@@ -28,6 +31,9 @@ namespace IQToolkit.Data
             this.tables = new Dictionary<MappingEntity, ISessionTable>();
         }
 
+        /// <summary>
+        /// The underlying <see cref="IEntityProvider"/>
+        /// </summary>
         public IEntityProvider Provider
         {
             get { return this.sessionProvider; }
@@ -43,14 +49,25 @@ namespace IQToolkit.Data
             return this.tables.Values;
         }
 
-        public ISessionTable GetTable(Type elementType, string tableId)
+        /// <summary>
+        /// Gets the <see cref="ISessionTable"/> for the corresponding database table.
+        /// </summary>
+        /// <param name="entityType">The type of the entities held by this table.</param>
+        /// <param name="entityId">The id of the entity in the mapping.
+        /// If unspecified, the provider will infer the id from the element type.</param>
+        public ISessionTable GetTable(Type entityType, string entityId = null)
         {
-            return this.GetTable(this.sessionProvider.Provider.Mapping.GetEntity(elementType, tableId));
+            return this.GetTable(this.sessionProvider.Provider.Mapping.GetEntity(entityType, entityId));
         }
 
-        public ISessionTable<T> GetTable<T>(string tableId)
+        /// <summary>
+        /// Gets the <see cref="ISessionTable"/> for the corresponding database table.
+        /// </summary>
+        /// <param name="entityId">The id of the entity in the mapping.
+        /// If unspecified, the provider will infer the id from the element type.</param>
+        public ISessionTable<TEntity> GetTable<TEntity>(string entityId = null)
         {
-            return (ISessionTable<T>)this.GetTable(typeof(T), tableId);
+            return (ISessionTable<TEntity>)this.GetTable(typeof(TEntity), entityId);
         }
 
         protected ISessionTable GetTable(MappingEntity entity)
@@ -76,18 +93,18 @@ namespace IQToolkit.Data
             MappingEntity Entity { get; }
         }
 
-        abstract class SessionTable<T> : Query<T>, ISessionTable<T>, ISessionTable, IEntitySessionTable
+        private abstract class SessionTable<T> : Query<T>, ISessionTable<T>, ISessionTable, IEntitySessionTable
         {
-            EntitySession session;
-            MappingEntity entity;
-            IEntityTable<T> underlyingTable;
+            private readonly EntitySession session;
+            private readonly MappingEntity entity;
+            private readonly IEntityTable<T> underlyingTable;
 
             public SessionTable(EntitySession session, MappingEntity entity)
                 : base(session.sessionProvider, typeof(ISessionTable<T>))
             {
                 this.session = session;
                 this.entity = entity;
-                this.underlyingTable = this.session.Provider.GetTable<T>(entity.TableId);
+                this.underlyingTable = this.session.Provider.GetTable<T>(entity.EntityId);
             }
 
             public IEntitySession Session
@@ -100,12 +117,12 @@ namespace IQToolkit.Data
                 get { return this.entity; }
             }
 
-            public IEntityTable<T> ProviderTable
+            public IEntityTable<T> Table
             {
                 get { return this.underlyingTable; }
             }
 
-            IEntityTable ISessionTable.ProviderTable
+            IEntityTable ISessionTable.Table
             {
                 get { return this.underlyingTable; }
             }
@@ -146,10 +163,10 @@ namespace IQToolkit.Data
             }
         }
 
-        class SessionProvider : QueryProvider, IEntityProvider, ICreateExecutor
+        private class SessionProvider : QueryProvider, IEntityProvider, IQueryExecutorFactory
         {
-            EntitySession session;
-            EntityProvider provider;
+            private readonly EntitySession session;
+            private readonly EntityProvider provider;
 
             public SessionProvider(EntitySession session, EntityProvider provider)
             {
@@ -192,16 +209,16 @@ namespace IQToolkit.Data
                 return this.provider.CanBeParameter(expression);
             }
 
-            QueryExecutor ICreateExecutor.CreateExecutor()
+            QueryExecutor IQueryExecutorFactory.CreateExecutor()
             {
-                return new SessionExecutor(this.session, ((ICreateExecutor)this.provider).CreateExecutor());
+                return new SessionExecutor(this.session, ((IQueryExecutorFactory)this.provider).CreateExecutor());
             }
         }
 
-        class SessionExecutor : QueryExecutor
+        private class SessionExecutor : QueryExecutor
         {
-            EntitySession session;
-            QueryExecutor executor;
+            private readonly EntitySession session;
+            private readonly QueryExecutor executor;
 
             public SessionExecutor(EntitySession session, QueryExecutor executor)
             {
@@ -251,6 +268,9 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Submit changes made to entity instances back to the database, as a single transaction.
+        /// </summary>
         public virtual void SubmitChanges()
         {
             this.provider.DoTransacted(
@@ -278,10 +298,10 @@ namespace IQToolkit.Data
 
         protected virtual ISessionTable CreateTable(MappingEntity entity)
         {
-            return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.ElementType), new object[] { this, entity });
+            return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.StaticType), new object[] { this, entity });
         }
 
-        interface ITrackedTable : IEntitySessionTable
+        private interface ITrackedTable : IEntitySessionTable
         {
             object GetFromCacheById(object key);
             IEnumerable<TrackedItem> TrackedItems { get; }
@@ -290,10 +310,10 @@ namespace IQToolkit.Data
             void AcceptChanges(TrackedItem item);
         }
 
-        class TrackedTable<T> : SessionTable<T>, ITrackedTable
+        private class TrackedTable<T> : SessionTable<T>, ITrackedTable
         {
-            Dictionary<T, TrackedItem> tracked;
-            Dictionary<object, T> identityCache;
+            private readonly Dictionary<T, TrackedItem> tracked;
+            private readonly Dictionary<object, T> identityCache;
 
             public TrackedTable(EntitySession session, MappingEntity entity)
                 : base(session, entity)
@@ -327,34 +347,109 @@ namespace IQToolkit.Data
                 switch (item.State)
                 {
                     case SubmitAction.Delete:
-                        this.ProviderTable.Delete(item.Instance);
+                        this.Table.Delete(item.Instance);
                         return true;
+
                     case SubmitAction.Insert:
-                        this.ProviderTable.Insert(item.Instance);
+                        var generatedKeySelector = this.GetGeneratedKeySelector();
+
+                        if (generatedKeySelector != null)
+                        {
+                            var keyValues = this.Table.Insert((T)item.Instance, generatedKeySelector);
+                            ApplyGeneratedKeyValues(item, keyValues);
+                        }
+                        else
+                        {
+                            this.Table.Insert((T)item.Instance);
+                        }
+
                         return true;
+
                     case SubmitAction.InsertOrUpdate:
-                        this.ProviderTable.InsertOrUpdate(item.Instance);
+                        this.Table.InsertOrUpdate(item.Instance);
                         return true;
+
                     case SubmitAction.PossibleUpdate:
                         if (item.Original != null &&
                             this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
                         {
-                            this.ProviderTable.Update(item.Instance);
+                            this.Table.Update(item.Instance);
                             return true;
                         }
                         break;
+
                     case SubmitAction.Update:
-                        this.ProviderTable.Update(item.Instance);
+                        this.Table.Update(item.Instance);
                         return true;
+
                     default:
                         break; // do nothing
                 }
+
                 return false;
             }
 
             bool ITrackedTable.SubmitChanges(TrackedItem item)
             {
                 return this.SubmitChanges(item);
+            }
+
+            private void ApplyGeneratedKeyValues(TrackedItem item, object[] keyValues)
+            {
+                // remove from tracked item
+                this.tracked.Remove((T) item.Instance);
+ 
+                var generatedKeys = GetGeneratedKeys();
+                for (int i = 0; i < generatedKeys.Length; i++)
+                {
+                    generatedKeys[i].SetValue((T) item.Instance, keyValues[i]);
+                }
+ 
+                // re-add tracked item to update its key
+                this.tracked[(T)item.Instance] = item;
+            }
+ 
+            private MemberInfo[] generatedKeys;
+            private MemberInfo[] GetGeneratedKeys()
+            {
+                if (generatedKeys == null)
+                {
+                    generatedKeys = this.Mapping.GetPrimaryKeyMembers(this.Entity)
+                                        .Where(k => this.Mapping.IsGenerated(this.Entity, k)).ToArray();
+                }
+ 
+                return generatedKeys;
+            }
+ 
+            private Expression<Func<T, object[]>> generatedKeySelector;
+            private Expression<Func<T, object[]>> GetGeneratedKeySelector()
+            {
+                var generatedKeys = GetGeneratedKeys();
+                if (generatedKeys.Length > 0)
+                {
+                    var e = Expression.Parameter(typeof(T), "entity");
+                    var arrayConstruction = Expression.NewArrayInit(typeof(object), generatedKeys.Select(gk => Expression.Convert(GetMemberAccess(e, gk), typeof(object))).ToArray());
+                    generatedKeySelector = Expression.Lambda<Func<T, object[]>>(arrayConstruction, e);
+                }
+ 
+                return generatedKeySelector;
+            }
+ 
+            private Expression GetMemberAccess(Expression expression, MemberInfo member)
+            {
+                var fi = member as FieldInfo;
+                if (fi != null)
+                {
+                    return Expression.Field(expression, fi);
+                }
+
+                var pi = member as PropertyInfo;
+                if (pi != null)
+                {
+                    return Expression.Property(expression, pi);
+                }
+
+                throw new InvalidOperationException();
             }
 
             private void AcceptChanges(TrackedItem item)
@@ -395,9 +490,13 @@ namespace IQToolkit.Data
                 {
                     this.AssignAction(typedInstance, SubmitAction.PossibleUpdate);
                 }
+
                 return cached;
             }
 
+            /// <summary>
+            /// Gets the current <see cref="SubmitAction"/> for the entity instance.
+            /// </summary>
             public override SubmitAction GetSubmitAction(T instance)
             {
                 TrackedItem ti;
@@ -416,6 +515,7 @@ namespace IQToolkit.Data
                     }
                     return ti.State;
                 }
+
                 return SubmitAction.None;
             }
 
@@ -434,6 +534,7 @@ namespace IQToolkit.Data
                         }
                         break;
                 }
+
                 this.AssignAction(instance, action);
             }
 
@@ -506,52 +607,24 @@ namespace IQToolkit.Data
             }
         }
 
-        class TrackedItem
+        private class TrackedItem
         {
-            ITrackedTable table;
-            object instance;
-            object original;
-            SubmitAction state;
-            bool hookedEvent;
+            public ITrackedTable Table { get; }
+            public object Instance { get; }
+            public object Original { get; }
+            public SubmitAction State { get; }
+            public bool HookedEvent { get; }
 
             internal TrackedItem(ITrackedTable table, object instance, object original, SubmitAction state, bool hookedEvent)
             {
-                this.table = table;
-                this.instance = instance;
-                this.original = original;
-                this.state = state;
-                this.hookedEvent = hookedEvent;
+                this.Table = table;
+                this.Instance = instance;
+                this.Original = original;
+                this.State = state;
+                this.HookedEvent = hookedEvent;
             }
 
-            public ITrackedTable Table
-            {
-                get { return this.table; }
-            }
-
-            public MappingEntity Entity 
-            {
-                get { return this.table.Entity; }
-            }
-
-            public object Instance
-            {
-                get { return this.instance; }
-            }
-
-            public object Original
-            {
-                get { return this.original; }
-            }
-
-            public SubmitAction State
-            {
-                get { return this.state; }
-            }
-
-            public bool HookedEvent
-            {
-                get { return this.hookedEvent; }
-            }
+            public MappingEntity Entity => this.Table.Entity;
 
             public static readonly IEnumerable<TrackedItem> EmptyList = new TrackedItem[] { };
         }
@@ -563,7 +636,7 @@ namespace IQToolkit.Data
                          where ti.State != SubmitAction.None
                          select ti).ToList();
 
-            // build edge maps to represent all references between entities
+            // build edge map to represent all references between entities
             var edges = this.GetEdges(items).Distinct().ToList();
             var stLookup = edges.ToLookup(e => e.Source, e => e.Target);
             var tsLookup = edges.ToLookup(e => e.Target, e => e.Source);
@@ -616,6 +689,7 @@ namespace IQToolkit.Data
                         yield return new Edge(dc, c);
                     }
                 }
+
                 foreach (var d in this.provider.Mapping.GetDependentEntities(c.Entity, c.Instance))
                 {
                     var dc = this.GetTrackedItem(d);
@@ -627,11 +701,11 @@ namespace IQToolkit.Data
             }
         }
 
-        class Edge : IEquatable<Edge>
+        private class Edge : IEquatable<Edge>
         {
-            internal TrackedItem Source { get; private set; }
-            internal TrackedItem Target { get; private set; }
-            int hash;
+            public TrackedItem Source { get; }
+            public TrackedItem Target { get; }
+            private readonly int hash;
 
             internal Edge(TrackedItem source, TrackedItem target)
             {

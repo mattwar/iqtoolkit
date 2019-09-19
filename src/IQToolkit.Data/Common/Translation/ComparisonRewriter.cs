@@ -156,10 +156,11 @@ namespace IQToolkit.Data.Common
 
         private static MemberInfo FixMember(MemberInfo member)
         {
-            if (member.MemberType == MemberTypes.Method && member.Name.StartsWith("get_"))
+            if (member is MethodInfo && member.Name.StartsWith("get_"))
             {
-                return member.DeclaringType.GetProperty(member.Name.Substring(4));
+                return member.DeclaringType.GetTypeInfo().GetDeclaredProperty(member.Name.Substring(4));
             }
+
             return member;
         }
     }

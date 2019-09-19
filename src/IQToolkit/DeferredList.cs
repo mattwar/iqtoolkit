@@ -16,63 +16,74 @@ namespace IQToolkit
         void Load();
     }
 
+    /// <summary>
+    /// An interface denoting a list that can be defer loaded.
+    /// </summary>
     public interface IDeferredList : IList, IDeferLoadable
     {
     }
 
+    /// <summary>
+    /// An interface denoting a list that can be defer loaded.
+    /// </summary>
     public interface IDeferredList<T> : IList<T>, IDeferredList
     {
     }
 
     /// <summary>
-    /// A list implementation that is loaded the first time the contents are examined
+    /// A <see cref="IList{T}"/> that is loaded the first time the contents are examined, 
+    /// or when the <see cref="Load"/> method is called.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class DeferredList<T> : IDeferredList<T>, ICollection<T>, IEnumerable<T>, IList, ICollection, IEnumerable, IDeferLoadable
     {
-        IEnumerable<T> source;
-        List<T> values;
+        private readonly IEnumerable<T> source;
+        private List<T> values;
 
+        /// <summary>
+        /// Construct a new <see cref="DeferredList{T}"/>
+        /// </summary>
+        /// <param name="source">The sequence of values that will be enumerated when <see cref="Load"/> is invoked.</param>
         public DeferredList(IEnumerable<T> source)
         {
             this.source = source;
         }
 
+        /// <summary>
+        /// Loads the list if not already loaded.
+        /// </summary>
         public void Load()
-        {
-            this.values = new List<T>(this.source);
-        }
-
-        public bool IsLoaded
-        {
-            get { return this.values != null; }
-        }
-
-        private void Check()
         {
             if (!this.IsLoaded)
             {
-                this.Load();
+                this.values = new List<T>(this.source);
             }
+        }
+
+        /// <summary>
+        /// True if the list is already loaded.
+        /// </summary>
+        public bool IsLoaded
+        {
+            get { return this.values != null; }
         }
 
         #region IList<T> Members
 
         public int IndexOf(T item)
         {
-            this.Check();
+            this.Load();
             return this.values.IndexOf(item);
         }
 
         public void Insert(int index, T item)
         {
-            this.Check();
+            this.Load();
             this.values.Insert(index, item);
         }
 
         public void RemoveAt(int index)
         {
-            this.Check();
+            this.Load();
             this.values.RemoveAt(index);
         }
 
@@ -80,12 +91,12 @@ namespace IQToolkit
         {
             get
             {
-                this.Check();
+                this.Load();
                 return this.values[index];
             }
             set
             {
-                this.Check();
+                this.Load();
                 this.values[index] = value;
             }
         }
@@ -96,31 +107,31 @@ namespace IQToolkit
 
         public void Add(T item)
         {
-            this.Check();
+            this.Load();
             this.values.Add(item);
         }
 
         public void Clear()
         {
-            this.Check();
+            this.Load();
             this.values.Clear();
         }
 
         public bool Contains(T item)
         {
-            this.Check();
+            this.Load();
             return this.values.Contains(item);
         }
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            this.Check();
+            this.Load();
             this.values.CopyTo(array, arrayIndex);
         }
 
         public int Count
         {
-            get { this.Check(); return this.values.Count; }
+            get { this.Load(); return this.values.Count; }
         }
 
         public bool IsReadOnly
@@ -130,7 +141,7 @@ namespace IQToolkit
 
         public bool Remove(T item)
         {
-            this.Check();
+            this.Load();
             return this.values.Remove(item);
         }
 
@@ -140,7 +151,7 @@ namespace IQToolkit
 
         public IEnumerator<T> GetEnumerator()
         {
-            this.Check();
+            this.Load();
             return this.values.GetEnumerator();
         }
 
@@ -159,25 +170,25 @@ namespace IQToolkit
 
         public int Add(object value)
         {
-            this.Check();
+            this.Load();
             return ((IList)this.values).Add(value);
         }
 
         public bool Contains(object value)
         {
-            this.Check();
+            this.Load();
             return ((IList)this.values).Contains(value);
         }
 
         public int IndexOf(object value)
         {
-            this.Check();
+            this.Load();
             return ((IList)this.values).IndexOf(value);
         }
 
         public void Insert(int index, object value)
         {
-            this.Check();
+            this.Load();
             ((IList)this.values).Insert(index, value);
         }
 
@@ -188,7 +199,7 @@ namespace IQToolkit
 
         public void Remove(object value)
         {
-            this.Check();
+            this.Load();
             ((IList)this.values).Remove(value);
         }
 
@@ -196,12 +207,12 @@ namespace IQToolkit
         {
             get
             {
-                this.Check();
+                this.Load();
                 return ((IList)this.values)[index];
             }
             set
             {
-                this.Check();
+                this.Load();
                 ((IList)this.values)[index] = value;
             }
         }
@@ -212,7 +223,7 @@ namespace IQToolkit
 
         public void CopyTo(Array array, int index)
         {
-            this.Check();
+            this.Load();
             ((IList)this.values).CopyTo(array, index);
         }
 

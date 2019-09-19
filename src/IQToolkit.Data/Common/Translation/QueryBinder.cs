@@ -194,7 +194,7 @@ namespace IQToolkit.Data.Common
                         break;
                 }
             }
-            else if (typeof(Updatable).IsAssignableFrom(m.Method.DeclaringType)) 
+            else if (typeof(Updatable).GetTypeInfo().IsAssignableFrom(m.Method.DeclaringType.GetTypeInfo())) 
             {
                 IEntityTable upd = this.batchUpd != null
                     ? this.batchUpd
@@ -279,7 +279,7 @@ namespace IQToolkit.Data.Common
                     return (ProjectionExpression)expr;
                 case ExpressionType.New:
                     NewExpression nex = (NewExpression)expr;
-                    if (expr.Type.IsGenericType && expr.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+                    if (expr.Type.GetTypeInfo().IsGenericType && expr.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
                     {
                         return (ProjectionExpression)nex.Arguments[1];
                     }
@@ -588,7 +588,7 @@ namespace IQToolkit.Data.Common
                 // result must be IGrouping<K,E>
                 resultExpr = 
                     Expression.New(
-                        typeof(Grouping<,>).MakeGenericType(keyExpr.Type, subqueryElemExpr.Type).GetConstructors()[0],
+                        typeof(Grouping<,>).MakeGenericType(keyExpr.Type, subqueryElemExpr.Type).GetTypeInfo().DeclaredConstructors.First(),
                         new Expression[] { keyExpr, elementSubquery }
                         );
 
@@ -599,7 +599,7 @@ namespace IQToolkit.Data.Common
 
             // make it possible to tie aggregates back to this group-by
             NewExpression newResult = this.GetNewExpression(pc.Projector);
-            if (newResult != null && newResult.Type.IsGenericType && newResult.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+            if (newResult != null && newResult.Type.GetTypeInfo().IsGenericType && newResult.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
             {
                 Expression projectedElementSubquery = newResult.Arguments[1];
                 this.groupByMap.Add(projectedElementSubquery, info);
@@ -946,25 +946,25 @@ namespace IQToolkit.Data.Common
 
         private Expression BindInsert(IEntityTable upd, Expression instance, LambdaExpression selector)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(this.mapper.GetInsertExpression(entity, instance, selector));
         }
 
         private Expression BindUpdate(IEntityTable upd, Expression instance, LambdaExpression updateCheck, LambdaExpression resultSelector)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(this.mapper.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null));
         }
 
         private Expression BindInsertOrUpdate(IEntityTable upd, Expression instance, LambdaExpression updateCheck, LambdaExpression resultSelector)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(this.mapper.GetInsertOrUpdateExpression(entity, instance, updateCheck, resultSelector));
         }
 
         private Expression BindDelete(IEntityTable upd, Expression instance, LambdaExpression deleteCheck)
         {
-            MappingEntity entity = this.mapper.Mapping.GetEntity(instance != null ? instance.Type : deleteCheck.Parameters[0].Type, upd.TableId);
+            MappingEntity entity = this.mapper.Mapping.GetEntity(instance != null ? instance.Type : deleteCheck.Parameters[0].Type, upd.EntityId);
             return this.Visit(this.mapper.GetDeleteExpression(entity, instance, deleteCheck));
         }
 
@@ -995,7 +995,7 @@ namespace IQToolkit.Data.Common
                 if (t != null)
                 {
                     IHaveMappingEntity ihme = t as IHaveMappingEntity;
-                    MappingEntity entity = ihme != null ? ihme.Entity : this.mapper.Mapping.GetEntity(t.ElementType, t.TableId);
+                    MappingEntity entity = ihme != null ? ihme.Entity : this.mapper.Mapping.GetEntity(t.ElementType, t.EntityId);
                     return this.VisitSequence(this.mapper.GetQueryExpression(entity));
                 }
                 else if (q.Expression.NodeType == ExpressionType.Constant)
@@ -1121,7 +1121,7 @@ namespace IQToolkit.Data.Common
                             }
                         }
                     }
-                    else if (nex.Type.IsGenericType && nex.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+                    else if (nex.Type.GetTypeInfo().IsGenericType && nex.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
                     {
                         if (member.Name == "Key")
                         {
@@ -1182,7 +1182,7 @@ namespace IQToolkit.Data.Common
 
         private static object GetDefault(Type type)
         {
-            if (!type.IsValueType || TypeHelper.IsNullableType(type))
+            if (!type.GetTypeInfo().IsValueType || TypeHelper.IsNullableType(type))
             {
                 return null;
             }
@@ -1198,14 +1198,16 @@ namespace IQToolkit.Data.Common
             {
                 return true;
             }
+
             if (a is MethodInfo && b is PropertyInfo)
             {
-                return a.Name == ((PropertyInfo)b).GetGetMethod().Name;
+                return a.Name == ((PropertyInfo)b).GetMethod.Name;
             }
             else if (a is PropertyInfo && b is MethodInfo)
             {
-                return ((PropertyInfo)a).GetGetMethod().Name == b.Name;
+                return ((PropertyInfo)a).GetMethod.Name == b.Name;
             }
+
             return false;
         }
     }

@@ -24,8 +24,8 @@ namespace IQToolkit
     /// </summary>
     public class Query<T> : IQueryable<T>, IQueryable, IEnumerable<T>, IEnumerable, IOrderedQueryable<T>, IOrderedQueryable
     {
-        IQueryProvider provider;
-        Expression expression;
+        private readonly IQueryProvider provider;
+        private readonly Expression expression;
 
         public Query(IQueryProvider provider)
             : this(provider, null)
@@ -38,6 +38,7 @@ namespace IQToolkit
             {
                 throw new ArgumentNullException("Provider");
             }
+
             this.provider = provider;
             this.expression = staticType != null ? Expression.Constant(this, staticType) : Expression.Constant(this);
         }
@@ -48,14 +49,17 @@ namespace IQToolkit
             {
                 throw new ArgumentNullException("Provider");
             }
+
             if (expression == null)
             {
                 throw new ArgumentNullException("expression");
             }
-            if (!typeof(IQueryable<T>).IsAssignableFrom(expression.Type))
+
+            if (!typeof(IQueryable<T>).GetTypeInfo().IsAssignableFrom(expression.Type.GetTypeInfo()))
             {
                 throw new ArgumentOutOfRangeException("expression");
             }
+
             this.provider = provider;
             this.expression = expression;
         }
@@ -107,7 +111,10 @@ namespace IQToolkit
                 {
                     return iqt.GetQueryText(this.expression);
                 }
-                return "";
+                else
+                {
+                    return "";
+                }
             }
         }
     }

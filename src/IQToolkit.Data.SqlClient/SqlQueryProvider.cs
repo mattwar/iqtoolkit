@@ -2,36 +2,61 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data.SqlClient
 {
     using IQToolkit.Data.Common;
 
+    /// <summary>
+    /// A <see cref="DbEntityProvider"/> for Microsoft SQL Server databases
+    /// </summary>
     public class SqlQueryProvider : DbEntityProvider
     {
-        bool? allowMulitpleActiveResultSets;
+        private bool? allowMulitpleActiveResultSets;
 
-        public SqlQueryProvider(SqlConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="SqlQueryProvider"/>
+        /// </summary>
+        public SqlQueryProvider(SqlConnection connection, QueryMapping mapping = null, QueryPolicy policy = null)
             : base(connection, TSqlLanguage.Default, mapping, policy)
         {
         }
 
-        public override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a <see cref="SqlQueryProvider"/>
+        /// </summary>
+        public SqlQueryProvider(string connectionStringOrDatabaseFile, QueryMapping mapping = null, QueryPolicy policy = null)
+            : this(CreateConnection(connectionStringOrDatabaseFile), mapping, policy)
+        {
+        }
+
+        protected override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
         {
             return new SqlQueryProvider((SqlConnection)connection, mapping, policy);
         }
 
+        /// <summary>
+        /// Creates a <see cref="SqlConnection"/> given a connection string or database file.
+        /// </summary>
+        public static SqlConnection CreateConnection(string connectionString)
+        {
+            if (!connectionString.Contains('='))
+            {
+                connectionString = GetConnectionString(connectionString);
+            }
+
+            return new SqlConnection(connectionString);
+        }
+
+        /// <summary>
+        /// Gets a connection string that will connect to the specified database file.
+        /// </summary>
         public static string GetConnectionString(string databaseFile)
         {
             if (databaseFile.EndsWith(".mdf"))
@@ -52,6 +77,7 @@ namespace IQToolkit.Data.SqlClient
                     var result = builder["MultipleActiveResultSets"];
                     this.allowMulitpleActiveResultSets = (result != null && result.GetType() == typeof(bool) && (bool)result);
                 }
+
                 return (bool)this.allowMulitpleActiveResultSets;
             }
         }
@@ -78,19 +104,20 @@ namespace IQToolkit.Data.SqlClient
 
             protected override void AddParameter(DbCommand command, QueryParameter parameter, object value)
             {
-                DbQueryType sqlType = (DbQueryType)parameter.QueryType;
+                SqlQueryType sqlType = (SqlQueryType)parameter.QueryType;
+
                 if (sqlType == null)
                 {
-                    sqlType = (DbQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
+                    sqlType = (SqlQueryType)this.Provider.Language.TypeSystem.GetColumnType(parameter.Type);
                 }
 
                 int len = sqlType.Length;
-                if (len == 0 && DbTypeSystem.IsVariableLength(sqlType.SqlDbType))
+                if (len == 0 && SqlTypeSystem.IsVariableLength(sqlType.SqlType))
                 {
                     len = Int32.MaxValue;
                 }
 
-                var p = ((SqlCommand)command).Parameters.Add("@" + parameter.Name, sqlType.SqlDbType, len);
+                var p = ((SqlCommand)command).Parameters.Add("@" + parameter.Name, (System.Data.SqlDbType)(int)sqlType.SqlType, len);
                 if (sqlType.Precision != 0)
                 {
                     p.Precision = (byte)sqlType.Precision;
@@ -104,6 +131,7 @@ namespace IQToolkit.Data.SqlClient
                 p.Value = value ?? DBNull.Value;
             }
 
+#if false // missing support in .NetStandard version of API
             public override IEnumerable<int> ExecuteBatch(QueryCommand query, IEnumerable<object[]> paramSets, int batchSize, bool stream)
             {
                 this.StartUsingConnection();
@@ -177,6 +205,7 @@ namespace IQToolkit.Data.SqlClient
                 this.LogMessage(string.Format("-- End SQL Batching --"));
                 this.LogMessage("");
             }
+#endif
         }
     }
 }

@@ -15,8 +15,8 @@ namespace IQToolkit
     /// </summary>
     public class ExpressionReplacer : ExpressionVisitor
     {
-        Expression searchFor;
-        Expression replaceWith;
+        private readonly Expression searchFor;
+        private readonly Expression replaceWith;
 
         private ExpressionReplacer(Expression searchFor, Expression replaceWith)
         {

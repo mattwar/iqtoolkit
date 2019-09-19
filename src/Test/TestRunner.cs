@@ -23,7 +23,7 @@ namespace Test
 
         public TestRunner(string[] commandLineArgs, params Assembly[] testAssemblies)
         {
-            this.commandLineArgs = commandLineArgs;
+            this.commandLineArgs = commandLineArgs.Select(a => a.Trim()).ToArray();
             this.testAssemblies = new List<Assembly>(testAssemblies);
             this.testNames = new List<string>();
             this.ParseCommandLineArgs();

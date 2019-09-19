@@ -1567,7 +1567,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             TestQuery(
                 nw.Customers
@@ -1578,7 +1578,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders, true);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             TestQuery(
                 nw.Customers
@@ -1590,7 +1590,7 @@ namespace Test
             var mapping = new AttributeMapping(typeof(NorthwindX));
             var policy = new EntityPolicy();
             policy.IncludeWith<CustomerX>(c => c.Orders);
-            NorthwindX nw = new NorthwindX(this.GetProvider().New(policy).New(mapping));
+            NorthwindX nw = new NorthwindX(this.GetProvider().WithPolicy(policy).WithMapping(mapping));
 
             TestQuery(
                 nw.Customers
@@ -1601,7 +1601,7 @@ namespace Test
         {
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             TestQuery(
                 from c in nw.Customers
@@ -1615,7 +1615,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
             policy.IncludeWith<Order>(o => o.Details);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             TestQuery(
                 nw.Customers
@@ -1627,7 +1627,7 @@ namespace Test
             var policy = new EntityPolicy();
             policy.IncludeWith<Customer>(c => c.Orders);
             policy.IncludeWith<Order>(o => o.Details);
-            Northwind nw = new Northwind(this.GetProvider().New(policy));
+            Northwind nw = new Northwind(this.GetProvider().WithPolicy(policy));
 
             TestQuery(
                 from c in nw.Customers
@@ -1650,10 +1650,11 @@ namespace Test
 
         public void TestXmlMappingSelectCustomers()
         {
-            var nw = new Northwind(this.GetProvider().New(XmlMapping.FromXml(File.ReadAllText(@"Northwind.xml"))));
+            var nw = new Northwind(this.GetProvider().WithMapping(
+                XmlMapping.FromXml(File.ReadAllText(@"Northwind.xml"))));
 
             TestQuery(
-                from c in db.Customers
+                from c in nw.Customers
                 where c.City == "London"
                 select c.ContactName
                 );

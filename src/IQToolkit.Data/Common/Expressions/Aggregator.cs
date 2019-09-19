@@ -2,13 +2,10 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data.Common
 {
@@ -22,16 +19,16 @@ namespace IQToolkit.Data.Common
         public static LambdaExpression GetAggregator(Type expectedType, Type actualType)
         {
             Type actualElementType = TypeHelper.GetElementType(actualType);
-            if (!expectedType.IsAssignableFrom(actualType))
+            if (!expectedType.GetTypeInfo().IsAssignableFrom(actualType.GetTypeInfo()))
             {
                 Type expectedElementType = TypeHelper.GetElementType(expectedType);
                 ParameterExpression p = Expression.Parameter(actualType, "p");
                 Expression body = null;
-                if (expectedType.IsAssignableFrom(actualElementType))
+                if (expectedType.GetTypeInfo().IsAssignableFrom(actualElementType.GetTypeInfo()))
                 {
                     body = Expression.Call(typeof(Enumerable), "SingleOrDefault", new Type[] { actualElementType }, p);
                 }
-                else if (expectedType.IsGenericType && 
+                else if (expectedType.GetTypeInfo().IsGenericType && 
                     (expectedType == typeof(IQueryable) ||
                      expectedType == typeof(IOrderedQueryable) ||
                      expectedType.GetGenericTypeDefinition() == typeof(IQueryable<>) ||
@@ -47,13 +44,13 @@ namespace IQToolkit.Data.Common
                 {
                     body = Expression.Call(typeof(Enumerable), "ToArray", new Type[] { expectedElementType }, CoerceElement(expectedElementType, p));
                 }
-                else if (expectedType.IsGenericType && expectedType.GetGenericTypeDefinition().IsAssignableFrom(typeof(IList<>)))
+                else if (expectedType.GetTypeInfo().IsGenericType && expectedType.GetGenericTypeDefinition().GetTypeInfo().IsAssignableFrom(typeof(IList<>).GetTypeInfo()))
                 {
-                    var gt = typeof(DeferredList<>).MakeGenericType(expectedType.GetGenericArguments());
-                    var cn = gt.GetConstructor(new Type[] {typeof(IEnumerable<>).MakeGenericType(expectedType.GetGenericArguments())});
+                    var gt = typeof(DeferredList<>).MakeGenericType(expectedType.GetTypeInfo().GenericTypeArguments);
+                    var cn = TypeHelper.FindConstructor(gt, new Type[] {typeof(IEnumerable<>).MakeGenericType(expectedType.GetTypeInfo().GenericTypeArguments)});
                     body = Expression.New(cn, CoerceElement(expectedElementType, p));
                 }
-                else if (expectedType.IsAssignableFrom(typeof(List<>).MakeGenericType(actualElementType)))
+                else if (expectedType.GetTypeInfo().IsAssignableFrom(typeof(List<>).MakeGenericType(actualElementType).GetTypeInfo()))
                 {
                     // List<T> can be assigned to expectedType
                     body = Expression.Call(typeof(Enumerable), "ToList", new Type[] { expectedElementType }, CoerceElement(expectedElementType, p));
@@ -61,7 +58,7 @@ namespace IQToolkit.Data.Common
                 else
                 {
                     // some other collection type that has a constructor that takes IEnumerable<T>
-                    ConstructorInfo ci = expectedType.GetConstructor(new Type[] { actualType });
+                    ConstructorInfo ci = TypeHelper.FindConstructor(expectedType, new Type[] { actualType });
                     if (ci != null)
                     {
                         body = Expression.New(ci, p);
@@ -78,7 +75,9 @@ namespace IQToolkit.Data.Common
         private static Expression CoerceElement(Type expectedElementType, Expression expression)
         {
             Type elementType = TypeHelper.GetElementType(expression.Type);
-            if (expectedElementType != elementType && (expectedElementType.IsAssignableFrom(elementType) || elementType.IsAssignableFrom(expectedElementType)))
+            if (expectedElementType != elementType 
+                && (expectedElementType.GetTypeInfo().IsAssignableFrom(elementType.GetTypeInfo()) 
+                    || elementType.GetTypeInfo().IsAssignableFrom(expectedElementType.GetTypeInfo())))
             {
                 return Expression.Call(typeof(Enumerable), "Cast", new Type[] { expectedElementType }, expression);
             }

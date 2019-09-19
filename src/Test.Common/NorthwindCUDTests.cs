@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Data;
-using System.Data.SqlClient;
-using System.Text;
 using IQToolkit;
-using IQToolkit.Data;
 
 namespace Test
 {
@@ -681,7 +676,7 @@ namespace Test
 
             // both objects should be different instances
             var cust = ns.Customers.Single(c => c.CustomerID == "ALFKI");
-            var cust2 = ns.Customers.ProviderTable.Single(c => c.CustomerID == "ALFKI");
+            var cust2 = ns.Customers.Table.Single(c => c.CustomerID == "ALFKI");
 
             Assert.NotEqual(null, cust);
             Assert.NotEqual(null, cust2);
@@ -914,5 +909,26 @@ namespace Test
             cust2.City = "ChicagoX";
             Assert.Equal(SubmitAction.Update, ns.Customers.GetSubmitAction(cust2));
         }
+
+         [ExcludeProvider("Access")] // Access does not auto generate the OrderID
+         public void TestSessionGeneratedId()
+         {
+             this.TestInsertCustomerNoResult(); // create customer "XX1"
+ 
+             NorthwindSession ns = new NorthwindSession(this.GetProvider());
+ 
+             var order = new Order
+             {
+                 CustomerID = "XX1",
+                 OrderDate = DateTime.Today,
+             };
+ 
+             ns.Orders.InsertOnSubmit(order);
+ 
+             Assert.Equal(0, order.OrderID);
+             ns.SubmitChanges();
+ 
+             Assert.NotEqual(0, order.OrderID);
+         }
     }
 }

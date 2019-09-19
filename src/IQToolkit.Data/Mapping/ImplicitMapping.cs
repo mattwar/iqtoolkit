@@ -24,7 +24,7 @@ namespace IQToolkit.Data.Mapping
         {
         }
 
-        public override string GetTableId(Type type)
+        public override string GetEntityId(Type type)
         {
             return this.InferTableName(type);
         }
@@ -59,13 +59,12 @@ namespace IQToolkit.Data.Mapping
             return IsScalar(TypeHelper.GetMemberType(member));
         }
 
-        private bool IsScalar(Type type)
+        private static bool IsScalar(Type type)
         {
             type = TypeHelper.GetNonNullableType(type);
-            switch (Type.GetTypeCode(type))
+            switch (TypeHelper.GetTypeCode(type))
             {
                 case TypeCode.Empty:
-                case TypeCode.DBNull:
                     return false;
                 case TypeCode.Object:
                     return
@@ -83,7 +82,7 @@ namespace IQToolkit.Data.Mapping
             if (IsMapped(entity, member) && !IsColumn(entity, member))
             {
                 Type otherType = TypeHelper.GetElementType(TypeHelper.GetMemberType(member));
-                return !this.IsScalar(otherType);
+                return !IsScalar(otherType);
             }
             return false;
         }
@@ -154,7 +153,7 @@ namespace IQToolkit.Data.Mapping
 
         public override string GetTableName(MappingEntity entity)
         {
-            return !string.IsNullOrEmpty(entity.TableId) ? entity.TableId : this.InferTableName(entity.EntityType);
+            return !string.IsNullOrEmpty(entity.EntityId) ? entity.EntityId : this.InferTableName(entity.StaticType);
         }
 
         private string InferTableName(Type rowType)
@@ -193,13 +192,13 @@ namespace IQToolkit.Data.Mapping
 
         public static string Plural(string name)
         {
-            if (name.EndsWith("x", StringComparison.InvariantCultureIgnoreCase) 
-                || name.EndsWith("ch", StringComparison.InvariantCultureIgnoreCase)
-                || name.EndsWith("ss", StringComparison.InvariantCultureIgnoreCase)) 
+            if (name.EndsWith("x", StringComparison.OrdinalIgnoreCase) 
+                || name.EndsWith("ch", StringComparison.OrdinalIgnoreCase)
+                || name.EndsWith("ss", StringComparison.OrdinalIgnoreCase)) 
             {
                 return name + "es";
             }
-            else if (name.EndsWith("y", StringComparison.InvariantCultureIgnoreCase)) 
+            else if (name.EndsWith("y", StringComparison.OrdinalIgnoreCase)) 
             {
                 return name.Substring(0, name.Length - 1) + "ies";
             }
@@ -212,22 +211,22 @@ namespace IQToolkit.Data.Mapping
 
         public static string Singular(string name)
         {
-            if (name.EndsWith("es", StringComparison.InvariantCultureIgnoreCase))
+            if (name.EndsWith("es", StringComparison.OrdinalIgnoreCase))
             {
                 string rest = name.Substring(0, name.Length - 2);
-                if (rest.EndsWith("x", StringComparison.InvariantCultureIgnoreCase)
-                    || name.EndsWith("ch", StringComparison.InvariantCultureIgnoreCase)
-                    || name.EndsWith("ss", StringComparison.InvariantCultureIgnoreCase))
+                if (rest.EndsWith("x", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith("ch", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith("ss", StringComparison.OrdinalIgnoreCase))
                 {
                     return rest;
                 }
             }
-            if (name.EndsWith("ies", StringComparison.InvariantCultureIgnoreCase))
+            if (name.EndsWith("ies", StringComparison.OrdinalIgnoreCase))
             {
                 return name.Substring(0, name.Length - 3) + "y";
             }
-            else if (name.EndsWith("s", StringComparison.InvariantCultureIgnoreCase)
-                && !name.EndsWith("ss", StringComparison.InvariantCultureIgnoreCase))
+            else if (name.EndsWith("s", StringComparison.OrdinalIgnoreCase)
+                && !name.EndsWith("ss", StringComparison.OrdinalIgnoreCase))
             {
                 return name.Substring(0, name.Length - 1);
             }

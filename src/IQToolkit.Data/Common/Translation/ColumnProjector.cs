@@ -16,8 +16,8 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public sealed class ProjectedColumns
     {
-        Expression projector;
-        ReadOnlyCollection<ColumnDeclaration> columns;
+        private readonly Expression projector;
+        private readonly ReadOnlyCollection<ColumnDeclaration> columns;
 
         public ProjectedColumns(Expression projector, ReadOnlyCollection<ColumnDeclaration> columns)
         {
@@ -62,14 +62,14 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class ColumnProjector : DbExpressionVisitor
     {
-        QueryLanguage language;
-        Dictionary<ColumnExpression, ColumnExpression> map;
-        List<ColumnDeclaration> columns;
-        HashSet<string> columnNames;
-        HashSet<Expression> candidates;
-        HashSet<TableAlias> existingAliases;
-        TableAlias newAlias;
-        int iColumn;
+        private readonly QueryLanguage language;
+        private readonly Dictionary<ColumnExpression, ColumnExpression> map;
+        private readonly List<ColumnDeclaration> columns;
+        private readonly HashSet<string> columnNames;
+        private readonly HashSet<Expression> candidates;
+        private readonly HashSet<TableAlias> existingAliases;
+        private readonly TableAlias newAlias;
+        private int iColumn;
 
         private ColumnProjector(QueryLanguage language, ProjectionAffinity affinity, Expression expression, IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)
         {
@@ -124,6 +124,7 @@ namespace IQToolkit.Data.Common
                     {
                         return mapped;
                     }
+
                     // check for column that already refers to this column
                     foreach (ColumnDeclaration existingColumn in this.columns)
                     {
@@ -134,6 +135,7 @@ namespace IQToolkit.Data.Common
                             return new ColumnExpression(column.Type, column.QueryType, this.newAlias, existingColumn.Name);
                         }
                     }
+
                     if (this.existingAliases.Contains(column.Alias)) 
                     {
                         int ordinal = this.columns.Count;
@@ -144,6 +146,7 @@ namespace IQToolkit.Data.Common
                         this.columnNames.Add(columnName);
                         return mapped;
                     }
+
                     // must be referring to outer scope
                     return column;
                 }

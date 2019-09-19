@@ -2,32 +2,33 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Data
 {
     using Common;
     using Mapping;
 
-    public class DbEntityProvider : EntityProvider
+    /// <summary>
+    /// The base type for <see cref="EntityProvider"/>'s that use a System.Data.<see cref="DbConnection"/>.
+    /// </summary>
+    public abstract partial class DbEntityProvider : EntityProvider
     {
-        DbConnection connection;
-        DbTransaction transaction;
-        IsolationLevel isolation = IsolationLevel.ReadCommitted;
+        private readonly DbConnection connection;
+        private DbTransaction transaction;
+        private IsolationLevel isolation = IsolationLevel.ReadCommitted;
 
-        int nConnectedActions = 0;
-        bool actionOpenedConnection = false;
+        private int nConnectedActions = 0;
+        private bool actionOpenedConnection = false;
 
-        public DbEntityProvider(DbConnection connection, QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Constructs a new <see cref="DbEntityProvider"/>
+        /// </summary>
+        protected DbEntityProvider(DbConnection connection, QueryLanguage language, QueryMapping mapping, QueryPolicy policy)
             : base(language, mapping, policy)
         {
             if (connection == null)
@@ -35,14 +36,24 @@ namespace IQToolkit.Data
             this.connection = connection;
         }
 
+        /// <summary>
+        /// The <see cref="DbConnection"/> used for executing queries.
+        /// </summary>
         public virtual DbConnection Connection
         {
             get { return this.connection; }
         }
 
+        /// <summary>
+        /// The <see cref="DbTransaction"/> to use for updates.
+        /// </summary>
         public virtual DbTransaction Transaction
         {
-            get { return this.transaction; }
+            get
+            {
+                return this.transaction;
+            }
+
             set
             {
                 if (value != null && value.Connection != this.connection)
@@ -51,148 +62,51 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// The <see cref="System.Data.IsolationLevel"/> used for transactions.
+        /// </summary>
         public IsolationLevel Isolation
         {
             get { return this.isolation; }
             set { this.isolation = value; }
         }
 
-        public virtual DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        protected virtual DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
         {
             return (DbEntityProvider)Activator.CreateInstance(this.GetType(), new object[] { connection, mapping, policy });
         }
 
-        public virtual DbEntityProvider New(DbConnection connection)
-        {
-            var n = New(connection, this.Mapping, this.Policy);
-            n.Log = this.Log;
-            return n;
-        }
-
-        public virtual DbEntityProvider New(QueryMapping mapping)
+        /// <summary>
+        /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the specified <see cref="QueryMapping"/>.
+        /// </summary>
+        public DbEntityProvider WithMapping(QueryMapping mapping)
         {
             var n = New(this.Connection, mapping, this.Policy);
             n.Log = this.Log;
             return n;
         }
 
-        public virtual DbEntityProvider New(QueryPolicy policy)
+        /// <summary>
+        /// Creates a new instance of the <see cref="DbEntityProvider"/> that uses the specified <see cref="QueryPolicy"/>.
+        /// </summary>
+        public DbEntityProvider WithPolicy(QueryPolicy policy)
         {
             var n = New(this.Connection, this.Mapping, policy);
             n.Log = this.Log;
             return n;
         }
 
-        public static DbEntityProvider FromApplicationSettings()
-        {
-            var provider = System.Configuration.ConfigurationManager.AppSettings["Provider"];
-            var connection = System.Configuration.ConfigurationManager.AppSettings["Connection"];
-            var mapping = System.Configuration.ConfigurationManager.AppSettings["Mapping"];
-            return From(provider, connection, mapping);
-        }
-
-        public static DbEntityProvider From(string connectionString, string mappingId)
-        {
-            return From(connectionString, mappingId, QueryPolicy.Default);
-        }
-
-        public static DbEntityProvider From(string connectionString, string mappingId, QueryPolicy policy)
-        {
-            return From(null, connectionString, mappingId, policy);
-        }
-
-        public static DbEntityProvider From(string connectionString, QueryMapping mapping, QueryPolicy policy)
-        {
-            return From((string)null, connectionString, mapping, policy);
-        }
-
-        public static DbEntityProvider From(string provider, string connectionString, string mappingId)
-        {
-            return From(provider, connectionString, mappingId, QueryPolicy.Default);
-        }
-
-        public static DbEntityProvider From(string provider, string connectionString, string mappingId, QueryPolicy policy)
-        {
-            return From(provider, connectionString, GetMapping(mappingId), policy);
-        }
-
-        public static DbEntityProvider From(string provider, string connectionString, QueryMapping mapping, QueryPolicy policy)
-        {
-            if (provider == null)
-            {
-                var clower = connectionString.ToLower();
-                // try sniffing connection to figure out provider
-                if (clower.Contains(".mdb") || clower.Contains(".accdb"))
-                {
-                    provider = "IQToolkit.Data.Access";
-                }
-                else if (clower.Contains(".sdf"))
-                {
-                    provider = "IQToolkit.Data.SqlServerCe";
-                }
-                else if (clower.Contains(".sl3") || clower.Contains(".db3"))
-                {
-                    provider = "IQToolkit.Data.SQLite";
-                }
-                else if (clower.Contains(".mdf"))
-                {
-                    provider = "IQToolkit.Data.SqlClient";
-                }
-                else
-                {
-                    throw new InvalidOperationException(string.Format("Query provider not specified and cannot be inferred."));
-                }
-            }
-
-            Type providerType = GetProviderType(provider);
-            if (providerType == null)
-                throw new InvalidOperationException(string.Format("Unable to find query provider '{0}'", provider));
-
-            return From(providerType, connectionString, mapping, policy);
-        }
-
-        public static DbEntityProvider From(Type providerType, string connectionString, QueryMapping mapping, QueryPolicy policy)
-        {
-            Type adoConnectionType = GetAdoConnectionType(providerType);
-            if (adoConnectionType == null)
-                throw new InvalidOperationException(string.Format("Unable to deduce ADO provider for '{0}'", providerType.Name));
-            DbConnection connection = (DbConnection)Activator.CreateInstance(adoConnectionType);
-
-            // is the connection string just a filename?
-            if (!connectionString.Contains('='))
-            {
-                MethodInfo gcs = providerType.GetMethod("GetConnectionString", BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string) }, null);
-                if (gcs != null)
-                {
-                    var getConnectionString = (Func<string, string>)Delegate.CreateDelegate(typeof(Func<string, string>), gcs);
-                    connectionString = getConnectionString(connectionString);
-                }
-            }
-
-            connection.ConnectionString = connectionString;
-
-            return (DbEntityProvider)Activator.CreateInstance(providerType, new object[] { connection, mapping, policy });
-        }
-
-        private static Type GetAdoConnectionType(Type providerType)
-        {
-            // sniff constructors 
-            foreach (var con in providerType.GetConstructors())
-            {
-                foreach (var arg in con.GetParameters())
-                {
-                    if (arg.ParameterType.IsSubclassOf(typeof(DbConnection)))
-                        return arg.ParameterType;
-                }
-            }
-            return null;
-        }
-
+        /// <summary>
+        /// True if a query or other action caused the connection to become open.
+        /// </summary>
         protected bool ActionOpenedConnection
         {
             get { return this.actionOpenedConnection; }
         }
 
+        /// <summary>
+        /// Opens the connection if it is currently closed.
+        /// </summary>
         protected void StartUsingConnection()
         {
             if (this.connection.State == ConnectionState.Closed)
@@ -200,13 +114,19 @@ namespace IQToolkit.Data
                 this.connection.Open();
                 this.actionOpenedConnection = true;
             }
+
             this.nConnectedActions++;
         }
 
+        /// <summary>
+        /// Closes the connection if no actions still require it.
+        /// </summary>
         protected void StopUsingConnection()
         {
             System.Diagnostics.Debug.Assert(this.nConnectedActions > 0);
+
             this.nConnectedActions--;
+
             if (this.nConnectedActions == 0 && this.actionOpenedConnection)
             {
                 this.connection.Close();
@@ -214,6 +134,9 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Invokes the specified <see cref="Action"/> while the connection is open.
+        /// </summary>
         public override void DoConnected(Action action)
         {
             this.StartUsingConnection();
@@ -227,6 +150,12 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Invokes the specified <see cref="Action"/> during a database transaction.
+        /// If no transaction is currently associated with the <see cref="DbEntityProvider"/> a new
+        /// one is started for the duration of the action. If the action completes without exception
+        /// the transation is commited, otherwise it is aborted.
+        /// </summary>
         public override void DoTransacted(Action action)
         {
             this.StartUsingConnection();
@@ -258,12 +187,16 @@ namespace IQToolkit.Data
             }
         }
 
+        /// <summary>
+        /// Execute the command specified in the database's language against the database.
+        /// </summary>
         public override int ExecuteCommand(string commandText)
         {
             if (this.Log != null)
             {
                 this.Log.WriteLine(commandText);
             }
+
             this.StartUsingConnection();
             try
             {
@@ -284,8 +217,8 @@ namespace IQToolkit.Data
 
         public class Executor : QueryExecutor
         {
-            DbEntityProvider provider;
-            int rowsAffected;
+            private readonly DbEntityProvider provider;
+            private int rowsAffected;
 
             public Executor(DbEntityProvider provider)
             {
@@ -328,11 +261,13 @@ namespace IQToolkit.Data
                 {
                     return TypeHelper.GetDefault(type);
                 }
+
                 type = TypeHelper.GetNonNullableType(type);
                 Type vtype = value.GetType();
+
                 if (type != vtype)
                 {
-                    if (type.IsEnum)
+                    if (type.GetTypeInfo().IsEnum)
                     {
                         if (vtype == typeof(string))
                         {
@@ -341,15 +276,19 @@ namespace IQToolkit.Data
                         else
                         {
                             Type utype = Enum.GetUnderlyingType(type);
+
                             if (utype != vtype)
                             {
                                 value = System.Convert.ChangeType(value, utype);
                             }
+
                             return Enum.ToObject(type, value);
                         }
                     }
+
                     return System.Convert.ChangeType(value, type);
                 }
+
                 return value;
             }
 
@@ -357,11 +296,13 @@ namespace IQToolkit.Data
             {
                 this.LogCommand(command, paramValues);
                 this.StartUsingConnection();
+
                 try
                 {
                     DbCommand cmd = this.GetCommand(command, paramValues);
                     DbDataReader reader = this.ExecuteReader(cmd);
                     var result = Project(reader, fnProjector, entity, true);
+
                     if (this.provider.ActionOpenedConnection)
                     {
                         result = result.ToList();
@@ -370,6 +311,7 @@ namespace IQToolkit.Data
                     {
                         result = new EnumerateOnce<T>(result);
                     }
+
                     return result;
                 }
                 finally
@@ -381,6 +323,8 @@ namespace IQToolkit.Data
             protected virtual DbDataReader ExecuteReader(DbCommand command)
             {
                 var reader = command.ExecuteReader();
+
+#if false
                 if (this.BufferResultRows)
                 {
                     // use data table to buffer results
@@ -392,6 +336,8 @@ namespace IQToolkit.Data
                     table.Load(reader);
                     reader = table.CreateDataReader();
                 }
+#endif
+
                 return reader;
             }
 
@@ -409,7 +355,7 @@ namespace IQToolkit.Data
                 {
                     if (closeReader)
                     {
-                        reader.Close();
+                        ((IDataReader)reader).Close();
                     }
                 }
             }
@@ -512,7 +458,7 @@ namespace IQToolkit.Data
                     }
                     finally
                     {
-                        reader.Close();
+                        ((IDataReader)reader).Close();
                     }
                 }
             }
@@ -535,7 +481,7 @@ namespace IQToolkit.Data
                     }
                     finally
                     {
-                        reader.Close();
+                        ((IDataReader)reader).Close();
                     }
                 }
                 finally
@@ -651,94 +597,6 @@ namespace IQToolkit.Data
                         }
                     }
                 }
-            }
-        }
-
-        protected class DbFieldReader : FieldReader
-        {
-            QueryExecutor executor;
-            DbDataReader reader;
-
-            public DbFieldReader(QueryExecutor executor, DbDataReader reader)
-            {
-                this.executor = executor;
-                this.reader = reader;
-                this.Init();
-            }
-
-            protected override int FieldCount
-            {
-                get { return this.reader.FieldCount; }
-            }
-
-            protected override Type GetFieldType(int ordinal)
-            {
-                return this.reader.GetFieldType(ordinal);
-            }
-
-            protected override bool IsDBNull(int ordinal)
-            {
-                return this.reader.IsDBNull(ordinal);
-            }
-
-            protected override T GetValue<T>(int ordinal)
-            {
-                return (T)this.executor.Convert(this.reader.GetValue(ordinal), typeof(T));
-            }
-
-            protected override Byte GetByte(int ordinal)
-            {
-                return this.reader.GetByte(ordinal);
-            }
-
-            protected override Char GetChar(int ordinal)
-            {
-                return this.reader.GetChar(ordinal);
-            }
-
-            protected override DateTime GetDateTime(int ordinal)
-            {
-                return this.reader.GetDateTime(ordinal);
-            }
-
-            protected override Decimal GetDecimal(int ordinal)
-            {
-                return this.reader.GetDecimal(ordinal);
-            }
-
-            protected override Double GetDouble(int ordinal)
-            {
-                return this.reader.GetDouble(ordinal);
-            }
-
-            protected override Single GetSingle(int ordinal)
-            {
-                return this.reader.GetFloat(ordinal);
-            }
-
-            protected override Guid GetGuid(int ordinal)
-            {
-                return this.reader.GetGuid(ordinal);
-            }
-
-            protected override Int16 GetInt16(int ordinal)
-            {
-                return this.reader.GetInt16(ordinal);
-            }
-
-            protected override Int32 GetInt32(int ordinal)
-            {
-                return this.reader.GetInt32(ordinal);
-            }
-
-            protected override Int64 GetInt64(int ordinal)
-            {
-                return this.reader.GetInt64(ordinal);
-            }
-
-            protected override String GetString(int ordinal)
-            {
-                return this.reader.GetString(ordinal);
             }
         }
     }

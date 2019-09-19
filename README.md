@@ -1,5 +1,5 @@
-# iqtoolkit
-A toolkit for building LINQ IQueryable providers. This is the official move of my IQToolkit project from CodePlex. 
+# iqtoolkit 2.0
+A toolkit for building LINQ IQueryable providers.
 
 IQToolkit is essential if you are building your own LINQ IQueryable provider. It contains common tools and source code 
 you can apply to your own project.
@@ -7,14 +7,16 @@ you can apply to your own project.
 In the toolkit you will find useful techniques for manipulating LINQ expression trees, implementing IQueryable providers, 
 and a host of extensible components for building providers that target translation of LINQ expressions into SQL like languages.
 
-Updates
--------
-The IQToolkit solution and project files have been updated to VS2013 format and target .Net 4.5 runtime.
+Incompatiblity
+--------------
+The master branch is now officially the 2.0 branch. The API's are no longer backward compatible with the original IQToolkit.
+You can continue to find the source for the original API's in the 'original' branch.
 
 Building 
 --------
 To build the solution you'll first have to restore the nuget packages. You can do this by right-clicking on the solution
-in the solution explorer in Visual Studio and accessing the nuget package manager.
+in the solution explorer in Visual Studio and accessing the nuget package manager.  If it complains after building, kick the
+tires and try again. Build systems these days! 
 
 Running Tests
 -------------

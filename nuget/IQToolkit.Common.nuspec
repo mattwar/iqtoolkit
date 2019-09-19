@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>IQToolkit.Common</id>
-        <version>1.0.0.0</version>
+        <version>2.0.0.0</version>
         <title>IQToolkit ORM for System.Data database providers</title>
         <authors>Matt Warren</authors>
         <owners>Matt Warren</owners>
@@ -17,7 +17,7 @@
         <file src="..\bin\Release\IQToolkit\IQToolkit.XML" target="lib\net45\IQToolkit.xml" />
         <file src="..\bin\Release\IQToolkit.Data\IQToolkit.Data.dll" target="lib\net45\IQToolkit.Data.dll" />
         <file src="..\bin\Release\IQToolkit.Data\IQToolkit.Data.XML" target="lib\net45\IQToolkit.Data.xml" />
-        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.dll" target="lib\net45\IQToolkit.Data.dll" />
-        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.XML" target="lib\net45\IQToolkit.Data.xml" />
+        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.dll" target="lib\net45\IQToolkit.Data.Ado.dll" />
+        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.XML" target="lib\net45\IQToolkit.Data.Ado.xml" />
     </files>
 </package>

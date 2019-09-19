@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>IQToolkit.SqlClient</id>
-        <version>1.0.0.0</version>
+        <version>2.0.0.0</version>
         <title>IQToolkit ORM for MS SQL Server (SqlClient)</title>
         <authors>Matt Warren</authors>
         <owners>Matt Warren</owners>
@@ -11,7 +11,7 @@
         <description>IQToolkit ORM for MS SQL Server (SqlClient)</description>
         <copyright />
         <dependencies>
-            <dependency id="IQToolkit.Common" version="1.0.0.0" />
+            <dependency id="IQToolkit.Common" version="2.0.0.0" />
         </dependencies>
     </metadata>
     <files>

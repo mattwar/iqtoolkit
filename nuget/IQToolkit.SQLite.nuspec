@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>IQToolkit.SQLite</id>
-        <version>1.0.0.0</version>
+        <version>2.0.0.0</version>
         <title>IQToolkit ORM for SQLite</title>
         <authors>Matt Warren</authors>
         <owners>Matt Warren</owners>
@@ -11,7 +11,7 @@
         <description>IQToolkit ORM for SQLite (System.Data.SQLite)</description>
         <copyright />
         <dependencies>
-            <dependency id="IQToolkit.Common" version="1.0.0.0" />
+            <dependency id="IQToolkit.Common" version="2.0.0.0" />
             <dependency id="System.Data.SQLite.Core" version="1.0.95.0"/>
         </dependencies>
     </metadata>

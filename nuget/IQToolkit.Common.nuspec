@@ -8,16 +8,16 @@
         <owners>Matt Warren</owners>
         <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>IQToolkit ORM for System.Data database providers (core API and shared libraries).</description>
+        <description>
+IQToolkit ORM for System.Data database providers.</description>
 	<summary></summary>
         <copyright />
+        <dependencies>
+            <dependency id="IQToolkit.Core" version="2.0.0.0" />
+        </dependencies>
     </metadata>
     <files>
-        <file src="..\bin\Release\IQToolkit\IQToolkit.dll" target="lib\net45\IQToolkit.dll" />
-        <file src="..\bin\Release\IQToolkit\IQToolkit.XML" target="lib\net45\IQToolkit.xml" />
-        <file src="..\bin\Release\IQToolkit.Data\IQToolkit.Data.dll" target="lib\net45\IQToolkit.Data.dll" />
-        <file src="..\bin\Release\IQToolkit.Data\IQToolkit.Data.XML" target="lib\net45\IQToolkit.Data.xml" />
-        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.dll" target="lib\net45\IQToolkit.Data.Ado.dll" />
-        <file src="..\bin\Release\IQToolkit.Data.Ado\IQToolkit.Data.Ado.XML" target="lib\net45\IQToolkit.Data.Ado.xml" />
+        <file src="..\bin\Release\IQToolkit.Data.Ado\netstandard1.6\IQToolkit.Data.Ado.dll" target="lib\netstandard1.6\IQToolkit.Data.Ado.dll" />
+        <file src="..\bin\Release\IQToolkit.Data.Ado\netstandard1.6\IQToolkit.Data.Ado.XML" target="lib\netstandard1.6\IQToolkit.Data.Ado.xml" />
     </files>
 </package>

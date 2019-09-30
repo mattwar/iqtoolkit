@@ -11,11 +11,12 @@
         <description>IQToolkit ORM for MS SQL Server (SqlClient)</description>
         <copyright />
         <dependencies>
+            <dependency id="IQToolkit.Core" version="2.0.0.0" />
             <dependency id="IQToolkit.Common" version="2.0.0.0" />
         </dependencies>
     </metadata>
     <files>
-        <file src="..\bin\Release\SqlClient\IQToolkit.Data.SqlClient.dll" target="lib\net45\IQToolkit.Data.SqlClient.dll" />
-        <file src="..\bin\Release\SqlClient\IQToolkit.Data.SqlClient.dll" target="lib\net45\IQToolkit.Data.SqlClient.xml" />
+        <file src="..\bin\Release\SqlClient\netstandard1.6\IQToolkit.Data.SqlClient.dll" target="lib\netstandard1.6\IQToolkit.Data.SqlClient.dll" />
+        <file src="..\bin\Release\SqlClient\netstandard1.6\IQToolkit.Data.SqlClient.dll" target="lib\netstandard1.6\IQToolkit.Data.SqlClient.xml" />
     </files>
 </package>

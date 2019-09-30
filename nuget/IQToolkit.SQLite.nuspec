@@ -11,6 +11,7 @@
         <description>IQToolkit ORM for SQLite (System.Data.SQLite)</description>
         <copyright />
         <dependencies>
+            <dependency id="IQToolkit.Core" version="2.0.0.0" />
             <dependency id="IQToolkit.Common" version="2.0.0.0" />
             <dependency id="System.Data.SQLite.Core" version="1.0.95.0"/>
         </dependencies>

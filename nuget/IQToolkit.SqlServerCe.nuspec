@@ -11,6 +11,7 @@
         <description>IQToolkit ORM for MS SQL Server Compact Edition (Microsoft.SqlServer.Compact)</description>
         <copyright />
         <dependencies>
+            <dependency id="IQToolkit.Core" version="2.0.0.0" />
             <dependency id="IQToolkit.Common" version="2.0.0.0" />
             <dependency id="Microsoft.SqlServer.Compact" version="4.0.8876.1"/>
         </dependencies>

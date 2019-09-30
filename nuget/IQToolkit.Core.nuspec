@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>IQToolkit.Core</id>
+        <version>2.0.0.0</version>
+        <title>IQToolkit ORM Core</title>
+        <authors>Matt Warren</authors>
+        <owners>Matt Warren</owners>
+        <projectUrl>https://github.com/mattwar/iqtoolkit</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>
+IQToolkit ORM 
+	Core API
+
+Targets:
+	netstandard1.6
+
+Contains:   
+	IQToolkit.dll
+	IQToolkit.Data.dll
+
+	</description>
+	<summary></summary>
+        <copyright />
+    </metadata>
+    <files>
+        <file src="..\bin\Release\IQToolkit\netstandard1.6\IQToolkit.dll" target="lib\netstandard1.6\IQToolkit.dll" />
+        <file src="..\bin\Release\IQToolkit\netstandard1.6\IQToolkit.XML" target="lib\netstandard1.6\IQToolkit.xml" />
+        <file src="..\bin\Release\IQToolkit.Data\netstandard1.6\IQToolkit.Data.dll" target="lib\netstandard1.6\IQToolkit.Data.dll" />
+        <file src="..\bin\Release\IQToolkit.Data\netstandard1.6\IQToolkit.Data.XML" target="lib\netstandard1.6\IQToolkit.Data.xml" />
+    </files>
+</package>

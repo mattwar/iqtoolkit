@@ -1,3 +1,4 @@
+nuget pack IQToolkit.Core.nuspec -OutputDirectory "..\bin\release\nupkgs"
 nuget pack IQToolkit.Common.nuspec -OutputDirectory "..\bin\release\nupkgs"
 nuget pack IQToolkit.Access.nuspec -OutputDirectory "..\bin\release\nupkgs"
 nuget pack IQToolkit.MySqlClient.nuspec -OutputDirectory "..\bin\release\nupkgs"

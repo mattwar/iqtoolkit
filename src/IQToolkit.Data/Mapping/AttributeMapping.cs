@@ -975,7 +975,7 @@ namespace IQToolkit.Data.Mapping
                     if (m2 != null)
                         return m2;
                 }
-                else if (this.IsColumn(entity, m) && string.Compare(this.GetColumnName(entity, m), columnName, true) == 0)
+                else if (this.IsColumn(entity, m) && string.Compare(this.GetColumnName(entity, m), columnName, StringComparison.OrdinalIgnoreCase) == 0)
                 {
                     return m;
                 }

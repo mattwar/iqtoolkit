@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -63,7 +64,7 @@ namespace IQToolkit.Data.Common
             get { return this.language; }
         }
 
-        protected bool HideColumnAliases 
+        protected bool HideColumnAliases
         {
             get { return this.hideColumnAliases; }
             set { this.hideColumnAliases = value; }
@@ -75,7 +76,7 @@ namespace IQToolkit.Data.Common
             set { this.hideTableAliases = value; }
         }
 
-        protected bool IsNested 
+        protected bool IsNested
         {
             get { return this.isNested; }
             set { this.isNested = value; }
@@ -790,7 +791,7 @@ namespace IQToolkit.Data.Common
                         throw new NotSupportedException(string.Format("The constant for '{0}' is not supported", value));
                     case TypeCode.Single:
                     case TypeCode.Double:
-                        string str = value.ToString();
+                        string str = ((IConvertible)value).ToString(NumberFormatInfo.InvariantInfo);
                         if (!str.Contains('.'))
                         {
                             str += ".0";
@@ -798,7 +799,7 @@ namespace IQToolkit.Data.Common
                         this.Write(str);
                         break;
                     default:
-                        this.Write(value);
+                        this.Write((value as IConvertible)?.ToString(CultureInfo.InvariantCulture) ?? value);
                         break;
                 }
             }
@@ -1113,7 +1114,7 @@ namespace IQToolkit.Data.Common
                     this.Write(")");
                 }
             }
-            else 
+            else
             {
                 this.VisitValue(@in.Expression);
                 this.Write(" IN (");

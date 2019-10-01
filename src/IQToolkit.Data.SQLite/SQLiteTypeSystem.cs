@@ -12,28 +12,28 @@ namespace IQToolkit.Data.SQLite
     {
         public override SqlType GetSqlType(string typeName)
         {
-            if (string.Compare(typeName, "TEXT", true) == 0 ||
-                string.Compare(typeName, "CHAR", true) == 0 ||
-                string.Compare(typeName, "CLOB", true) == 0 ||
-                string.Compare(typeName, "VARYINGCHARACTER", true) == 0 ||
-                string.Compare(typeName, "NATIONALVARYINGCHARACTER", true) == 0)
+            if (string.Compare(typeName, "TEXT", StringComparison.OrdinalIgnoreCase) == 0 ||
+                string.Compare(typeName, "CHAR", StringComparison.OrdinalIgnoreCase) == 0 ||
+                string.Compare(typeName, "CLOB", StringComparison.OrdinalIgnoreCase) == 0 ||
+                string.Compare(typeName, "VARYINGCHARACTER", StringComparison.OrdinalIgnoreCase) == 0 ||
+                string.Compare(typeName, "NATIONALVARYINGCHARACTER", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.VarChar;
             }
-            else if (string.Compare(typeName, "INT", true) == 0 ||
-                string.Compare(typeName, "INTEGER", true) == 0)
+            else if (string.Compare(typeName, "INT", StringComparison.OrdinalIgnoreCase) == 0 ||
+                string.Compare(typeName, "INTEGER", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.BigInt;
             }
-            else if (string.Compare(typeName, "BLOB", true) == 0)
+            else if (string.Compare(typeName, "BLOB", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.Binary;
             }
-            else if (string.Compare(typeName, "BOOLEAN", true) == 0)
+            else if (string.Compare(typeName, "BOOLEAN", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.Bit;
             }
-            else if (string.Compare(typeName, "NUMERIC", true) == 0)
+            else if (string.Compare(typeName, "NUMERIC", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.Decimal;
             }

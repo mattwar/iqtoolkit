@@ -193,7 +193,7 @@ namespace IQToolkit.Data.Common
                 if (assignment == null)
                 {
                     assignment = members.FirstOrDefault(a =>
-                        string.Compare(p.Name, a.Member.Name, true) == 0
+                        string.Compare(p.Name, a.Member.Name, StringComparison.OrdinalIgnoreCase) == 0
                         && p.ParameterType.IsAssignableFrom(a.Expression.Type));
                 }
                 if (assignment != null)
@@ -206,7 +206,7 @@ namespace IQToolkit.Data.Common
                 else
                 {
                     // find member with same name as parameter and associate it in object initializer
-                    MemberInfo mem = TypeHelper.GetDataMembers(cons.DeclaringType).Where(m => string.Compare(m.Name, p.Name, ignoreCase: true) == 0).FirstOrDefault();
+                    MemberInfo mem = TypeHelper.GetDataMembers(cons.DeclaringType).Where(m => string.Compare(m.Name, p.Name, StringComparison.OrdinalIgnoreCase) == 0).FirstOrDefault();
                     if (mem != null)
                     {
                         args[i] = Expression.Constant(TypeHelper.GetDefault(p.ParameterType), p.ParameterType);

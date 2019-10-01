@@ -109,11 +109,11 @@ namespace Test
             {
                 if (
                     // actual name of the provider type
-                    string.Compare(this.provider.GetType().Name, exclude.Provider, true) == 0
+                    string.Compare(this.provider.GetType().Name, exclude.Provider, StringComparison.OrdinalIgnoreCase) == 0
                     // prefix of the provider type xxxQueryProvider
-                    || string.Compare(this.provider.GetType().Name, exclude.Provider + "QueryProvider", true) == 0
+                    || string.Compare(this.provider.GetType().Name, exclude.Provider + "QueryProvider", StringComparison.OrdinalIgnoreCase) == 0
                     // last name of the namespace
-                    || string.Compare(this.provider.GetType().Namespace.Split(new[] { '.' }).Last(), exclude.Provider, true) == 0
+                    || string.Compare(this.provider.GetType().Namespace.Split(new[] { '.' }).Last(), exclude.Provider, StringComparison.OrdinalIgnoreCase) == 0
                     )
                 {
                     return false;

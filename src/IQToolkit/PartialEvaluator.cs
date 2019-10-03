@@ -87,6 +87,30 @@ namespace IQToolkit
                 return base.Visit(exp);
             }
 
+            protected override Expression VisitConditional(ConditionalExpression c)
+            {
+                // if the conditional test can be evaluated locally, rewrite expression
+                // to the valid case
+                if (this.candidates.Contains(c.Test))
+                {
+                    Expression test = Evaluate(c.Test);
+
+                    if (test is ConstantExpression && ((ConstantExpression)test).Type == typeof(Boolean))
+                    {
+                        if ((Boolean)((ConstantExpression)test).Value)
+                        {
+                            return Visit(c.IfTrue);
+                        }
+                        else
+                        {
+                            return Visit(c.IfFalse);
+                        }
+                    }
+                }
+
+                return base.VisitConditional(c);
+            }
+
             private Expression PostEval(ConstantExpression e)
             {
                 if (this.onEval != null)

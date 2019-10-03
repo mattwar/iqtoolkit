@@ -9,6 +9,7 @@ using System.Text;
 namespace IQToolkit.Data
 {
     using Common;
+    using System.Globalization;
 
     /// <summary>
     /// A <see cref="QueryTypeSystem"/> for types based on <see cref="SqlType"/>.
@@ -97,7 +98,7 @@ namespace IQToolkit.Data
                     {
                         length = 80;
                     }
-                    else if (string.Compare(args[0], "max", true) == 0)
+                    else if (string.Compare(args[0], "max", StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         length = Int32.MaxValue;
                     }
@@ -113,7 +114,7 @@ namespace IQToolkit.Data
                     }
                     else
                     {
-                        precision = Int16.Parse(args[0]);
+                        precision = Int16.Parse(args[0], NumberFormatInfo.InvariantInfo);
                     }
                     if (args == null || args.Length < 2)
                     {
@@ -121,7 +122,7 @@ namespace IQToolkit.Data
                     }
                     else
                     {
-                        scale = Int16.Parse(args[1]);
+                        scale = Int16.Parse(args[1], NumberFormatInfo.InvariantInfo);
                     }
                     break;
                 case SqlType.Decimal:
@@ -131,7 +132,7 @@ namespace IQToolkit.Data
                     }
                     else
                     {
-                        precision = Int16.Parse(args[0]);
+                        precision = Int16.Parse(args[0], NumberFormatInfo.InvariantInfo);
                     }
                     if (args == null || args.Length < 2)
                     {
@@ -139,7 +140,7 @@ namespace IQToolkit.Data
                     }
                     else
                     {
-                        scale = Int16.Parse(args[1]);
+                        scale = Int16.Parse(args[1], NumberFormatInfo.InvariantInfo);
                     }
                     break;
                 case SqlType.Float:
@@ -150,7 +151,7 @@ namespace IQToolkit.Data
                     }
                     else
                     {
-                        precision = Int16.Parse(args[0]);
+                        precision = Int16.Parse(args[0], NumberFormatInfo.InvariantInfo);
                     }
                     break;
             }
@@ -278,18 +279,18 @@ namespace IQToolkit.Data
                 }
                 else
                 {
-                    sb.AppendFormat("({0})", sqlType.Length);
+                    sb.AppendFormat(NumberFormatInfo.InvariantInfo, "({0})", sqlType.Length);
                 }
             }
             else if (sqlType.Precision != 0)
             {
                 if (sqlType.Scale != 0)
                 {
-                    sb.AppendFormat("({0},{1})", sqlType.Precision, sqlType.Scale);
+                    sb.AppendFormat(NumberFormatInfo.InvariantInfo, "({0},{1})", sqlType.Precision, sqlType.Scale);
                 }
                 else
                 {
-                    sb.AppendFormat("({0})", sqlType.Precision);
+                    sb.AppendFormat(NumberFormatInfo.InvariantInfo, "({0})", sqlType.Precision);
                 }
             }
 

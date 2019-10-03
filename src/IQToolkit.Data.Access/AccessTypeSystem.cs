@@ -40,27 +40,27 @@ namespace IQToolkit.Data.Access
 
         public override SqlType GetSqlType(string typeName)
         {
-            if (string.Compare(typeName, "Memo", true) == 0)
+            if (string.Compare(typeName, "Memo", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.VarChar;
             }
-            else if (string.Compare(typeName, "Currency", true) == 0)
+            else if (string.Compare(typeName, "Currency", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.Decimal;
             }
-            else if (string.Compare(typeName, "ReplicationID", true) == 0)
+            else if (string.Compare(typeName, "ReplicationID", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.UniqueIdentifier;
             }
-            else if (string.Compare(typeName, "YesNo", true) == 0)
+            else if (string.Compare(typeName, "YesNo", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.Bit;
             }
-            else if (string.Compare(typeName, "LongInteger", true) == 0)
+            else if (string.Compare(typeName, "LongInteger", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.BigInt;
             }
-            else if (string.Compare(typeName, "VarWChar", true) == 0)
+            else if (string.Compare(typeName, "VarWChar", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return SqlType.NVarChar;
             }

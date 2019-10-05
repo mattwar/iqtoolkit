@@ -1,6 +1,10 @@
-# LINQ: Building an IQueryable Provider - Part I
+# LINQ: Building an IQueryable Provider - Part I: Reusable IQueryable base classes
+
+Matt Warren - MSFT; July 30, 2007
 
 This is the first in a series of posts on  how to build a LINQ IQueryable provider.  Each post builds on the last one.
+
+---
 
 I’ve been meaning for a while to start up a series of posts that covers building LINQ providers using `IQueryable`.
 People have been asking me advice on doing this for quite some time now, whether through internal Microsoft email 
@@ -41,7 +45,7 @@ The second property gives you the expression that corresponds to the query.
 This is quintessential essence of IQueryable’s being.
 The actual ‘query’ underneath the hood of an  `IQueryable` is an expression that represents the query as a tree of LINQ query operators/method calls.
 This is the part of the `IQueryable` that your provider must comprehend in order to do anything useful.
-If you look deeper you will see that the whole `IQueryable` infrastructure (including the System.Linq.Queryable version of LINQ standard query operators)
+If you look deeper you will see that the whole `IQueryable` infrastructure (including the `System.Linq.Queryable` version of LINQ standard query operators)
 is just a mechanism to auto-construct expression tree nodes for you.
 When you use the `Queryable.Where` method to apply a filter to an `IQueryable`, 
 it simply builds you a new `IQueryable` adding a method-call expression node on top of the tree representing the call you just made to `Queryable.Where`.
@@ -221,8 +225,9 @@ That’s where your provider has the opportunity to make sense of the query by exa
 And that’s what I’ll start showing next time.
 
 
----
-UPDATE:
+<br/>
+
+## UPDATE:
 
 
 It looks like I’ve forget to define a little helper class my implementation was using, so here it is:

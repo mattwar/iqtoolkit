@@ -36,6 +36,7 @@ namespace IQToolkit.Data.Common
 
         protected override Expression VisitSelect(SelectExpression select)
         {
+            // look for association references in SelectExpression clauses
             Expression saveCurrentFrom = this.currentFrom;
             this.currentFrom = this.VisitSource(select.From);
 
@@ -48,23 +49,62 @@ namespace IQToolkit.Data.Common
                 var take = this.Visit(select.Take);
                 var columns = this.VisitColumnDeclarations(select.Columns);
 
-                if (this.currentFrom != select.From
-                    || where != select.Where
-                    || orderBy != select.OrderBy
-                    || groupBy != select.GroupBy
-                    || take != select.Take
-                    || skip != select.Skip
-                    || columns != select.Columns
-                    )
-                {
-                    return new SelectExpression(select.Alias, columns, this.currentFrom, where, orderBy, groupBy, select.IsDistinct, skip, take, select.IsReverse);
-                }
-
-                return select;
+                return UpdateSelect(select, this.currentFrom, where, orderBy, groupBy, skip, take, select.IsDistinct, select.IsReverse, columns);
             }
             finally
             {
                 this.currentFrom = saveCurrentFrom;
+            }
+        }
+
+        protected override Expression VisitProjection(ProjectionExpression proj)
+        {
+            var select = (SelectExpression)this.Visit(proj.Select);
+
+            // look for association references in projector
+            Expression saveCurrentFrom = this.currentFrom;
+            this.currentFrom = select;
+
+            try
+            {
+                var projector = this.Visit(proj.Projector);
+
+                if (this.currentFrom != select)
+                {
+                    // remap projector onto new select that includes new from
+                    var alias = new TableAlias();
+                    var existingAliases = GetAliases(this.currentFrom);
+                    ProjectedColumns pc = ColumnProjector.ProjectColumns(this.language, projector, null, alias, existingAliases);
+                    projector = pc.Projector;
+                    select = new SelectExpression(alias, pc.Columns, this.currentFrom, null);
+                }
+
+                return UpdateProjection(proj, select, projector, proj.Aggregator);
+            }
+            finally
+            {
+                this.currentFrom = saveCurrentFrom;
+            }
+        }
+
+        private static List<TableAlias> GetAliases(Expression expr)
+        {
+            var aliases = new List<TableAlias>();
+            GetAliases(expr);
+            return aliases;
+
+            void GetAliases(Expression e)
+            {
+                switch (e)
+                {
+                    case JoinExpression j:
+                        GetAliases(j.Left);
+                        GetAliases(j.Right);
+                        break;
+                    case AliasedExpression a:
+                        aliases.Add(a.Alias);
+                        break;
+                }
             }
         }
 
@@ -76,6 +116,7 @@ namespace IQToolkit.Data.Common
             if (ex != null && this.mapping.IsRelationship(ex.Entity, m.Member))
             {
                 ProjectionExpression projection = (ProjectionExpression)this.Visit(this.mapper.GetMemberExpression(source, ex.Entity, m.Member));
+
                 if (this.currentFrom != null && this.mapping.IsSingletonRelationship(ex.Entity, m.Member))
                 {
                     // convert singleton associations directly to OUTER APPLY

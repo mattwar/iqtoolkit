@@ -1746,7 +1746,7 @@ namespace Test
             Assert.Equal(832, cods.Count);
         }
 
-        public void TestSelectWhereAssociation()
+        public void TestAssociationInWhere()
         {
             var ords = (
                 from o in db.Orders
@@ -1756,7 +1756,7 @@ namespace Test
             Assert.Equal(14, ords.Count);
         }
 
-        public void TestSelectWhereAssociationTwice()
+        public void TestAssociationInWhereDuplicate()
         {
             var n = db.Orders.Where(c => c.CustomerID == "WHITC").Count();
             var ords = (
@@ -1767,7 +1767,7 @@ namespace Test
             Assert.Equal(n, ords.Count);
         }
 
-        public void TestSelectWhereAssociationDeep()
+        public void TestAssociationInWhereDeep()
         {
             var q = from d in db.OrderDetails
                     where d.Order.Customer.CustomerID == "VINET"
@@ -1777,7 +1777,25 @@ namespace Test
             Assert.Equal(10, ods.Count);
         }
 
-        public void TestSelectAssociation()
+        public void TestAssocationInSelectDeep()
+        {
+            var q = from od in db.OrderDetails
+                    where od.Order != null
+                    select od.Order.Customer.CompanyName;
+            var result = q.ToList();
+            Assert.Equal(2155, result.Count);
+        }
+
+        /*
+        public void TestAssociationInGroupBy()
+        {
+            var q = from od in db.OrderDetails
+                    group od by od.Order.Customer.CustomerID;
+            var result = q.ToList();
+        }
+        */
+
+        public void TestAssociationInSelect()
         {
             var custs = (
                 from o in db.Orders
@@ -1788,7 +1806,7 @@ namespace Test
             Assert.Equal(true, custs.All(c => c.CustomerID == "ALFKI"));
         }
 
-        public void TestSelectAssociations()
+        public void TestAssociationInSelectDuplicate()
         {
             var doubleCusts = (
                 from o in db.Orders
@@ -1800,7 +1818,7 @@ namespace Test
             Assert.Equal(true, doubleCusts.All(c => c.A.CustomerID == "ALFKI" && c.B.CustomerID == "ALFKI"));
         }
 
-        public void TestSelectAssociationsWhereAssociations()
+        public void TestAssociationInSelectAndWhereDuplicate()
         {
             var stuff = (
                 from o in db.Orders

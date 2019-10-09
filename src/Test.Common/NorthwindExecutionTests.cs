@@ -1774,6 +1774,7 @@ namespace Test
                     select d;
 
             var ods = q.ToList();
+            Assert.Equal(10, ods.Count);
         }
 
         public void TestSelectAssociation()

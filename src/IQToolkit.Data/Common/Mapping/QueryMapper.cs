@@ -88,31 +88,30 @@ namespace IQToolkit.Data.Common
         public virtual Expression Translate(Expression expression)
         {
             // convert references to LINQ operators into query specific nodes
-            expression = QueryBinder.Bind(this, expression);
+            var bound = QueryBinder.Bind(this, expression);
 
             // move aggregate computations so they occur in same select as group-by
-            expression = AggregateRewriter.Rewrite(this.Translator.Linguist.Language, expression);
+            var aggmoved = AggregateRewriter.Rewrite(this.Translator.Linguist.Language, bound);
 
             // do reduction so duplicate association's are likely to be clumped together
-            expression = UnusedColumnRemover.Remove(expression);
-            expression = RedundantColumnRemover.Remove(expression);
-            expression = RedundantSubqueryRemover.Remove(expression);
-            expression = RedundantJoinRemover.Remove(expression);
+            var reduced = UnusedColumnRemover.Remove(aggmoved);
+            reduced = RedundantColumnRemover.Remove(reduced);
+            reduced = RedundantSubqueryRemover.Remove(reduced);
+            reduced = RedundantJoinRemover.Remove(reduced);
 
             // convert references to association properties into correlated queries
-            var bound = RelationshipBinder.Bind(this, expression);
-            if (bound != expression)
+            var rbound = RelationshipBinder.Bind(this, reduced);
+            if (rbound != reduced)
             {
-                expression = bound;
                 // clean up after ourselves! (multiple references to same association property)
-                expression = RedundantColumnRemover.Remove(expression);
-                expression = RedundantJoinRemover.Remove(expression);
+                rbound = RedundantColumnRemover.Remove(rbound);
+                rbound = RedundantJoinRemover.Remove(rbound);
             }
 
             // rewrite comparision checks between entities and multi-valued constructs
-            expression = ComparisonRewriter.Rewrite(this.Mapping, expression);
+            var result = ComparisonRewriter.Rewrite(this.Mapping, rbound);
 
-            return expression;
+            return result;
         }
     }
 }

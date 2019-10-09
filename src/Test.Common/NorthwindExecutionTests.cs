@@ -1767,6 +1767,15 @@ namespace Test
             Assert.Equal(n, ords.Count);
         }
 
+        public void TestSelectWhereAssociationDeep()
+        {
+            var q = from d in db.OrderDetails
+                    where d.Order.Customer.CustomerID == "VINET"
+                    select d;
+
+            var ods = q.ToList();
+        }
+
         public void TestSelectAssociation()
         {
             var custs = (

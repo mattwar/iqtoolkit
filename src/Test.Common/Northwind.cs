@@ -36,6 +36,7 @@ namespace Test
         public int? OrderID { get; set; }
         public int ProductID { get; set; }
         public Product Product;
+        public Order Order;
     }
 
     public interface IEntity
@@ -155,6 +156,7 @@ namespace Test
         [Column(Member = nameof(OrderDetail.OrderID), IsPrimaryKey = true)]
         [Column(Member = nameof(OrderDetail.ProductID), IsPrimaryKey = true)]
         [Association(Member = nameof(OrderDetail.Product), KeyMembers = nameof(OrderDetail.ProductID), RelatedKeyMembers = nameof(Product.ID))]
+        [Association(Member = nameof(OrderDetail.Order), KeyMembers =nameof(OrderDetail.OrderID), RelatedKeyMembers = nameof(Order.OrderID))]
         public override IEntityTable<OrderDetail> OrderDetails
         {
             get { return base.OrderDetails; }

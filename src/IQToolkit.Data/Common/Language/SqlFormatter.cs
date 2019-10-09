@@ -287,11 +287,11 @@ namespace IQToolkit.Data.Common
                 default:
                     if (!forDebug)
                     {
-                        throw new NotSupportedException(string.Format("The LINQ expression node of type {0} is not supported", exp.NodeType));
+                        throw new NotSupportedException($"The expression node of type '{exp.GetNodeTypeName()}' is not supported");
                     }
                     else
                     {
-                        this.Write(string.Format("?{0}?(", exp.NodeType));
+                        this.Write($"?{exp.GetNodeTypeName()}?");
                         base.Visit(exp);
                         this.Write(")");
                         return exp;

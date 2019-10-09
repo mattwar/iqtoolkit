@@ -17,9 +17,9 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public class RelationshipBinder : DbExpressionVisitor
     {
-        QueryMapper mapper;
-        QueryMapping mapping;
-        QueryLanguage language;
+        private readonly QueryMapper mapper;
+        private readonly QueryMapping mapping;
+        private readonly QueryLanguage language;
         Expression currentFrom;
 
         private RelationshipBinder(QueryMapper mapper)
@@ -38,14 +38,16 @@ namespace IQToolkit.Data.Common
         {
             Expression saveCurrentFrom = this.currentFrom;
             this.currentFrom = this.VisitSource(select.From);
+
             try
             {
-                Expression where = this.Visit(select.Where);
-                ReadOnlyCollection<OrderExpression> orderBy = this.VisitOrderBy(select.OrderBy);
-                ReadOnlyCollection<Expression> groupBy = this.VisitExpressionList(select.GroupBy);
-                Expression skip = this.Visit(select.Skip);
-                Expression take = this.Visit(select.Take);
-                ReadOnlyCollection<ColumnDeclaration> columns = this.VisitColumnDeclarations(select.Columns);
+                var where = this.Visit(select.Where);
+                var orderBy = this.VisitOrderBy(select.OrderBy);
+                var groupBy = this.VisitExpressionList(select.GroupBy);
+                var skip = this.Visit(select.Skip);
+                var take = this.Visit(select.Take);
+                var columns = this.VisitColumnDeclarations(select.Columns);
+
                 if (this.currentFrom != select.From
                     || where != select.Where
                     || orderBy != select.OrderBy
@@ -57,6 +59,7 @@ namespace IQToolkit.Data.Common
                 {
                     return new SelectExpression(select.Alias, columns, this.currentFrom, where, orderBy, groupBy, select.IsDistinct, skip, take, select.IsReverse);
                 }
+
                 return select;
             }
             finally
@@ -68,7 +71,7 @@ namespace IQToolkit.Data.Common
         protected override Expression VisitMemberAccess(MemberExpression m)
         {
             Expression source = this.Visit(m.Expression);
-            EntityExpression ex = source as EntityExpression;
+            EntityExpression ex = GetEntityExpression(source);
 
             if (ex != null && this.mapping.IsRelationship(ex.Entity, m.Member))
             {
@@ -76,23 +79,37 @@ namespace IQToolkit.Data.Common
                 if (this.currentFrom != null && this.mapping.IsSingletonRelationship(ex.Entity, m.Member))
                 {
                     // convert singleton associations directly to OUTER APPLY
+                    // by adding join to relavent FROM clause
+                    // and placing an OuterJoinedExpression in the projection to remember the outer-join test-for-null condition
                     projection = this.language.AddOuterJoinTest(projection);
                     Expression newFrom = new JoinExpression(JoinType.OuterApply, this.currentFrom, projection.Select, null);
                     this.currentFrom = newFrom;
                     return projection.Projector;
                 }
+
                 return projection;
             }
             else
             {
                 Expression result = QueryBinder.BindMember(source, m.Member);
                 MemberExpression mex = result as MemberExpression;
+
                 if (mex != null && mex.Member == m.Member && mex.Expression == m.Expression)
                 {
                     return m;
                 }
+
                 return result;
             }
+        }
+
+        private static EntityExpression GetEntityExpression(Expression exp)
+        {
+            // see through the outer-joined-expression to find the entity expression
+            if (exp is OuterJoinedExpression oj)
+                exp = oj.Expression;
+
+            return exp as EntityExpression;
         }
     }
 }

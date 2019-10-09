@@ -13,33 +13,33 @@ namespace IQToolkit.Data.Common
     /// </summary>
     public enum DbExpressionType
     {
-        Table = 1000, // make sure these don't overlap with ExpressionType
-        ClientJoin,
-        Column,
-        Select,
-        Projection,
-        Entity,
-        Join,
-        Aggregate,
-        Scalar,
-        Exists,
-        In,
-        Grouping,
-        AggregateSubquery,
-        IsNull,
-        Between,
-        RowCount,
-        NamedValue,
-        OuterJoined,
-        Insert,
-        Update,
-        Delete,
-        Batch,
-        Function,
-        Block,
-        If,
-        Declaration,
-        Variable
+        Table               = 1000, // make sure these don't overlap with ExpressionType
+        ClientJoin          = 1001,
+        Column              = 1002,
+        Select              = 1003,
+        Projection          = 1004,
+        Entity              = 1005,
+        Join                = 1006,
+        Aggregate           = 1007,
+        Scalar              = 1008,
+        Exists              = 1009,
+        In                  = 1010,
+        Grouping            = 1011,
+        AggregateSubquery   = 1012,
+        IsNull              = 1013,
+        Between             = 1014,
+        RowCount            = 1015,
+        NamedValue          = 1016,
+        OuterJoined         = 1017,
+        Insert              = 1018,
+        Update              = 1019,
+        Delete              = 1020,
+        Batch               = 1021,
+        Function            = 1022,
+        Block               = 1023,
+        If                  = 1024,
+        Declaration         = 1025,
+        Variable            = 1026
     }
 
     public static class DbExpressionTypeExtensions
@@ -48,8 +48,21 @@ namespace IQToolkit.Data.Common
         {
             return ((int)et) >= 1000;
         }
+
+        public static string GetNodeTypeName(this Expression e)
+        {
+            if (e is DbExpression d)
+            {
+                return d.ExpressionType.ToString();
+            }
+            else
+            {
+                return e.NodeType.ToString();
+            }
+        }
     }
 
+    [System.Diagnostics.DebuggerDisplay("{DebugText}")]
     public abstract class DbExpression : Expression
     {
         private readonly DbExpressionType expressionType;
@@ -61,6 +74,11 @@ namespace IQToolkit.Data.Common
             this.type = type;
         }
 
+        public DbExpressionType ExpressionType
+        {
+            get { return this.expressionType; }
+        }
+
         public override ExpressionType NodeType
         {
             get { return (ExpressionType)(int)this.expressionType; }
@@ -69,6 +87,11 @@ namespace IQToolkit.Data.Common
         public override Type Type
         {
             get { return this.type; }
+        }
+
+        private string DebugText
+        {
+            get { return $"{this.GetType().Name}: {this.GetNodeTypeName()} := {this.ToString()}"; }
         }
 
         public override string ToString()

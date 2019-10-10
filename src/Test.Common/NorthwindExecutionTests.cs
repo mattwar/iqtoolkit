@@ -1713,14 +1713,14 @@ namespace Test
 
         public void TestConditionalWithInvalidCase()
         {
-            Nullable<Boolean> hasOrders = null;
+            bool? hasOrders = null;
 
             var query = db.Customers.Select(r => new
             {
                 CustomerID = r.CustomerID,
                 HasOrders = hasOrders != null
-                                  ? (bool)hasOrders
-                                  : db.Orders.Any(o => o.CustomerID.Equals(r.CustomerID))
+                                ? (bool)hasOrders
+                                : db.Orders.Any(o => o.CustomerID.Equals(r.CustomerID))
             });
 
             var test = query.ToList();
@@ -1786,8 +1786,17 @@ namespace Test
             Assert.Equal(2155, result.Count);
         }
 
+        public void TestAssociationInOrderByDeep()
+        {
+            var q = from od in db.OrderDetails
+                    orderby od.Order.Customer.CompanyName
+                    select od.OrderID;
+
+            var result = q.ToList();
+        }
+
         /*
-        public void TestAssociationInGroupBy()
+        public void TestAssociationInGroupByDeep()
         {
             var q = from od in db.OrderDetails
                     group od by od.Order.Customer.CustomerID;

@@ -61,7 +61,7 @@ namespace IQToolkit.Data.Common
                         {
                             Expression where = select.Where;
                             select = selectWithoutWhere;
-                            var pc = ColumnProjector.ProjectColumns(this.language, where, select.Columns, select.Alias, DeclaredAliasGatherer.Gather(select.From));
+                            var pc = ColumnProjector.ProjectColumns(this.language, ProjectionAffinity.Client, where, select.Columns, select.Alias, DeclaredAliasGatherer.Gather(select.From));
                             select = select.SetColumns(pc.Columns);
                             where = pc.Projector;
                             JoinType jt = (where == null) ? JoinType.CrossJoin : (join.Join == JoinType.CrossApply ? JoinType.InnerJoin : JoinType.LeftOuter);

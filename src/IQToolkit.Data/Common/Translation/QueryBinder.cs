@@ -534,7 +534,7 @@ namespace IQToolkit.Data.Common
             }
 
             // Use ProjectColumns to get group-by expressions from key expression
-            ProjectedColumns keyProjection = this.ProjectColumns(keyExpr, projection.Select.Alias, projection.Select.Alias);
+            ProjectedColumns keyProjection = ColumnProjector.ProjectColumns(this.language, ProjectionAffinity.Server, keyExpr, null, projection.Select.Alias, projection.Select.Alias);
             var groupExprs = keyProjection.Columns.Select(c => c.Expression).ToArray();
 
             // make duplicate of source query as basis of element subquery by visiting the source again
@@ -545,7 +545,7 @@ namespace IQToolkit.Data.Common
             Expression subqueryKey = this.Visit(keySelector.Body);
 
             // use same projection trick to get group-by expressions based on subquery
-            ProjectedColumns subqueryKeyPC = this.ProjectColumns(subqueryKey, subqueryBasis.Select.Alias, subqueryBasis.Select.Alias);
+            ProjectedColumns subqueryKeyPC = ColumnProjector.ProjectColumns(this.language, ProjectionAffinity.Server, subqueryKey, null, subqueryBasis.Select.Alias, subqueryBasis.Select.Alias);
             var subqueryGroupExprs = subqueryKeyPC.Columns.Select(c => c.Expression).ToArray();
             Expression subqueryCorrelation = this.BuildPredicateWithNullsEqual(subqueryGroupExprs, groupExprs);
 
@@ -559,7 +559,7 @@ namespace IQToolkit.Data.Common
 
             // build subquery that projects the desired element
             var elementAlias = this.GetNextAlias();
-            ProjectedColumns elementPC = this.ProjectColumns(subqueryElemExpr, elementAlias, subqueryBasis.Select.Alias);
+            ProjectedColumns elementPC = ColumnProjector.ProjectColumns(this.language, ProjectionAffinity.Server, subqueryElemExpr, null, elementAlias, subqueryBasis.Select.Alias);
             ProjectionExpression elementSubquery =
                 new ProjectionExpression(
                     new SelectExpression(elementAlias, elementPC.Columns, subqueryBasis.Select, subqueryCorrelation),
@@ -595,7 +595,7 @@ namespace IQToolkit.Data.Common
                 resultExpr = Expression.Convert(resultExpr, typeof(IGrouping<,>).MakeGenericType(keyExpr.Type, subqueryElemExpr.Type));
             }
 
-            ProjectedColumns pc = this.ProjectColumns(resultExpr, alias, projection.Select.Alias);
+            ProjectedColumns pc = ColumnProjector.ProjectColumns(this.language, ProjectionAffinity.Server, resultExpr, null, alias, projection.Select.Alias);
 
             // make it possible to tie aggregates back to this group-by
             NewExpression newResult = this.GetNewExpression(pc.Projector);

@@ -2029,5 +2029,28 @@ namespace Test
             Order fo = q.First();
             Assert.Equal(3, fo.Details.Count);
         }
+
+        public void TestGroupByCase1()
+        {
+            var q = db.OrderDetails.GroupBy(i => i.ProductID > 10 ? i.ProductID : 0).Select(i => new { i.Key, Count = i.Count() });
+            var qtext = this.GetProvider().GetQueryText(q.Expression);
+            var result = q.ToList();
+        }
+
+        public void TestGroupByCase2()
+        {
+            var q = db.OrderDetails.Select(i => new { key = i.ProductID > 10 ? i.ProductID : 0, i }).GroupBy(i => i.key).Select(i => new { i.Key, Count = i.Count() });
+            var qtext = this.GetProvider().GetQueryText(q.Expression);
+            var result = q.ToList();
+        }
+
+        public void TestGroupByCase3()
+        {
+            var q = db.OrderDetails.Select(i => new { key = i.ProductID > 10 ? i.ProductID : 0, i }).GroupBy(i => i.key).Select(i => new { i.Key, Count = i.Count() })
+                .Select(i => new { Computed = i.Count + i.Key });
+            var qtext = this.GetProvider().GetQueryText(q.Expression);
+            var result = q.ToList();
+        }
+
     }
 }

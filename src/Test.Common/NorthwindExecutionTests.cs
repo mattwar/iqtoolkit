@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Test 
+namespace Test
 {
     using IQToolkit;
     using IQToolkit.Data;
@@ -19,7 +19,8 @@ namespace Test
             var items = fn("ALKFI").ToList();
         }
 
-        public void TestCompiledQuerySingleton()        {
+        public void TestCompiledQuerySingleton()
+        {
             var fn = QueryCompiler.Compile((string id) => db.Customers.SingleOrDefault(c => c.CustomerID == id));
             Customer cust = fn("ALKFI");
         }
@@ -377,7 +378,7 @@ namespace Test
 
         public void TestGroupBySumMinMaxAvg()
         {
-            var list = 
+            var list =
                 db.Orders.Where(o => o.CustomerID == "ALFKI").GroupBy(o => o.CustomerID).Select(g =>
                     new
                     {
@@ -392,7 +393,7 @@ namespace Test
 
         public void TestGroupByWithResultSelector()
         {
-            var list = 
+            var list =
                 db.Orders.Where(o => o.CustomerID == "ALFKI").GroupBy(o => o.CustomerID, (k, g) =>
                     new
                     {
@@ -402,7 +403,7 @@ namespace Test
                         Avg = g.Average(o => o.OrderID)
                     }).ToList();
             Assert.Equal(1, list.Count);
-            Assert.Equal(6, list[0].Sum);           
+            Assert.Equal(6, list[0].Sum);
         }
 
         public void TestGroupByWithElementSelectorSum()
@@ -563,7 +564,7 @@ namespace Test
 
         public void TestDistinctCountPredicate()
         {
-            var cnt = db.Customers.Select(c => new {c.City, c.Country}).Distinct().Count(c => c.City == "London");
+            var cnt = db.Customers.Select(c => new { c.City, c.Country }).Distinct().Count(c => c.City == "London");
             Assert.Equal(1, cnt);
         }
 
@@ -723,9 +724,9 @@ namespace Test
 
         public void TestLastOrDefault()
         {
-           var last = db.Customers.OrderBy(c => c.ContactName).LastOrDefault();
-           Assert.NotEqual(null, last);
-           Assert.Equal("WOLZA", last.CustomerID);
+            var last = db.Customers.OrderBy(c => c.ContactName).LastOrDefault();
+            Assert.NotEqual(null, last);
+            Assert.Equal("WOLZA", last.CustomerID);
         }
 
         public void TestLastOrDefaultPredicate()
@@ -1181,10 +1182,10 @@ namespace Test
         {
             var zero = db.Customers.Where(c => c.CustomerID == "ALFKI").Sum(c => Math.Sin((c.CustomerID == "ALFKI") ? 0.0 : 0.0));
             var pi = db.Customers.Where(c => c.CustomerID == "ALFKI").Sum(c => Math.Sin((c.CustomerID == "ALFKI") ? Math.PI : Math.PI));
-            var pi2 = db.Customers.Where(c => c.CustomerID == "ALFKI").Sum(c => Math.Sin(((c.CustomerID == "ALFKI") ? Math.PI : Math.PI)/2.0));
+            var pi2 = db.Customers.Where(c => c.CustomerID == "ALFKI").Sum(c => Math.Sin(((c.CustomerID == "ALFKI") ? Math.PI : Math.PI) / 2.0));
             Assert.Equal(Math.Sin(0.0), zero);
             Assert.Equal(Math.Sin(Math.PI), pi, 0.0001);
-            Assert.Equal(Math.Sin(Math.PI/2.0), pi2, 0.0001);
+            Assert.Equal(Math.Sin(Math.PI / 2.0), pi2, 0.0001);
         }
 
         public void TestMathTan()
@@ -1729,10 +1730,10 @@ namespace Test
 
         public void TestSelectManyJoined()
         {
-            var cods = 
+            var cods =
                 (from c in db.Customers
-                from o in db.Orders.Where(o => o.CustomerID == c.CustomerID)
-                select new { c.ContactName, o.OrderDate }).ToList();
+                 from o in db.Orders.Where(o => o.CustomerID == c.CustomerID)
+                 select new { c.ContactName, o.OrderDate }).ToList();
             Assert.Equal(830, cods.Count);
         }
 
@@ -1795,14 +1796,12 @@ namespace Test
             var result = q.ToList();
         }
 
-        /*
         public void TestAssociationInGroupByDeep()
         {
             var q = from od in db.OrderDetails
                     group od by od.Order.Customer.CustomerID;
             var result = q.ToList();
         }
-        */
 
         public void TestAssociationInSelect()
         {
@@ -2050,6 +2049,56 @@ namespace Test
                 .Select(i => new { Computed = i.Count + i.Key });
             var qtext = this.GetProvider().GetQueryText(q.Expression);
             var result = q.ToList();
+        }
+
+        public void TestGroupByCase4()
+        {
+            //var q = db.OrderDetails.GroupBy(i => new { key = i.ProductID + 2 > 10 ? i.Product.ProductName : "no" }).Select(i => new { Count = i.Count() });
+            var q = db.OrderDetails.GroupBy(i => new { key = i.Order.Customer.Phone == "+15585" ? i.Product.ProductName : "no" }).Select(i => new { Count = i.Count() });
+            var qtext = this.GetProvider().GetQueryText(q.Expression);
+            var result = q.ToList();
+        }
+
+        public void TestSelect1()
+        {
+            var q = db.OrderDetails.Select(o => o.Order.Customer.City);
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby1()
+        {
+            var q = db.OrderDetails.GroupBy(od => od.Order.Customer.CustomerID).Select(o => o.Key);
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby2()
+        {
+            var q = db.OrderDetails.GroupBy(od => od.Order.Customer.CustomerID).Select(o => new { o.Key, c = o.Count() });
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby3()
+        {
+            var q = db.OrderDetails.GroupBy(od => od.Order.Customer.CustomerID).Select(o => new { o.Key, c = o.Sum(i => i.Product.ID) });
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby4()
+        {
+            var q = db.OrderDetails.GroupBy(od => od.Order.OrderID > 2 ? od.Order.OrderID : 0).Select(o => new { o.Key, c = o.Count() });
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby5()
+        {
+            var q = db.OrderDetails.GroupBy(od => new { id = od.Order.Customer.City.Substring(0, 2) }).Select(o => new { o.Key, c = o.Count() });
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby6()
+        {
+            var q = db.OrderDetails.GroupBy(od => new { id = od.Order.OrderDate.Year }).Select(o => new { o.Key, c = o.Count() });
+            var result = q.ToArray();
         }
 
     }

@@ -2101,5 +2101,23 @@ namespace Test
             var result = q.ToArray();
         }
 
+        public void TestGroupby7()
+        {
+            var q = db.OrderDetails.GroupBy(od => new { od.Order }).Select(o => new { c = o.Count(), x = o.Key.Order.Customer.CustomerID + 2 });
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby8()
+        {
+            var q = db.OrderDetails.GroupBy(od => new { od.Order }, (o, g) => new { c = g.Count(), x = o.Order.Customer.CustomerID + 2 });
+            var result = q.ToArray();
+        }
+
+        public void TestGroupby9()
+        {
+            var q = db.OrderDetails.GroupBy(od => new { od.Order }, o => new { keyTest = o.OrderID }, (o, g) => new { c = g.Sum(i => i.keyTest), x = o.Order.Customer.CustomerID + 2 });
+            var result = q.ToArray();
+        }
+
     }
 }

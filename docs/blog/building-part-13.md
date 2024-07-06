@@ -1,4 +1,4 @@
-# Building a LINQ IQueryable Provider � Part XIII: Updates and Batch Processing
+# Building a LINQ IQueryable Provider ' Part XIII: Updates and Batch Processing
 
 Matt Warren - MSFT; January 22, 2009
 
@@ -10,23 +10,18 @@ Complete list of posts in the Building an IQueryable Provider series
 
 It's been precisely the correct amount of time that it took for me to complete the additional goodness that is jam packed into this drop, less actual work, dinners out, dinners in, any interesting film and televisions programs, housework, trips out to the store, family game night, time reading fiction, napping on the couch and other assorted unavoidable activities.
 
-The full source code can be found at:  
-http://www.codeplex.com/IQToolkit
-
-
 I'll try to cover as much as I can in this post, however you'll like find other gems by scouring the source itself.
 
 What's inside:  
 
-- Updates - Insert, Update & Delete operations.
-- Batch processing - true SQL Server batch processing.
-- Server language type systems - correct parameter types.
-- Mapping Changes - use the same class with multiple tables, etc.
+- **Updates** - Insert, Update & Delete operations.
+- **Batch processing** - true SQL Server batch processing.
+- **Server Language Type Systems** - correct parameter types.
+- **Mapping Changes** - use the same class with multiple tables, etc.
 
 ## Insert, Update and Delete
 
 It's about time that this toolkit actually got usable right out of the box.  My original intention with the series was to show how to build an IQueryable provider and that turned more and more into a fully working query engine that you could actually use to get real work done. Yet, how many real world applications only ever need to pull data out of a database and never push it back?  Not many.
-
 
 So I knew I'd eventually want to add updates, because I knew that you'd eventually need to do it too. Yet, every time I started thinking about updates I always fell into the trap of thinking about full blown ORM's with object tracking, et al, and I did not really want to go there, at least not yet. As a toolkit I think its just fine to define the primitives that a more advanced system might be built out of. And there is nothing wrong with those primitives being generally useful on their own. So you should be able to use the toolkit as-is and not only get a pretty good query engine but also something that at least works as a rudimentary data access layer.
 
@@ -62,7 +57,6 @@ Also, like other LINQ operations, update commands should be a pattern, and be av
 
 This pattern works just like the LINQ Enumerable and Queryable patterns.  I've declared an interface 'IUpdatable' that extends IQueryable, so anything that is updatable is also queryable, and then an Updatable class with a bunch of new extension methods that encapsulate the pattern.  (I realize the IUpdatable name may be in conflict with some other library, but until I think of something better this is what it is.)
 
-
 The Insert method inserts an object instance into a collection. It's not an ordinary insert, like with List<T>. The collection is considered to be remote and inserting into it copies the data from your instance. It has an optional result-selector argument that can be a function you supply to construct a result out of the object after it has been inserted. This, of course, is intended to occur on the server and can be used to read back auto-generated state and computed expressions.
 
     IUpdatable<Customer> customers = ...;
@@ -81,7 +75,6 @@ The Update method updates a corresponding object already in the collection with 
 
 The InsertOrUpdate is the 'Upsert' operation.  It will basically insert an object into the collection if a corresponding one does not exist, or update the one that does with the new values. You specify it just like you'd specify an update, instead you call InsertOrUpdate.
 
-
 There are two flavors of Delete. The first one lets you delete the object in the collection corresponding to the instance. You can optionally specify a delete-check, which is similar to the update-check, a predicate function evaluated against the server's state. The delete will only occur if the check passes. The second flavor just lets you specify a predicate. It's basically a delete-all-where method and will delete all objects from the collection that match the predicate. So far, its the only SQL-like 'set-based' operation I've defined.
 
     IUpdatable<Customer> customers = ...;
@@ -92,7 +85,6 @@ There are two flavors of Delete. The first one lets you delete the object in the
     Customer c = ...;
     customers.Delete(c => c.CustomerID == "ALFKI");
 
-
 The last operation is Batch.  It will allow you to specify an operation to apply to a whole set of instances. The operation can be one of the other commands like Insert or Update.  You can use this method Insert, Update or Delete a whole bunch of objects all at the same time. If possible, the provider will use optimized batching techniques to give you extra performance.
 
     IUpdatable<Customer> customers = ...;
@@ -102,9 +94,7 @@ The last operation is Batch.  It will allow you to specify an operation to apply
 If you've got many objects to update and you want to have instance specific update-checks done, you can sneak the extra information into the batch process by combining the data together into a single collection and then piecing them apart in the operation.
 
     IUpdatable<Customer> customers = ...;
-
     var oldAndNew = new [] { new { Old = oldCustomer, New = newCustomer }, ...};
-
     customers.Batch(oldAndNew, (u, x) => u.Update(x.New, d => d.City == x.Old.City));
  
 ## Updates and DbQueryProvider

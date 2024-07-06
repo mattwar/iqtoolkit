@@ -232,132 +232,130 @@ There are no bells and whistles in this implementation.
 It will only work for writing into class fields via reflection.
 The names of the fields must match the names of the columns in the reader and the types must match whatever the `DataReader` thinks is the correct type.
 
-```csharp
-internal class ObjectReader<T> : IEnumerable<T>, IEnumerable where T : class, new()
-{
-    Enumerator enumerator;
-
-    internal ObjectReader(DbDataReader reader)
+    internal class ObjectReader<T> : IEnumerable<T>, IEnumerable where T : class, new()
     {
-        this.enumerator = new Enumerator(reader);
-    }
+        Enumerator enumerator;
 
-    public IEnumerator<T> GetEnumerator()
-    {
-        Enumerator e = this.enumerator;
-
-        if (e == null)
+        internal ObjectReader(DbDataReader reader)
         {
-            throw new InvalidOperationException("Cannot enumerate more than once");
+            this.enumerator = new Enumerator(reader);
         }
 
-        this.enumerator = null;
-        return e;
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return this.GetEnumerator();
-    }
-
-    class Enumerator : IEnumerator<T>, IEnumerator, IDisposable
-    {
-        DbDataReader reader;
-        FieldInfo[] fields;
-        int[] fieldLookup;
-        T current;
-
-        internal Enumerator(DbDataReader reader)
+        public IEnumerator<T> GetEnumerator()
         {
-            this.reader = reader;
-            this.fields = typeof(T).GetFields();
-        }
+            Enumerator e = this.enumerator;
 
-        public T Current
-        {
-            get { return this.current; }
-        }
-
-        object IEnumerator.Current
-        {
-            get { return this.current; }
-        }
-
-        public bool MoveNext()
-        {
-            if (this.reader.Read())
+            if (e == null)
             {
-                if (this.fieldLookup == null)
+                throw new InvalidOperationException("Cannot enumerate more than once");
+            }
+
+            this.enumerator = null;
+            return e;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
+
+        class Enumerator : IEnumerator<T>, IEnumerator, IDisposable
+        {
+            DbDataReader reader;
+            FieldInfo[] fields;
+            int[] fieldLookup;
+            T current;
+
+            internal Enumerator(DbDataReader reader)
+            {
+                this.reader = reader;
+                this.fields = typeof(T).GetFields();
+            }
+
+            public T Current
+            {
+                get { return this.current; }
+            }
+
+            object IEnumerator.Current
+            {
+                get { return this.current; }
+            }
+
+            public bool MoveNext()
+            {
+                if (this.reader.Read())
                 {
-                    this.InitFieldLookup();
+                    if (this.fieldLookup == null)
+                    {
+                        this.InitFieldLookup();
+                    }
+
+                    T instance = new T();
+
+                    for (int i = 0, n = this.fields.Length; i < n; i++)
+                    {
+                        int index = this.fieldLookup[i];
+
+                        if (index >= 0)
+                        {
+                            FieldInfo fi = this.fields[i];
+
+                            if (this.reader.IsDBNull(index))
+                            {
+                                fi.SetValue(instance, null);
+                            }
+                            else
+                            {
+                                fi.SetValue(instance, this.reader.GetValue(index));
+                            }
+                        }
+                    }
+
+                    this.current = instance;
+
+                    return true;
                 }
 
-                T instance = new T();
+                return false;
+            }
+
+            public void Reset()
+            {
+            }
+
+            public void Dispose()
+            {
+                this.reader.Dispose();
+            }
+
+            private void InitFieldLookup()
+            {
+                var map = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
+
+                for (int i = 0, n = this.reader.FieldCount; i < n; i++)
+                {
+                    map.Add(this.reader.GetName(i), i);
+                }
+
+                this.fieldLookup = new int[this.fields.Length];
 
                 for (int i = 0, n = this.fields.Length; i < n; i++)
                 {
-                    int index = this.fieldLookup[i];
+                    int index;
 
-                    if (index >= 0)
+                    if (map.TryGetValue(this.fields[i].Name, out index))
                     {
-                        FieldInfo fi = this.fields[i];
-
-                        if (this.reader.IsDBNull(index))
-                        {
-                            fi.SetValue(instance, null);
-                        }
-                        else
-                        {
-                            fi.SetValue(instance, this.reader.GetValue(index));
-                        }
+                        this.fieldLookup[i] = index;
                     }
-                }
-
-                this.current = instance;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        public void Reset()
-        {
-        }
-
-        public void Dispose()
-        {
-            this.reader.Dispose();
-        }
-
-        private void InitFieldLookup()
-        {
-            var map = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
-
-            for (int i = 0, n = this.reader.FieldCount; i < n; i++)
-            {
-                map.Add(this.reader.GetName(i), i);
-            }
-
-            this.fieldLookup = new int[this.fields.Length];
-
-            for (int i = 0, n = this.fields.Length; i < n; i++)
-            {
-                int index;
-
-                if (map.TryGetValue(this.fields[i].Name, out index))
-                {
-                    this.fieldLookup[i] = index;
-                }
-                else
-                {
-                    this.fieldLookup[i] = -1;
+                    else
+                    {
+                        this.fieldLookup[i] = -1;
+                    }
                 }
             }
         }
     }
-}
-```
 
 The `ObjectReader` creates a new instance of type `T` for each row read by the `DbDataReader`.
 It uses the reflection API `FieldInfo.SetValue` to assign values to each field of the object.
@@ -366,7 +364,6 @@ This enumerator is handed out when the `GetEnumerator` method is called. Since `
 the enumerator can only be handed out once.
 If `GetEnumerator` is called a second time an exception is thrown.
 
-
 The `ObjectReader` is lenient in the ordering of fields.
 Since the `QueryTranslator` builds queries using `SELECT *` this is a must because otherwise the code has no way of knowing which column will appear first in the results.
 Note, that it is generally inadvisable to use `SELECT *` in production code.
@@ -374,152 +371,132 @@ Remember this is just an illustrative sample to show how in general to put toget
 In order to allow for different sequences of columns, the precise sequence is discovered at runtime when the first row is read for the `DataReader`.
 The `InitFieldLookup` function builds a map from column name to column ordinal and then assembles a lookup table `fieldLookup` that maps between the object's fields and the ordinals.
 
-<br/>
-
 ## The Provider
-
 
 Now that we have these two pieces (and the classes define in the prior post) it's quite easy to combine them together to make an actual IQueryable LINQ provider.
 
-
-```csharp
-public class DbQueryProvider : QueryProvider
-{
-    private readonly DbConnection connection;
-
-    public DbQueryProvider(DbConnection connection)
+    public class DbQueryProvider : QueryProvider
     {
-        this.connection = connection;
-    }
+        private readonly DbConnection connection;
 
-    public override string GetQueryText(Expression expression)
-    {
-        return this.Translate(expression);
-    }
+        public DbQueryProvider(DbConnection connection)
+        {
+            this.connection = connection;
+        }
 
-    public override object Execute(Expression expression)
-    {
-        DbCommand cmd = this.connection.CreateCommand();
-        cmd.CommandText = this.Translate(expression);
-        DbDataReader reader = cmd.ExecuteReader();
-        Type elementType = TypeSystem.GetElementType(expression.Type);
+        public override string GetQueryText(Expression expression)
+        {
+            return this.Translate(expression);
+        }
 
-        return Activator.CreateInstance(
-            typeof(ObjectReader<>).MakeGenericType(elementType),
-            BindingFlags.Instance | BindingFlags.NonPublic, null,
-            new object[] { reader },
-            null);
-    }
+        public override object Execute(Expression expression)
+        {
+            DbCommand cmd = this.connection.CreateCommand();
+            cmd.CommandText = this.Translate(expression);
+            DbDataReader reader = cmd.ExecuteReader();
+            Type elementType = TypeSystem.GetElementType(expression.Type);
 
-    private string Translate(Expression expression)
-    {
-        return new QueryTranslator().Translate(expression);
+            return Activator.CreateInstance(
+                typeof(ObjectReader<>).MakeGenericType(elementType),
+                BindingFlags.Instance | BindingFlags.NonPublic, null,
+                new object[] { reader },
+                null);
+        }
+
+        private string Translate(Expression expression)
+        {
+            return new QueryTranslator().Translate(expression);
+        }
     }
-}
-```
 
 As you can see, building a provider is now simply an exercise in combining these two pieces.
 The `GetQueryText` method just needs to use the `QueryTranslator` to produce the command text.
 The `Execute` method uses both `QueryTranslator` and `ObjectReader` to build a `DbCommand` object, execute it and return the results as an `IEnumerable`.
 
-<br/>
-
 ### Trying it Out
-
 
 Now that we have our provider we can try it out.
 Since I'm basically following the LINQ to SQL model I'll define a class for the Customers table, 
 a 'Context' that holds onto the tables (root queries) and a little program that uses them.
 
-
-```csharp
-public class Customers
-{
-    public string CustomerID;
-    public string ContactName;
-    public string Phone;
-    public string City;
-    public string Country;
-}
-
-public class Orders
-{
-    public int OrderID;
-    public string CustomerID;
-    public DateTime OrderDate;
-}
-
-public class Northwind
-{
-    public Query<Customers> Customers;
-    public Query<Orders> Orders;
-
-    public Northwind(DbConnection connection)
+    public class Customers
     {
-        QueryProvider provider = new DbQueryProvider(connection);
-        this.Customers = new Query<Customers>(provider);
-        this.Orders = new Query<Orders>(provider);
+        public string CustomerID;
+        public string ContactName;
+        public string Phone;
+        public string City;
+        public string Country;
     }
-}
 
-class Program
-{
-    static void Main(string[] args)
+    public class Orders
     {
-        string constr = @"'";
+        public int OrderID;
+        public string CustomerID;
+        public DateTime OrderDate;
+    }
 
-        using (SqlConnection con = new SqlConnection(constr))
+    public class Northwind
+    {
+        public Query<Customers> Customers;
+        public Query<Orders> Orders;
+
+        public Northwind(DbConnection connection)
         {
-            con.Open();
-            Northwind db = new Northwind(con);
-
-            IQueryable<Customers> query =
-                 db.Customers.Where(c => c.City == "London");
-
-            Console.WriteLine("Query:\n{0}\n", query);
-
-            var list = query.ToList();
-
-            foreach (var item in list)
-            {
-                Console.WriteLine("Name: {0}", item.ContactName);
-            }
-
-            Console.ReadLine();
+            QueryProvider provider = new DbQueryProvider(connection);
+            this.Customers = new Query<Customers>(provider);
+            this.Orders = new Query<Orders>(provider);
         }
     }
-}
-```
 
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string constr = @"'";
+
+            using (SqlConnection con = new SqlConnection(constr))
+            {
+                con.Open();
+                Northwind db = new Northwind(con);
+
+                IQueryable<Customers> query =
+                    db.Customers.Where(c => c.City == "London");
+
+                Console.WriteLine("Query:\n{0}\n", query);
+
+                var list = query.ToList();
+
+                foreach (var item in list)
+                {
+                    Console.WriteLine("Name: {0}", item.ContactName);
+                }
+
+                Console.ReadLine();
+            }
+        }
+    }
 
 Now if we run this we should get the following output:  (Note that you will have to add your own connection string to the program above.)
 
-```
-Query: SELECT * FROM (SELECT * FROM Customers) AS T WHERE (City = 'London')
+    Query: SELECT * FROM (SELECT * FROM Customers) AS T WHERE (City = 'London')
 
-Name: Thom7as Hardy
-Name: Victoria Ashworth
-Name: Elizabeth Brown
-Name: Ann Devon
-Name: Simon Crowther
-Name: Hari Kumar
-```
+    Name: Thom7as Hardy
+    Name: Victoria Ashworth
+    Name: Elizabeth Brown
+    Name: Ann Devon
+    Name: Simon Crowther
+    Name: Hari Kumar
 
 Excellent, just what I wanted.  I love it when a plan comes together.
-
 
 That's it folks.  That's a LINQ IQueryable provider.  Well, at least a crude facsimile of one.
 Of course, yours will do so much more than mine.  It will handle all the edge cases and serve coffee. 
 
- <br/>
-
 ## APPENDIX ' The Expression Visitor
-
 
 Now you are in for it. I think I've received about an order of magnitude more requests for this class than for help on building a query provider.
 There is an `ExpressionVisitor` class in `System.Linq.Expressions`, however it is internal so it's not for your direct consumption as much as you'd like it to be.
 If you shout real loud you might convince us to make that one public in the next go 'round.
-
 
 This expression visitor is my take on the (classic) visitor pattern.
 In this variant there is only one visitor class that dispatches calls to the general Visit function out to specific `VisitXXX` methods corresponding to different node types.
@@ -529,441 +506,436 @@ The reason for this is that the quantity of visitors is actually open ended. You
 Therefore no semantics of visiting is coupled into the node classes.  It's all in the visitors.
 The default visit behavior for node XXX is baked into the base class's version of VisitXXX.
 
-
 Another variant is that all `VisitXXX` methods return a node. The `Expression` tree nodes are immutable.
 In order to change the tree you must construct a new one. The default `VisitXXX` methods will construct a new node if any of its sub-trees change.
 If no changes are made then the same node is returned. 
 That way if you make a change to a node (by making a new node) deep down in a tree, the rest of the tree is rebuilt automatically for you.
 
-
 Here's the code. Enjoy.
 
-
-```csharp
-public abstract class ExpressionVisitor
-{
-    protected ExpressionVisitor()
+    public abstract class ExpressionVisitor
     {
-    }
-
-    protected virtual Expression Visit(Expression exp)
-    {
-        if (exp == null)
-            return exp;
-
-        switch (exp.NodeType)
+        protected ExpressionVisitor()
         {
-            case ExpressionType.Negate:
-            case ExpressionType.NegateChecked:
-            case ExpressionType.Not:
-            case ExpressionType.Convert:
-            case ExpressionType.ConvertChecked:
-            case ExpressionType.ArrayLength:
-            case ExpressionType.Quote:
-            case ExpressionType.TypeAs:
-                return this.VisitUnary((UnaryExpression)exp);
-
-            case ExpressionType.Add:
-            case ExpressionType.AddChecked:
-            case ExpressionType.Subtract:
-            case ExpressionType.SubtractChecked:
-            case ExpressionType.Multiply:
-            case ExpressionType.MultiplyChecked:
-            case ExpressionType.Divide:
-            case ExpressionType.Modulo:
-            case ExpressionType.And:
-            case ExpressionType.AndAlso:
-            case ExpressionType.Or:
-            case ExpressionType.OrElse:
-            case ExpressionType.LessThan:
-            case ExpressionType.LessThanOrEqual:
-            case ExpressionType.GreaterThan:
-            case ExpressionType.GreaterThanOrEqual:
-            case ExpressionType.Equal:
-            case ExpressionType.NotEqual:
-            case ExpressionType.Coalesce:
-            case ExpressionType.ArrayIndex:
-            case ExpressionType.RightShift:
-            case ExpressionType.LeftShift:
-            case ExpressionType.ExclusiveOr:
-                return this.VisitBinary((BinaryExpression)exp);
-
-            case ExpressionType.TypeIs:
-                return this.VisitTypeIs((TypeBinaryExpression)exp);
-
-            case ExpressionType.Conditional:
-                return this.VisitConditional((ConditionalExpression)exp);
-
-            case ExpressionType.Constant:
-                return this.VisitConstant((ConstantExpression)exp);
-
-            case ExpressionType.Parameter:
-                return this.VisitParameter((ParameterExpression)exp);
-
-            case ExpressionType.MemberAccess:
-                return this.VisitMemberAccess((MemberExpression)exp);
-
-            case ExpressionType.Call:
-                return this.VisitMethodCall((MethodCallExpression)exp);
-
-            case ExpressionType.Lambda:
-                return this.VisitLambda((LambdaExpression)exp);
-
-            case ExpressionType.New:
-                return this.VisitNew((NewExpression)exp);
-
-            case ExpressionType.NewArrayInit:
-            case ExpressionType.NewArrayBounds:
-                return this.VisitNewArray((NewArrayExpression)exp);
-
-            case ExpressionType.Invoke:
-                return this.VisitInvocation((InvocationExpression)exp);
-
-            case ExpressionType.MemberInit:
-                return this.VisitMemberInit((MemberInitExpression)exp);
-
-            case ExpressionType.ListInit:
-                return this.VisitListInit((ListInitExpression)exp);
-
-            default:
-                throw new Exception(string.Format("Unhandled expression type: '{0}'", exp.NodeType));
-        }
-    }
-
-    protected virtual MemberBinding VisitBinding(MemberBinding binding)
-    {
-        switch (binding.BindingType)
-        {
-            case MemberBindingType.Assignment:
-                return this.VisitMemberAssignment((MemberAssignment)binding);
-
-            case MemberBindingType.MemberBinding:
-                return this.VisitMemberMemberBinding((MemberMemberBinding)binding);
-
-            case MemberBindingType.ListBinding:
-                return this.VisitMemberListBinding((MemberListBinding)binding);
-
-            default:
-                throw new Exception(string.Format("Unhandled binding type '{0}'", binding.BindingType));
-        }
-    }
-
-    protected virtual ElementInit VisitElementInitializer(ElementInit initializer)
-    {
-        ReadOnlyCollection<Expression> arguments = this.VisitExpressionList(initializer.Arguments);
-
-        if (arguments != initializer.Arguments)
-        {
-            return Expression.ElementInit(initializer.AddMethod, arguments);
         }
 
-        return initializer;
-    }
-
-    protected virtual Expression VisitUnary(UnaryExpression u)
-    {
-        Expression operand = this.Visit(u.Operand);
-
-        if (operand != u.Operand)
+        protected virtual Expression Visit(Expression exp)
         {
-            return Expression.MakeUnary(u.NodeType, operand, u.Type, u.Method);
+            if (exp == null)
+                return exp;
+
+            switch (exp.NodeType)
+            {
+                case ExpressionType.Negate:
+                case ExpressionType.NegateChecked:
+                case ExpressionType.Not:
+                case ExpressionType.Convert:
+                case ExpressionType.ConvertChecked:
+                case ExpressionType.ArrayLength:
+                case ExpressionType.Quote:
+                case ExpressionType.TypeAs:
+                    return this.VisitUnary((UnaryExpression)exp);
+
+                case ExpressionType.Add:
+                case ExpressionType.AddChecked:
+                case ExpressionType.Subtract:
+                case ExpressionType.SubtractChecked:
+                case ExpressionType.Multiply:
+                case ExpressionType.MultiplyChecked:
+                case ExpressionType.Divide:
+                case ExpressionType.Modulo:
+                case ExpressionType.And:
+                case ExpressionType.AndAlso:
+                case ExpressionType.Or:
+                case ExpressionType.OrElse:
+                case ExpressionType.LessThan:
+                case ExpressionType.LessThanOrEqual:
+                case ExpressionType.GreaterThan:
+                case ExpressionType.GreaterThanOrEqual:
+                case ExpressionType.Equal:
+                case ExpressionType.NotEqual:
+                case ExpressionType.Coalesce:
+                case ExpressionType.ArrayIndex:
+                case ExpressionType.RightShift:
+                case ExpressionType.LeftShift:
+                case ExpressionType.ExclusiveOr:
+                    return this.VisitBinary((BinaryExpression)exp);
+
+                case ExpressionType.TypeIs:
+                    return this.VisitTypeIs((TypeBinaryExpression)exp);
+
+                case ExpressionType.Conditional:
+                    return this.VisitConditional((ConditionalExpression)exp);
+
+                case ExpressionType.Constant:
+                    return this.VisitConstant((ConstantExpression)exp);
+
+                case ExpressionType.Parameter:
+                    return this.VisitParameter((ParameterExpression)exp);
+
+                case ExpressionType.MemberAccess:
+                    return this.VisitMemberAccess((MemberExpression)exp);
+
+                case ExpressionType.Call:
+                    return this.VisitMethodCall((MethodCallExpression)exp);
+
+                case ExpressionType.Lambda:
+                    return this.VisitLambda((LambdaExpression)exp);
+
+                case ExpressionType.New:
+                    return this.VisitNew((NewExpression)exp);
+
+                case ExpressionType.NewArrayInit:
+                case ExpressionType.NewArrayBounds:
+                    return this.VisitNewArray((NewArrayExpression)exp);
+
+                case ExpressionType.Invoke:
+                    return this.VisitInvocation((InvocationExpression)exp);
+
+                case ExpressionType.MemberInit:
+                    return this.VisitMemberInit((MemberInitExpression)exp);
+
+                case ExpressionType.ListInit:
+                    return this.VisitListInit((ListInitExpression)exp);
+
+                default:
+                    throw new Exception(string.Format("Unhandled expression type: '{0}'", exp.NodeType));
+            }
         }
 
-        return u;
-    }
-
-    protected virtual Expression VisitBinary(BinaryExpression b)
-    {
-        Expression left = this.Visit(b.Left);
-        Expression right = this.Visit(b.Right);
-        Expression conversion = this.Visit(b.Conversion);
-
-        if (left != b.Left || right != b.Right || conversion != b.Conversion)
+        protected virtual MemberBinding VisitBinding(MemberBinding binding)
         {
-            if (b.NodeType == ExpressionType.Coalesce && b.Conversion != null)
-                return Expression.Coalesce(left, right, conversion as LambdaExpression);
-            else
-                return Expression.MakeBinary(b.NodeType, left, right, b.IsLiftedToNull, b.Method);
+            switch (binding.BindingType)
+            {
+                case MemberBindingType.Assignment:
+                    return this.VisitMemberAssignment((MemberAssignment)binding);
+
+                case MemberBindingType.MemberBinding:
+                    return this.VisitMemberMemberBinding((MemberMemberBinding)binding);
+
+                case MemberBindingType.ListBinding:
+                    return this.VisitMemberListBinding((MemberListBinding)binding);
+
+                default:
+                    throw new Exception(string.Format("Unhandled binding type '{0}'", binding.BindingType));
+            }
         }
 
-        return b;
-    }
-
-    protected virtual Expression VisitTypeIs(TypeBinaryExpression b)
-    {
-        Expression expr = this.Visit(b.Expression);
-
-        if (expr != b.Expression)
+        protected virtual ElementInit VisitElementInitializer(ElementInit initializer)
         {
-            return Expression.TypeIs(expr, b.TypeOperand);
+            ReadOnlyCollection<Expression> arguments = this.VisitExpressionList(initializer.Arguments);
+
+            if (arguments != initializer.Arguments)
+            {
+                return Expression.ElementInit(initializer.AddMethod, arguments);
+            }
+
+            return initializer;
         }
 
-        return b;
-    }
-
-    protected virtual Expression VisitConstant(ConstantExpression c)
-    {
-        return c;
-    }
-
-    protected virtual Expression VisitConditional(ConditionalExpression c)
-    {
-        Expression test = this.Visit(c.Test);
-        Expression ifTrue = this.Visit(c.IfTrue);
-        Expression ifFalse = this.Visit(c.IfFalse);
-
-        if (test != c.Test || ifTrue != c.IfTrue || ifFalse != c.IfFalse)
+        protected virtual Expression VisitUnary(UnaryExpression u)
         {
-            return Expression.Condition(test, ifTrue, ifFalse);
+            Expression operand = this.Visit(u.Operand);
+
+            if (operand != u.Operand)
+            {
+                return Expression.MakeUnary(u.NodeType, operand, u.Type, u.Method);
+            }
+
+            return u;
         }
 
-        return c;
-    }
-
-    protected virtual Expression VisitParameter(ParameterExpression p)
-    {
-        return p;
-    }
-
-    protected virtual Expression VisitMemberAccess(MemberExpression m)
-    {
-        Expression exp = this.Visit(m.Expression);
-
-        if (exp != m.Expression)
+        protected virtual Expression VisitBinary(BinaryExpression b)
         {
-            return Expression.MakeMemberAccess(exp, m.Member);
+            Expression left = this.Visit(b.Left);
+            Expression right = this.Visit(b.Right);
+            Expression conversion = this.Visit(b.Conversion);
+
+            if (left != b.Left || right != b.Right || conversion != b.Conversion)
+            {
+                if (b.NodeType == ExpressionType.Coalesce && b.Conversion != null)
+                    return Expression.Coalesce(left, right, conversion as LambdaExpression);
+                else
+                    return Expression.MakeBinary(b.NodeType, left, right, b.IsLiftedToNull, b.Method);
+            }
+
+            return b;
         }
 
-        return m;
-    }
-
-    protected virtual Expression VisitMethodCall(MethodCallExpression m)
-    {
-        Expression obj = this.Visit(m.Object);
-        IEnumerable<Expression> args = this.VisitExpressionList(m.Arguments);
-
-        if (obj != m.Object || args != m.Arguments)
+        protected virtual Expression VisitTypeIs(TypeBinaryExpression b)
         {
-            return Expression.Call(obj, m.Method, args);
+            Expression expr = this.Visit(b.Expression);
+
+            if (expr != b.Expression)
+            {
+                return Expression.TypeIs(expr, b.TypeOperand);
+            }
+
+            return b;
         }
 
-        return m;
-    }
-
-    protected virtual ReadOnlyCollection<Expression> VisitExpressionList(ReadOnlyCollection<Expression> original)
-    {
-        List<Expression> list = null;
-
-        for (int i = 0, n = original.Count; i < n; i++)
+        protected virtual Expression VisitConstant(ConstantExpression c)
         {
-            Expression p = this.Visit(original[i]);
+            return c;
+        }
+
+        protected virtual Expression VisitConditional(ConditionalExpression c)
+        {
+            Expression test = this.Visit(c.Test);
+            Expression ifTrue = this.Visit(c.IfTrue);
+            Expression ifFalse = this.Visit(c.IfFalse);
+
+            if (test != c.Test || ifTrue != c.IfTrue || ifFalse != c.IfFalse)
+            {
+                return Expression.Condition(test, ifTrue, ifFalse);
+            }
+
+            return c;
+        }
+
+        protected virtual Expression VisitParameter(ParameterExpression p)
+        {
+            return p;
+        }
+
+        protected virtual Expression VisitMemberAccess(MemberExpression m)
+        {
+            Expression exp = this.Visit(m.Expression);
+
+            if (exp != m.Expression)
+            {
+                return Expression.MakeMemberAccess(exp, m.Member);
+            }
+
+            return m;
+        }
+
+        protected virtual Expression VisitMethodCall(MethodCallExpression m)
+        {
+            Expression obj = this.Visit(m.Object);
+            IEnumerable<Expression> args = this.VisitExpressionList(m.Arguments);
+
+            if (obj != m.Object || args != m.Arguments)
+            {
+                return Expression.Call(obj, m.Method, args);
+            }
+
+            return m;
+        }
+
+        protected virtual ReadOnlyCollection<Expression> VisitExpressionList(ReadOnlyCollection<Expression> original)
+        {
+            List<Expression> list = null;
+
+            for (int i = 0, n = original.Count; i < n; i++)
+            {
+                Expression p = this.Visit(original[i]);
+
+                if (list != null)
+                {
+                    list.Add(p);
+                }
+                else if (p != original[i])
+                {
+                    list = new List<Expression>(n);
+
+                    for (int j = 0; j < i; j++)
+                    {
+                        list.Add(original[j]);
+                    }
+
+                    list.Add(p);
+                }
+            }
 
             if (list != null)
             {
-                list.Add(p);
+                return list.AsReadOnly();
             }
-            else if (p != original[i])
+
+            return original;
+        }
+
+        protected virtual MemberAssignment VisitMemberAssignment(MemberAssignment assignment)
+        {
+            Expression e = this.Visit(assignment.Expression);
+
+            if (e != assignment.Expression)
             {
-                list = new List<Expression>(n);
-
-                for (int j = 0; j < i; j++)
-                {
-                    list.Add(original[j]);
-                }
-
-                list.Add(p);
+                return Expression.Bind(assignment.Member, e);
             }
+
+            return assignment;
         }
 
-        if (list != null)
+        protected virtual MemberMemberBinding VisitMemberMemberBinding(MemberMemberBinding binding)
         {
-            return list.AsReadOnly();
+            IEnumerable<MemberBinding> bindings = this.VisitBindingList(binding.Bindings);
+
+            if (bindings != binding.Bindings)
+            {
+                return Expression.MemberBind(binding.Member, bindings);
+            }
+
+            return binding;
         }
 
-        return original;
-    }
-
-    protected virtual MemberAssignment VisitMemberAssignment(MemberAssignment assignment)
-    {
-        Expression e = this.Visit(assignment.Expression);
-
-        if (e != assignment.Expression)
+        protected virtual MemberListBinding VisitMemberListBinding(MemberListBinding binding)
         {
-            return Expression.Bind(assignment.Member, e);
+            IEnumerable<ElementInit> initializers = this.VisitElementInitializerList(binding.Initializers);
+
+            if (initializers != binding.Initializers)
+            {
+                return Expression.ListBind(binding.Member, initializers);
+            }
+
+            return binding;
         }
 
-        return assignment;
-    }
-
-    protected virtual MemberMemberBinding VisitMemberMemberBinding(MemberMemberBinding binding)
-    {
-        IEnumerable<MemberBinding> bindings = this.VisitBindingList(binding.Bindings);
-
-        if (bindings != binding.Bindings)
+        protected virtual IEnumerable<MemberBinding> VisitBindingList(ReadOnlyCollection<MemberBinding> original)
         {
-            return Expression.MemberBind(binding.Member, bindings);
-        }
+            List<MemberBinding> list = null;
 
-        return binding;
-    }
+            for (int i = 0, n = original.Count; i < n; i++)
+            {
+                MemberBinding b = this.VisitBinding(original[i]);
 
-    protected virtual MemberListBinding VisitMemberListBinding(MemberListBinding binding)
-    {
-        IEnumerable<ElementInit> initializers = this.VisitElementInitializerList(binding.Initializers);
+                if (list != null)
+                {
+                    list.Add(b);
+                }
+                else if (b != original[i])
+                {
+                    list = new List<MemberBinding>(n);
 
-        if (initializers != binding.Initializers)
-        {
-            return Expression.ListBind(binding.Member, initializers);
-        }
+                    for (int j = 0; j < i; j++)
+                    {
+                        list.Add(original[j]);
+                    }
 
-        return binding;
-    }
-
-    protected virtual IEnumerable<MemberBinding> VisitBindingList(ReadOnlyCollection<MemberBinding> original)
-    {
-        List<MemberBinding> list = null;
-
-        for (int i = 0, n = original.Count; i < n; i++)
-        {
-            MemberBinding b = this.VisitBinding(original[i]);
+                    list.Add(b);
+                }
+            }
 
             if (list != null)
-            {
-                list.Add(b);
-            }
-            else if (b != original[i])
-            {
-                list = new List<MemberBinding>(n);
+                return list;
 
-                for (int j = 0; j < i; j++)
-                {
-                    list.Add(original[j]);
-                }
-
-                list.Add(b);
-            }
+            return original;
         }
 
-        if (list != null)
-            return list;
-
-        return original;
-    }
-
-    protected virtual IEnumerable<ElementInit> VisitElementInitializerList(ReadOnlyCollection<ElementInit> original)
-    {
-        List<ElementInit> list = null;
-
-        for (int i = 0, n = original.Count; i < n; i++)
+        protected virtual IEnumerable<ElementInit> VisitElementInitializerList(ReadOnlyCollection<ElementInit> original)
         {
-            ElementInit init = this.VisitElementInitializer(original[i]);
+            List<ElementInit> list = null;
+
+            for (int i = 0, n = original.Count; i < n; i++)
+            {
+                ElementInit init = this.VisitElementInitializer(original[i]);
+
+                if (list != null)
+                {
+                    list.Add(init);
+                }
+                else if (init != original[i])
+                {
+                    list = new List<ElementInit>(n);
+
+                    for (int j = 0; j < i; j++)
+                    {
+                        list.Add(original[j]);
+                    }
+
+                    list.Add(init);
+                }
+            }
 
             if (list != null)
-            {
-                list.Add(init);
-            }
-            else if (init != original[i])
-            {
-                list = new List<ElementInit>(n);
+                return list;
 
-                for (int j = 0; j < i; j++)
+            return original;
+        }
+
+        protected virtual Expression VisitLambda(LambdaExpression lambda)
+        {
+            Expression body = this.Visit(lambda.Body);
+
+            if (body != lambda.Body)
+            {
+                return Expression.Lambda(lambda.Type, body, lambda.Parameters);
+            }
+
+            return lambda;
+        }
+
+        protected virtual NewExpression VisitNew(NewExpression nex)
+        {
+            IEnumerable<Expression> args = this.VisitExpressionList(nex.Arguments);
+
+            if (args != nex.Arguments)
+            {
+                if (nex.Members != null)
+                    return Expression.New(nex.Constructor, args, nex.Members);
+                else
+                    return Expression.New(nex.Constructor, args);
+            }
+
+            return nex;
+        }
+
+        protected virtual Expression VisitMemberInit(MemberInitExpression init)
+        {
+            NewExpression n = this.VisitNew(init.NewExpression);
+            IEnumerable<MemberBinding> bindings = this.VisitBindingList(init.Bindings);
+
+            if (n != init.NewExpression || bindings != init.Bindings)
+            {
+                return Expression.MemberInit(n, bindings);
+            }
+
+            return init;
+        }
+
+        protected virtual Expression VisitListInit(ListInitExpression init)
+        {
+            NewExpression n = this.VisitNew(init.NewExpression);
+            IEnumerable<ElementInit> initializers = this.VisitElementInitializerList(init.Initializers);
+
+            if (n != init.NewExpression || initializers != init.Initializers)
+            {
+                return Expression.ListInit(n, initializers);
+            }
+
+            return init;
+        }
+
+        protected virtual Expression VisitNewArray(NewArrayExpression na)
+        {
+            IEnumerable<Expression> exprs = this.VisitExpressionList(na.Expressions);
+
+            if (exprs != na.Expressions)
+            {
+                if (na.NodeType == ExpressionType.NewArrayInit)
                 {
-                    list.Add(original[j]);
+                    return Expression.NewArrayInit(na.Type.GetElementType(), exprs);
                 }
-
-                list.Add(init);
+                else
+                {
+                    return Expression.NewArrayBounds(na.Type.GetElementType(), exprs);
+                }
             }
+
+            return na;
         }
 
-        if (list != null)
-            return list;
-
-        return original;
-    }
-
-    protected virtual Expression VisitLambda(LambdaExpression lambda)
-    {
-        Expression body = this.Visit(lambda.Body);
-
-        if (body != lambda.Body)
+        protected virtual Expression VisitInvocation(InvocationExpression iv)
         {
-            return Expression.Lambda(lambda.Type, body, lambda.Parameters);
-        }
+            IEnumerable<Expression> args = this.VisitExpressionList(iv.Arguments);
+            Expression expr = this.Visit(iv.Expression);
 
-        return lambda;
-    }
-
-    protected virtual NewExpression VisitNew(NewExpression nex)
-    {
-        IEnumerable<Expression> args = this.VisitExpressionList(nex.Arguments);
-
-        if (args != nex.Arguments)
-        {
-            if (nex.Members != null)
-                return Expression.New(nex.Constructor, args, nex.Members);
-            else
-                return Expression.New(nex.Constructor, args);
-        }
-
-        return nex;
-    }
-
-    protected virtual Expression VisitMemberInit(MemberInitExpression init)
-    {
-        NewExpression n = this.VisitNew(init.NewExpression);
-        IEnumerable<MemberBinding> bindings = this.VisitBindingList(init.Bindings);
-
-        if (n != init.NewExpression || bindings != init.Bindings)
-        {
-            return Expression.MemberInit(n, bindings);
-        }
-
-        return init;
-    }
-
-    protected virtual Expression VisitListInit(ListInitExpression init)
-    {
-        NewExpression n = this.VisitNew(init.NewExpression);
-        IEnumerable<ElementInit> initializers = this.VisitElementInitializerList(init.Initializers);
-
-        if (n != init.NewExpression || initializers != init.Initializers)
-        {
-            return Expression.ListInit(n, initializers);
-        }
-
-        return init;
-    }
-
-    protected virtual Expression VisitNewArray(NewArrayExpression na)
-    {
-        IEnumerable<Expression> exprs = this.VisitExpressionList(na.Expressions);
-
-        if (exprs != na.Expressions)
-        {
-            if (na.NodeType == ExpressionType.NewArrayInit)
+            if (args != iv.Arguments || expr != iv.Expression)
             {
-                return Expression.NewArrayInit(na.Type.GetElementType(), exprs);
+                return Expression.Invoke(expr, args);
             }
-            else
-            {
-                return Expression.NewArrayBounds(na.Type.GetElementType(), exprs);
-            }
+
+            return iv;
         }
-
-        return na;
     }
-
-    protected virtual Expression VisitInvocation(InvocationExpression iv)
-    {
-        IEnumerable<Expression> args = this.VisitExpressionList(iv.Arguments);
-        Expression expr = this.Visit(iv.Expression);
-
-        if (args != iv.Arguments || expr != iv.Expression)
-        {
-            return Expression.Invoke(expr, args);
-        }
-
-        return iv;
-    }
-}
-```

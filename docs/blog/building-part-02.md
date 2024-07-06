@@ -1,4 +1,4 @@
-# LINQ: Building an IQueryable Provider – Part II: Where and a reusable Expression tree visitor
+# LINQ: Building an IQueryable Provider ' Part II: Where and a reusable Expression tree visitor
 
 Matt Warren - MSFT; July 31, 2007
 
@@ -7,249 +7,229 @@ If you are new to this series please read the following post before proceeding.
 
 ---
 
-Now, that I’ve laid the groundwork defining a reusable version of `IQueryable` and `IQueryProvider`, namely `Query<T>` and `QueryProvider`, 
-I’m going to build a provider that actually does something.
-As I said before, what a query provider really does is execute a little bit of ‘code’ defined as an expression tree instead of actual IL.
+Now, that I've laid the groundwork defining a reusable version of `IQueryable` and `IQueryProvider`, namely `Query<T>` and `QueryProvider`, 
+I'm going to build a provider that actually does something.
+As I said before, what a query provider really does is execute a little bit of code defined as an expression tree instead of actual IL.
 Of course, it does not actually have to execute it in the traditional sense.
 For example, LINQ to SQL translates the query expression into SQL and sends it to the server to execute it.
 
-
 My sample below is going to work much like LINQ to SQL in that it translates and executes a query against an ADO provider.
 However, I must add a disclaimer here, this sample is not a full-fledge provider in any sense.
-I’m only going to handle translating the ‘Where’ operation and I’m not even going to attempt to do anything more complicated than allow the predicate to contain a field reference and few simple operators.
+I'm only going to handle translating the 'Where' operation and I'm not even going to attempt to do anything more complicated than allow the predicate to contain a field reference and few simple operators.
 I may expand on this provider in the future, but for now it is mostly for illustrative purposes only.
-Please don’t copy and paste and expect to have ship-quality code.
-
+Please don't copy and paste and expect to have ship-quality code.
 
 The provider is going to basically do two things:
   1) translate the query into a SQL command text
   2) translate the result of executing the command into objects.
 
-<br/>
-
 ## The Query Translator
 
+The query translator is going to simply visit each node in the query's expression tree and translate the supported operations into text using a StringBuilder.  For the sake of clarity assume there is a class called ExpressionVisitor that defines the base visitor pattern for Expression nodes.  (I promise I'll actually include the code for this at the end of the post but for now bear with me.)
 
-The query translator is going to simply visit each node in the query’s expression tree and translate the supported operations into text using a StringBuilder.  For the sake of clarity assume there is a class called ExpressionVisitor that defines the base visitor pattern for Expression nodes.  (I promise I’ll actually include the code for this at the end of the post but for now bear with me.)
-
-
-```csharp
-internal class QueryTranslator : ExpressionVisitor
-{
-    StringBuilder sb;
-
-    internal QueryTranslator()
+    internal class QueryTranslator : ExpressionVisitor
     {
-    }
+        StringBuilder sb;
 
-    internal string Translate(Expression expression)
-    {
-        this.sb = new StringBuilder();
-        this.Visit(expression);
-        return this.sb.ToString();
-    }
-
-    private static Expression StripQuotes(Expression e)
-    {
-        while (e.NodeType == ExpressionType.Quote)
+        internal QueryTranslator()
         {
-            e = ((UnaryExpression)e).Operand;
         }
 
-        return e;
-    }
-
-    protected override Expression VisitMethodCall(MethodCallExpression m)
-    {
-        if (m.Method.DeclaringType == typeof(Queryable) && m.Method.Name == "Where")
+        internal string Translate(Expression expression)
         {
-            sb.Append("SELECT * FROM (");
-            this.Visit(m.Arguments[0]);
-            sb.Append(") AS T WHERE ");
-            LambdaExpression lambda = (LambdaExpression)StripQuotes(m.Arguments[1]);
-            this.Visit(lambda.Body);
-            return m;
+            this.sb = new StringBuilder();
+            this.Visit(expression);
+            return this.sb.ToString();
         }
 
-        throw new NotSupportedException(string.Format("The method '{0}' is not supported", m.Method.Name));
-    }
-
-    protected override Expression VisitUnary(UnaryExpression u)
-    {
-        switch (u.NodeType)
+        private static Expression StripQuotes(Expression e)
         {
-            case ExpressionType.Not:
-                sb.Append(" NOT ");
-                this.Visit(u.Operand);
-                break;
-
-            default:
-                throw new NotSupportedException(string.Format("The unary operator '{0}' is not supported", u.NodeType));
-        }
-
-        return u;
-    }
-
-    protected override Expression VisitBinary(BinaryExpression b)
-    {
-        sb.Append("(");
-
-        this.Visit(b.Left);
-
-        switch (b.NodeType)
-        {
-            case ExpressionType.And:
-                sb.Append(" AND ");
-                break;
-
-            case ExpressionType.Or:
-                sb.Append(" OR");
-                break;
-
-            case ExpressionType.Equal:
-                sb.Append(" = ");
-                break;
-
-            case ExpressionType.NotEqual:
-                sb.Append(" <> ");
-                break;
-
-            case ExpressionType.LessThan:
-                sb.Append(" < ");
-                break;
-
-            case ExpressionType.LessThanOrEqual:
-                sb.Append(" <= ");
-                break;
-
-            case ExpressionType.GreaterThan:
-                sb.Append(" > ");
-                break;
-
-            case ExpressionType.GreaterThanOrEqual:
-               sb.Append(" >= ");
-                break;
-
-            default:
-                throw new NotSupportedException(string.Format("The binary operator '{0}' is not supported", b.NodeType));
-        }
-
-        this.Visit(b.Right);
-
-        sb.Append(")");
-
-        return b;
-    }
-
-    protected override Expression VisitConstant(ConstantExpression c)
-    {
-        IQueryable q = c.Value as IQueryable;
-
-        if (q != null)
-        {
-            // assume constant nodes w/ IQueryables are table references
-            sb.Append("SELECT * FROM ");
-            sb.Append(q.ElementType.Name);
-        }
-        else if (c.Value == null)
-        {
-            sb.Append("NULL");
-        }
-        else
-        {
-            switch (Type.GetTypeCode(c.Value.GetType()))
+            while (e.NodeType == ExpressionType.Quote)
             {
-                case TypeCode.Boolean:
-                    sb.Append(((bool)c.Value) ? 1 : 0);
-                    break;
+                e = ((UnaryExpression)e).Operand;
+            }
 
-                case TypeCode.String:
-                    sb.Append("'");
-                    sb.Append(c.Value);
-                    sb.Append("'");
-                    break;
+            return e;
+        }
 
-                case TypeCode.Object:
-                    throw new NotSupportedException(string.Format("The constant for '{0}' is not supported", c.Value));
+        protected override Expression VisitMethodCall(MethodCallExpression m)
+        {
+            if (m.Method.DeclaringType == typeof(Queryable) && m.Method.Name == "Where")
+            {
+                sb.Append("SELECT * FROM (");
+                this.Visit(m.Arguments[0]);
+                sb.Append(") AS T WHERE ");
+                LambdaExpression lambda = (LambdaExpression)StripQuotes(m.Arguments[1]);
+                this.Visit(lambda.Body);
+                return m;
+            }
+
+            throw new NotSupportedException(string.Format("The method '{0}' is not supported", m.Method.Name));
+        }
+
+        protected override Expression VisitUnary(UnaryExpression u)
+        {
+            switch (u.NodeType)
+            {
+                case ExpressionType.Not:
+                    sb.Append(" NOT ");
+                    this.Visit(u.Operand);
+                    break;
 
                 default:
-                    sb.Append(c.Value);
-                    break;
+                    throw new NotSupportedException(string.Format("The unary operator '{0}' is not supported", u.NodeType));
             }
+
+            return u;
         }
 
-        return c;
-    }
-
-    protected override Expression VisitMemberAccess(MemberExpression m)
-    {
-        if (m.Expression != null && m.Expression.NodeType == ExpressionType.Parameter)
+        protected override Expression VisitBinary(BinaryExpression b)
         {
-            sb.Append(m.Member.Name);
-            return m;
+            sb.Append("(");
+
+            this.Visit(b.Left);
+
+            switch (b.NodeType)
+            {
+                case ExpressionType.And:
+                    sb.Append(" AND ");
+                    break;
+
+                case ExpressionType.Or:
+                    sb.Append(" OR");
+                    break;
+
+                case ExpressionType.Equal:
+                    sb.Append(" = ");
+                    break;
+
+                case ExpressionType.NotEqual:
+                    sb.Append(" <> ");
+                    break;
+
+                case ExpressionType.LessThan:
+                    sb.Append(" < ");
+                    break;
+
+                case ExpressionType.LessThanOrEqual:
+                    sb.Append(" <= ");
+                    break;
+
+                case ExpressionType.GreaterThan:
+                    sb.Append(" > ");
+                    break;
+
+                case ExpressionType.GreaterThanOrEqual:
+                sb.Append(" >= ");
+                    break;
+
+                default:
+                    throw new NotSupportedException(string.Format("The binary operator '{0}' is not supported", b.NodeType));
+            }
+
+            this.Visit(b.Right);
+
+            sb.Append(")");
+
+            return b;
         }
 
-        throw new NotSupportedException(string.Format("The member '{0}' is not supported", m.Member.Name));
+        protected override Expression VisitConstant(ConstantExpression c)
+        {
+            IQueryable q = c.Value as IQueryable;
+
+            if (q != null)
+            {
+                // assume constant nodes w/ IQueryables are table references
+                sb.Append("SELECT * FROM ");
+                sb.Append(q.ElementType.Name);
+            }
+            else if (c.Value == null)
+            {
+                sb.Append("NULL");
+            }
+            else
+            {
+                switch (Type.GetTypeCode(c.Value.GetType()))
+                {
+                    case TypeCode.Boolean:
+                        sb.Append(((bool)c.Value) ? 1 : 0);
+                        break;
+
+                    case TypeCode.String:
+                        sb.Append("'");
+                        sb.Append(c.Value);
+                        sb.Append("'");
+                        break;
+
+                    case TypeCode.Object:
+                        throw new NotSupportedException(string.Format("The constant for '{0}' is not supported", c.Value));
+
+                    default:
+                        sb.Append(c.Value);
+                        break;
+                }
+            }
+
+            return c;
+        }
+
+        protected override Expression VisitMemberAccess(MemberExpression m)
+        {
+            if (m.Expression != null && m.Expression.NodeType == ExpressionType.Parameter)
+            {
+                sb.Append(m.Member.Name);
+                return m;
+            }
+
+            throw new NotSupportedException(string.Format("The member '{0}' is not supported", m.Member.Name));
+        }
     }
-}
-```
 
- 
-
-
-As you can see, there’s not much there and still it is rather complicated.
-What I’m expecting to see in the expression tree is at most a method call node with arguments referring to the source (argument 0) and the predicate (argument 1).
+As you can see, there's not much there and still it is rather complicated.
+What I'm expecting to see in the expression tree is at most a method call node with arguments referring to the source (argument 0) and the predicate (argument 1).
 Take a look at the VisitMethodCall method above.
-I explicitly handle the case of the `Queryable.Where` method, generating a “SELECT * FROM (“, recursively visiting the source and then appending “) AS T WHERE “,
+I explicitly handle the case of the `Queryable.Where` method, generating a 'SELECT * FROM (', recursively visiting the source and then appending ') AS T WHERE ',
 and then visiting the predicate.
 This allows for other query operators present in the source expression to be nested sub-queries.
-I don’t handle any other operators, but if more than one call to Where is used then I’m able to deal with that gracefully.
-It doesn’t matter what the table alias is that is used (I picked ‘T’) since I’m not going to generate references to it anyway.
+I don't handle any other operators, but if more than one call to Where is used then I'm able to deal with that gracefully.
+It doesn't matter what the table alias is that is used (I picked 'T') since I'm not going to generate references to it anyway.
 A more full-fledged provider would of course want to do this.
 
-
-There’s a little helper method included called `StripQutotes`.
-Its job is to strip away any `ExpressionType.Quote` nodes on the method arguments (which may happen) so I can get at the pure lambda expression that I’m looking for.
-
+There's a little helper method included called `StripQuotes`.
+Its job is to strip away any `ExpressionType.Quote` nodes on the method arguments (which may happen) so I can get at the pure lambda expression that I'm looking for.
 
 The `VisitUnary` and `VisitBinary` methods are straightforward.
-They simply inject the correct text for the specific unary and binary operators I’ve chosen to support.
+They simply inject the correct text for the specific unary and binary operators I've chosen to support.
 The interesting bit of translation comes in the `VisitConstant` method.
-You see, table references in my world are just the root IQueryable’s.
-If a constant node holds one of my `Query<T>` instances then I’ll just assume it’s meant to represent the root table
-so I’ll append “SELECT * FROM” and then the name of the table which is simply the name of the element type of the query.
+You see, table references in my world are just the root IQueryable's.
+If a constant node holds one of my `Query<T>` instances then I'll just assume it's meant to represent the root table
+so I'll append 'SELECT * FROM' and then the name of the table which is simply the name of the element type of the query.
 The rest of the translation for constant nodes just deals with actual constants.
 Note, these constants are added to the command text as literal values.
 There is nothing here to stop injection attacks that real providers need to deal with.
-
 
 Finally, `VisitMemberAccess` assumes that all field or property accesses are meant to be column references in the command text.
 No checking is done to prove that this is true.
 The name of the field or property is assumed to match the name of the column in the database.
 
-
 Given a class `Customers` with fields matching the names of the columns in the Northwind sample database, this query translator will generate queries that look like this:
-
 
 #### For the query:
 
-```csharp
-Query<Customers> customers = ...;
-IQueryable<Customers> q = customers.Where(c => c.City == "London");
-```
+    Query<Customers> customers = ...;
+    IQueryable<Customers> q = customers.Where(c => c.City == "London");
 
 #### Resulting SQL:
 
-```SQL
-SELECT * FROM (SELECT *FROM Customers) AS T WHERE (city = ‘London’)
-```
+    SELECT * FROM (SELECT *FROM Customers) AS T WHERE (city = 'London')
 
 <br/>
 
 ## The Object Reader
 
 The job of the object reader is to turn the results of a SQL query into objects.
-I’m going to build a simple class that takes a `DbDataReader` and a type `T` and I’ll make it implement `IEnumerable<T>`.
+I'm going to build a simple class that takes a `DbDataReader` and a type `T` and I'll make it implement `IEnumerable<T>`.
 There are no bells and whistles in this implementation.
 It will only work for writing into class fields via reflection.
 The names of the fields must match the names of the columns in the reader and the types must match whatever the `DataReader` thinks is the correct type.
@@ -384,7 +364,7 @@ internal class ObjectReader<T> : IEnumerable<T>, IEnumerable where T : class, ne
 The `ObjectReader` creates a new instance of type `T` for each row read by the `DbDataReader`.
 It uses the reflection API `FieldInfo.SetValue` to assign values to each field of the object.
 When the `ObjectReader` is first created it instantiates an instance of the nested `Enumerator` class.
-This enumerator is handed out when the `GetEnumerator` method is called. Since `DataReader`’s cannot reset and execute again,
+This enumerator is handed out when the `GetEnumerator` method is called. Since `DataReader`'s cannot reset and execute again,
 the enumerator can only be handed out once.
 If `GetEnumerator` is called a second time an exception is thrown.
 
@@ -394,14 +374,14 @@ Since the `QueryTranslator` builds queries using `SELECT *` this is a must becau
 Note, that it is generally inadvisable to use `SELECT *` in production code.
 Remember this is just an illustrative sample to show how in general to put together a LINQ provider.
 In order to allow for different sequences of columns, the precise sequence is discovered at runtime when the first row is read for the `DataReader`.
-The `InitFieldLookup` function builds a map from column name to column ordinal and then assembles a lookup table `fieldLookup` that maps between the object’s fields and the ordinals.
+The `InitFieldLookup` function builds a map from column name to column ordinal and then assembles a lookup table `fieldLookup` that maps between the object's fields and the ordinals.
 
 <br/>
 
 ## The Provider
 
 
-Now that we have these two pieces (and the classes define in the prior post) it’s quite easy to combine them together to make an actual IQueryable LINQ provider.
+Now that we have these two pieces (and the classes define in the prior post) it's quite easy to combine them together to make an actual IQueryable LINQ provider.
 
 
 ```csharp
@@ -450,8 +430,8 @@ The `Execute` method uses both `QueryTranslator` and `ObjectReader` to build a `
 
 
 Now that we have our provider we can try it out.
-Since I’m basically following the LINQ to SQL model I’ll define a class for the Customers table, 
-a ‘Context’ that holds onto the tables (root queries) and a little program that uses them.
+Since I'm basically following the LINQ to SQL model I'll define a class for the Customers table, 
+a 'Context' that holds onto the tables (root queries) and a little program that uses them.
 
 
 ```csharp
@@ -488,7 +468,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        string constr = @"…";
+        string constr = @"'";
 
         using (SqlConnection con = new SqlConnection(constr))
         {
@@ -530,17 +510,17 @@ Name: Hari Kumar
 Excellent, just what I wanted.  I love it when a plan comes together.
 
 
-That’s it folks.  That’s a LINQ IQueryable provider.  Well, at least a crude facsimile of one.
+That's it folks.  That's a LINQ IQueryable provider.  Well, at least a crude facsimile of one.
 Of course, yours will do so much more than mine.  It will handle all the edge cases and serve coffee. 
 
  <br/>
 
-## APPENDIX – The Expression Visitor
+## APPENDIX ' The Expression Visitor
 
 
-Now you are in for it. I think I’ve received about an order of magnitude more requests for this class than for help on building a query provider.
-There is an `ExpressionVisitor` class in `System.Linq.Expressions`, however it is internal so it’s not for your direct consumption as much as you’d like it to be.
-If you shout real loud you might convince us to make that one public in the next go ‘round.
+Now you are in for it. I think I've received about an order of magnitude more requests for this class than for help on building a query provider.
+There is an `ExpressionVisitor` class in `System.Linq.Expressions`, however it is internal so it's not for your direct consumption as much as you'd like it to be.
+If you shout real loud you might convince us to make that one public in the next go 'round.
 
 
 This expression visitor is my take on the (classic) visitor pattern.
@@ -548,8 +528,8 @@ In this variant there is only one visitor class that dispatches calls to the gen
 Note not every node type gets it own method, for example all binary operators are treated in one `VisitBinary` method.
 The nodes themselves do not directly participate in the visitation process. They are treated as just data.
 The reason for this is that the quantity of visitors is actually open ended. You can write your own.
-Therefore no semantics of visiting is coupled into the node classes.  It’s all in the visitors.
-The default visit behavior for node XXX is baked into the base class’s version of VisitXXX.
+Therefore no semantics of visiting is coupled into the node classes.  It's all in the visitors.
+The default visit behavior for node XXX is baked into the base class's version of VisitXXX.
 
 
 Another variant is that all `VisitXXX` methods return a node. The `Expression` tree nodes are immutable.
@@ -558,7 +538,7 @@ If no changes are made then the same node is returned.
 That way if you make a change to a node (by making a new node) deep down in a tree, the rest of the tree is rebuilt automatically for you.
 
 
-Here’s the code. Enjoy.
+Here's the code. Enjoy.
 
 
 ```csharp

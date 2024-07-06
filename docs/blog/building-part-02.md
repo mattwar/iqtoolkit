@@ -224,8 +224,6 @@ Given a class `Customers` with fields matching the names of the columns in the N
 
     SELECT * FROM (SELECT *FROM Customers) AS T WHERE (city = 'London')
 
-<br/>
-
 ## The Object Reader
 
 The job of the object reader is to turn the results of a SQL query into objects.

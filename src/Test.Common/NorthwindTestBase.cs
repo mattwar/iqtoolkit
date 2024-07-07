@@ -21,7 +21,6 @@ namespace Test
         public override void Setup(string[] args)
         {
             base.Setup(args);
-
             this.db = new Northwind(this.GetProvider());
         }
     }

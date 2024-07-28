@@ -5,6 +5,9 @@ using System;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// Represents the raw text of a literal in the syntax of the database language.
+    /// </summary>
     public sealed class DbLiteralExpression : DbExpression
     {
         public string LiteralText { get; }

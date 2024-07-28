@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQToolkit.Data.Odbc", "IQTo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQToolkit.Data.OleDb", "IQToolkit.Data.OleDb\IQToolkit.Data.OleDb.csproj", "{A499FAB7-638D-48E9-944D-F177E3DE3DEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Shared", "Test.Shared\Test.Shared.csproj", "{D407613E-337F-4525-A90E-09E3EB07AEAF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Shared", "Test.Shared\Test.Shared.csproj", "{D407613E-337F-4525-A90E-09E3EB07AEAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

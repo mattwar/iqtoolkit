@@ -7,9 +7,19 @@ namespace IQToolkit.Data.Expressions
 {
     using Utils;
 
+    /// <summary>
+    /// A <see cref="CommandExpression"/> that declared variables.
+    /// </summary>
     public sealed class DeclarationCommand : CommandExpression
     {
+        /// <summary>
+        /// The declared variables.
+        /// </summary>
         public IReadOnlyList<VariableDeclaration> Variables { get; }
+
+        /// <summary>
+        /// An optional source/query expression used to initialize the variables.
+        /// </summary>
         public SelectExpression? Source { get; }
 
         public DeclarationCommand(IEnumerable<VariableDeclaration> variables, SelectExpression? source)

@@ -9,7 +9,7 @@ namespace IQToolkit.Data.Expressions
     using Utils;
 
     /// <summary>
-    /// A SQL `in` expression for a list of values.
+    /// A SQL IN expression for a list of values.
     /// </summary>
     public sealed class InValuesExpression : DbExpression
     {

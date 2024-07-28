@@ -4,7 +4,7 @@
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// An exists subquery (scalar boolean).
+    /// A SQL EXISTS subquery.
     /// </summary>
     public sealed class ExistsSubqueryExpression : SubqueryExpression
     {

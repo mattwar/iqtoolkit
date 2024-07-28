@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// A SQL `in` sub-query expression
+    /// A SQL IN subquery.
     /// </summary>
     public sealed class InSubqueryExpression : SubqueryExpression
     {

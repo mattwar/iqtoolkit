@@ -7,7 +7,8 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// An extended expression visitor including custom DbExpression nodes
+    /// An extended expression visitor.
+    /// Includes <see cref="DbExpression"/> nodes.
     /// </summary>
     public abstract class DbExpressionVisitor : IQToolkit.Expressions.ExpressionVisitor
     {
@@ -146,10 +147,9 @@ namespace IQToolkit.Data.Expressions
         protected virtual void VisitVariable(VariableExpression expr) { this.VisitUnhandled(expr); }
     }
 
-
-
     /// <summary>
-    /// An extended expression visitor including custom DbExpression nodes
+    /// An extended expression visitor.
+    /// Includes <see cref="DbExpression"/> nodes.
     /// </summary>
     public abstract class DbExpressionVisitor<TResult> : IQToolkit.Expressions.ExpressionVisitor<TResult>
     {

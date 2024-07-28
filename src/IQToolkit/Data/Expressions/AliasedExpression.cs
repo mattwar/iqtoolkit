@@ -5,6 +5,9 @@ using System;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// Base class for <see cref="DbExpression"/> that declare a <see cref="TableAlias"/>.
+    /// </summary>
     public abstract class AliasedExpression : DbExpression
     {
         public TableAlias Alias { get; }

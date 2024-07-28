@@ -47,17 +47,4 @@ namespace IQToolkit.Data
             this.Diagnostics = diagnostics.ToReadOnly();
         }
     }
-
-    /// <summary>
-    /// Represents an error.
-    /// </summary>
-    public class Diagnostic
-    {
-        public string Message { get; }
-
-        public Diagnostic(string message)
-        {
-            this.Message = message;
-        }
-    }
 }

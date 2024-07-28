@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Access
     /// <summary>
     /// Microsoft Access SQL <see cref="QueryLanguage"/>
     /// </summary>
-    public sealed class AccessLanguage : QueryLanguage, ICreateLanguageTranslator
+    public sealed class AccessLanguage : QueryLanguage, ICreateLanguageRewriter
     {
         private AccessLanguage()
         {
@@ -28,7 +28,7 @@ namespace IQToolkit.Data.Access
         public override QueryFormatter Formatter =>
             AccessFormatter.Singleton;
 
-        QueryLanguageRewriter ICreateLanguageTranslator.CreateLanguageTranslator(QueryTranslator translator) =>
+        QueryLanguageRewriter ICreateLanguageRewriter.CreateLanguageTranslator(QueryTranslator translator) =>
             new AccessLanguageRewriter(translator, this);
 
         public override string Quote(string name)
@@ -48,5 +48,4 @@ namespace IQToolkit.Data.Access
             return new FunctionCallExpression(TypeHelper.GetMemberType(member), false, "@@IDENTITY", null);
         }
     }
-
 }

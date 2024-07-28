@@ -11,6 +11,7 @@ using IQToolkit.Expressions;
 
 namespace IQToolkit.Data
 {
+    using Expressions;
     using Utils;
 
     /// <summary>
@@ -188,7 +189,7 @@ namespace IQToolkit.Data
             if (rootMember != memberQuery.Body)
             {
                 var memberParam = Expression.Parameter(rootMember.Type, "root");
-                var newBody = ExpressionReplacer.Replace(memberQuery.Body, rootMember, memberParam);
+                var newBody = memberQuery.Body.Replace(rootMember, memberParam);
                 return this.AddOperation(rootMember.Member, Expression.Lambda(newBody, memberParam));
             }
 

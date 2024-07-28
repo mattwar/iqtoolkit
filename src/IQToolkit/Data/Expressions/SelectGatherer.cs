@@ -11,7 +11,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// returns the list of SelectExpressions accessible from the source expression
+    /// Returns a list of <see cref="SelectExpression"/> accessible from the source expression
     /// </summary>
     public class SelectGatherer : DbExpressionRewriter
     {

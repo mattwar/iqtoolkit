@@ -50,7 +50,7 @@ namespace IQToolkit.Data.Translation
                     ));
                 select = select.WithOrderBy(inverted);
 
-                select = select.AddRedundantSelect(this._language, new TableAlias());
+                select = select.AddRedundantSelect(_language, new TableAlias());
                 select = select.WithTake(Expression.Constant(0)); // temporary
                 select = (SelectExpression)select.MoveOrderByToOuterSelect(_language);
                 var reverted = select.OrderBy.Select(ob => new OrderExpression(

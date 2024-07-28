@@ -21,7 +21,7 @@ namespace IQToolkit.Data.Sessions
         /// <summary>
         /// The entity is updated if it has changed.
         /// </summary>
-        PossibleUpdate,
+        ConditionalUpdate,
 
         /// <summary>
         /// The new entity is inserted

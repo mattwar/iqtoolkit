@@ -4,15 +4,15 @@
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// A kind of SQL join
+    /// The kinds of SQL join operations.
     /// </summary>
     public enum JoinType
     {
+        CrossApply,
         CrossJoin,
         InnerJoin,
-        CrossApply,
-        OuterApply,
         LeftOuterJoin,
+        OuterApply,
         SingletonLeftOuterJoin
     }
 }

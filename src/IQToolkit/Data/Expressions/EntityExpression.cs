@@ -7,9 +7,19 @@ namespace IQToolkit.Data.Expressions
 {
     using Mapping;
 
+    /// <summary>
+    /// Associates the expression with a mapped entity.
+    /// </summary>
     public sealed class EntityExpression : DbExpression
     {
+        /// <summary>
+        /// The entity.
+        /// </summary>
         public MappingEntity Entity { get; }
+
+        /// <summary>
+        /// The expression that constructs the entity instance.
+        /// </summary>
         public Expression Expression { get; }
 
         public EntityExpression(MappingEntity entity, Expression expression)

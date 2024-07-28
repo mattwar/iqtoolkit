@@ -31,7 +31,7 @@ namespace IQToolkit.Data.Translation
                 if (rjoin.Right is AliasedExpression right
                     && this.FindSimilarRight(rjoin.Left as JoinExpression, join) is AliasedExpression similarRight)
                 {
-                    this._map.Add(right.Alias, similarRight.Alias);
+                    _map.Add(right.Alias, similarRight.Alias);
                     return join.Left;
                 }
             }
@@ -69,7 +69,7 @@ namespace IQToolkit.Data.Translation
         protected override Expression RewriteColumn(ColumnExpression column)
         {
             TableAlias mapped;
-            if (this._map.TryGetValue(column.Alias, out mapped))
+            if (_map.TryGetValue(column.Alias, out mapped))
             {
                 return new ColumnExpression(column.Type, column.QueryType, mapped, column.Name);
             }

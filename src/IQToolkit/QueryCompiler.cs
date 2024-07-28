@@ -117,63 +117,66 @@ namespace IQToolkit
 
             internal IQueryProvider? FindProvider(Expression expression, object?[] args)
             {
-                Expression? root = this.FindProviderInExpression(expression) as ConstantExpression;
-                
-                if (root == null && args != null && args.Length > 0)
+                var providerNode = this.FindProvider(expression);
+
+                var providerConst = providerNode as ConstantExpression;
+
+                // If no expression is found that refers to the provider
+                // replace all parameter references with actual argument values and try again.
+                if (providerConst == null
+                    && args != null 
+                    && args.Length > 0)
                 {
-                    Expression replaced = ExpressionReplacer.ReplaceAll(
+                    var replaced = ExpressionReplacer.ReplaceAll(
                         expression,
                         _query.Parameters.ToArray(),
                         args.Select((a, i) => Expression.Constant(a, _query.Parameters[i].Type)).ToArray()
                         );
-                    root = this.FindProviderInExpression(replaced);
+
+                    providerNode = this.FindProvider(replaced);
+                    providerConst = providerNode as ConstantExpression;
                 }
 
-                if (root != null) 
+                // if we found a provider node but it is not a constant
+                // try partial evaluating the node to get the value
+                if (providerConst == null && providerNode != null)
                 {
-                    var cex = root as ConstantExpression;
-                    if (cex == null)
-                    {
-                        cex = PartialEvaluator.Eval(root) as ConstantExpression;
-                    }
-                    if (cex != null)
-                    {
-                        var provider = cex.Value as IQueryProvider;
-                        if (provider == null)
-                        {
-                            var query = cex.Value as IQueryable;
-                            if (query != null)
-                            {
-                                provider = query.Provider;
-                            }
-                        }
+                    providerConst = PartialEvaluator.Eval(providerNode) as ConstantExpression;
+                }
 
+                if (providerConst != null)
+                {
+                    if (providerConst.Value is IQueryProvider provider)
+                    {
                         return provider;
+                    }
+                    else if (providerConst.Value is IQueryable queryable)
+                    {
+                        return queryable.Provider;
                     }
                 }
 
                 return null;
             }
 
-            private Expression? FindProviderInExpression(Expression expression)
+            /// <summary>
+            /// Returns the expression that refers to the query provider.
+            /// </summary>
+            private Expression? FindProvider(Expression expression)
             {
-                var root = TypedSubtreeFinder.Find(expression, typeof(IQueryProvider));
-                
-                if (root == null)
-                {
-                    root = TypedSubtreeFinder.Find(expression, typeof(IQueryable));            
-                }
-
-                return root;
+                return TypedSubtreeFinder.Find(expression, typeof(IQueryProvider))
+                    ?? TypedSubtreeFinder.Find(expression, typeof(IQueryable));
             }
 
             public object? Invoke(object?[] args)
             {
                 this.Compile(args);
+
                 if (_invoker == null)
                 {
                     _invoker = GetInvoker();
                 }
+
                 if (_invoker != null)
                 {
                     return _invoker(args);
@@ -191,14 +194,14 @@ namespace IQToolkit
                 }
             }
 
-            Func<object?[], object?>? _invoker;
-            bool checkedForInvoker;
+            private Func<object?[], object?>? _invoker;
+            private bool _checkedForInvoker;
 
             private Func<object?[], object?>? GetInvoker()
             {
-                if (_fnQuery != null && _invoker == null && !checkedForInvoker)
+                if (_fnQuery != null && _invoker == null && !_checkedForInvoker)
                 {
-                    this.checkedForInvoker = true;
+                    _checkedForInvoker = true;
                     Type fnType = _fnQuery.GetType();
 
                     if (fnType.FullName.StartsWith("System.Func`"))
@@ -211,6 +214,7 @@ namespace IQToolkit
                         }
                     }
                 }
+
                 return _invoker;
             }
 

@@ -39,19 +39,6 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-#if false
-        protected override Expression RewriteIsNull(IsNullExpression original)
-        {
-            var modified = (IsNullExpression)base.RewriteIsNull(original);
-
-            var expression = this.SkipConvert(modified.Expression);
-
-            if (modified.Expression)
-
-            return base.RewriteIsNull(original);
-        }
-#endif
-
         protected override Expression RewriteBinary(BinaryExpression b)
         {
             switch (b.NodeType)

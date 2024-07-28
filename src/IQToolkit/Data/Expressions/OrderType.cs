@@ -4,7 +4,7 @@
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// An SQL OrderBy order type 
+    /// The type or order.
     /// </summary>
     public enum OrderType
     {

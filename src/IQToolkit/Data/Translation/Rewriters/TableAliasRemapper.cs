@@ -19,8 +19,8 @@ namespace IQToolkit.Data.Translation
 
         public TableAliasRemapper(IEnumerable<TableAlias> oldAliases, TableAlias newAlias)
         {
-            this._oldAliases = new HashSet<TableAlias>(oldAliases);
-            this._newAlias = newAlias;
+            _oldAliases = new HashSet<TableAlias>(oldAliases);
+            _newAlias = newAlias;
         }
 
         public static Expression Map(Expression expression, TableAlias newAlias, IEnumerable<TableAlias> oldAliases)
@@ -37,7 +37,7 @@ namespace IQToolkit.Data.Translation
         {
             if (_oldAliases.Contains(column.Alias))
             {
-                return new ColumnExpression(column.Type, column.QueryType, this._newAlias, column.Name);
+                return new ColumnExpression(column.Type, column.QueryType, _newAlias, column.Name);
             }
 
             return column;

@@ -6,7 +6,7 @@ using System;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// A scalar subquery.
+    /// A SQL scalar subquery.
     /// </summary>
     public sealed class ScalarSubqueryExpression : SubqueryExpression
     {

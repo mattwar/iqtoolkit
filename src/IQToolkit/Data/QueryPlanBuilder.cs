@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -104,20 +105,6 @@ namespace IQToolkit.Data.Execution
                 // add variable assignments up front
                 if (_variables.Count > 0)
                 {
-#if false
-                    List<Expression> exprs = new List<Expression>();
-                    for (int i = 0, n = _variables.Count; i < n; i++)
-                    {
-                        exprs.Add(MakeAssign(_variables[i], _initializers[i]));
-                    }
-
-                    exprs.Add(expression);
-                    Expression sequence = MakeGetLastElement(exprs);  // yields last expression value
-
-                    // use invoke/lambda to create variables via parameters in scope
-                    Expression[] nulls = _variables.Select(v => Expression.Constant(null, v.Type)).ToArray();
-                    expression = Expression.Invoke(Expression.Lambda(sequence, _variables.ToArray()), nulls);
-#else
                     var exprs = new List<Expression>();
 
                     for (int i = 0, n = _variables.Count; i < n; i++)
@@ -128,7 +115,6 @@ namespace IQToolkit.Data.Execution
                     exprs.Add(expression);
 
                     return Expression.Block(_variables, exprs);
-#endif
                 }
 
                 return expression;
@@ -255,7 +241,12 @@ namespace IQToolkit.Data.Execution
             {
                 if (_variableMap.Count > 0)
                 {
-                    expression = VariableSubstitutor.Substitute(_variableMap, expression);
+                    expression = expression.Replace(exp =>
+                        exp is VariableExpression vex
+                            && _variableMap.TryGetValue(vex.Name, out var sub) 
+                            ? sub 
+                            : exp
+                        );
                 }
 
                 return _linguist.Parameterize(expression);
@@ -294,8 +285,6 @@ namespace IQToolkit.Data.Execution
                 // ODBC needs each reference to be a separate parameter.
                 if (!_formattingOptions.IsOdbc)
                     clientParameters = clientParameters.DistinctBy(cp => cp.Name).ToList();
-
-#if true
                 
                 var parameters = clientParameters
                     .Select(cp => new QueryParameter(cp.Name, cp.Type, cp.QueryType))
@@ -304,42 +293,6 @@ namespace IQToolkit.Data.Execution
                 command =
                     Expression.Constant(
                         new QueryCommand(commandText, parameters));
-#else
-                var paramConstructor = typeof(QueryParameter).GetConstructors(BindingFlags.Public | BindingFlags.Instance).First();
-
-
-                Expression parameters;
-                if (clientParameters.Count > 0)
-                {
-                    parameters = Expression.NewArrayInit(
-                        typeof(QueryParameter),
-                        clientParameters.Select(v =>
-                            Expression.New(
-                                paramConstructor,
-                                new[]
-                                {
-                                    Expression.Constant(v.Name),
-                                    Expression.Constant(v.Type),
-                                    Expression.Constant(v.QueryType)
-                                }))
-                            .ToList()
-                        );   
-                }
-                else
-                {
-                    parameters = Expression.Constant(null, typeof(QueryParameter[]));
-                }
-
-                var commandConstructor = typeof(QueryCommand).GetConstructors(BindingFlags.Public | BindingFlags.Instance).First();
-
-                command = Expression.New(
-                    commandConstructor,
-                    new Expression[]
-                    {
-                        Expression.Constant(commandText),
-                        parameters
-                    });
-#endif
 
                 values = clientParameters
                     .Select(v => Expression.Convert(this.Rewrite(v.Value), typeof(object)))
@@ -360,7 +313,7 @@ namespace IQToolkit.Data.Execution
                 var projector = Expression.Lambda(this.Rewrite(projection.Projector), reader);
                 _scope = saveScope;
 
-                var entity = EntityFinder.Find(projection.Projector);
+                var entity = projection.Projector.FindFirstOrDefault<EntityExpression>()?.Entity;
 
                 string methExecute = okayToDefer
                     ? "ExecuteDeferred"
@@ -385,7 +338,8 @@ namespace IQToolkit.Data.Execution
 
             protected override Expression RewriteBatch(BatchExpression batch)
             {
-                if (_linguist.Language.AllowsMultipleCommands || !IsMultipleCommands(batch.Operation.Body as CommandExpression))
+                if (_linguist.Language.AllowsMultipleCommands 
+                    || !IsMultipleCommands(batch.Operation.Body as CommandExpression))
                 {
                     return this.BuildExecuteBatch(batch);
                 }
@@ -427,8 +381,7 @@ namespace IQToolkit.Data.Execution
                     LambdaExpression projector = Expression.Lambda(this.Rewrite(projection.Projector), reader);
                     _scope = saveScope;
 
-                    var entity = EntityFinder.Find(projection.Projector);
-                    //command = new QueryCommand(command.CommandText, command.Parameters);
+                    var entity = projection.Projector.FindFirstOrDefault<EntityExpression>()?.Entity;
 
                     plan = Expression.Call(_executor, "ExecuteBatch", new Type[] { projector.Body.Type },
                         command,
@@ -452,20 +405,6 @@ namespace IQToolkit.Data.Execution
                 return plan;
             }
 
-#if false
-        protected override Expression VisitCommand(CommandExpression command)
-        {
-            if (_linguist.Language.AllowsMultipleCommands || !IsMultipleCommands(command))
-            {
-                return this.BuildExecuteCommand(command);
-            }
-            else
-            {
-                return base.VisitCommand(command);
-            }
-        }
-#endif
-
             protected virtual bool IsMultipleCommands(CommandExpression? command)
             {
                 if (command == null)
@@ -473,9 +412,9 @@ namespace IQToolkit.Data.Execution
 
                 switch ((DbExpressionType)command.NodeType)
                 {
-                    case DbExpressionType.Insert:
-                    case DbExpressionType.Delete:
-                    case DbExpressionType.Update:
+                    case DbExpressionType.InsertCommand:
+                    case DbExpressionType.DeleteCommand:
+                    case DbExpressionType.UpdateCommand:
                         return false;
                     default:
                         return true;
@@ -508,7 +447,7 @@ namespace IQToolkit.Data.Execution
             {
                 var test =
                     Expression.Condition(
-                        ifx.Check,
+                        ifx.Test,
                         ifx.IfTrue,
                         ifx.IfFalse != null
                             ? ifx.IfFalse
@@ -650,7 +589,7 @@ namespace IQToolkit.Data.Execution
             {
                 private readonly Scope? _outer;
                 private readonly ParameterExpression? _fieldReader;
-                private readonly Dictionary<string, int> _nameMap;
+                private readonly ImmutableDictionary<string, int> _nameMap;
 
                 internal TableAlias Alias { get; private set; }
 
@@ -659,14 +598,17 @@ namespace IQToolkit.Data.Execution
                     _outer = outer;
                     _fieldReader = fieldReader;
                     this.Alias = alias;
-                    _nameMap = columns.Select((c, i) => new { c, i }).ToDictionary(x => x.c.Name, x => x.i);
+                    _nameMap = columns
+                        .Select((c, i) => new { c, i })
+                        .ToImmutableDictionary(x => x.c.Name, x => x.i);
                 }
 
                 internal bool TryGetValue(ColumnExpression column, out ParameterExpression? fieldReader, out int ordinal)
                 {
                     for (Scope? s = this; s != null; s = s._outer)
                     {
-                        if (column.Alias == s.Alias && _nameMap.TryGetValue(column.Name, out ordinal))
+                        if (column.Alias == s.Alias 
+                            && _nameMap.TryGetValue(column.Name, out ordinal))
                         {
                             fieldReader = _fieldReader;
                             return true;
@@ -696,7 +638,7 @@ namespace IQToolkit.Data.Execution
 
                 internal static Expression Parameterize(TableAlias outerAlias, Expression expr)
                 {
-                    OuterParameterizer op = new OuterParameterizer(outerAlias);
+                    var op = new OuterParameterizer(outerAlias);
                     return op.Rewrite(expr)!;
                 }
 
@@ -722,106 +664,6 @@ namespace IQToolkit.Data.Execution
                     return column;
                 }
             }
-
-#if false
-            private sealed class ColumnGatherer : DbExpressionRewriter
-            {
-                private readonly Dictionary<string, ColumnExpression> columns =
-                    new Dictionary<string, ColumnExpression>();
-
-                internal static IEnumerable<ColumnExpression> Gather(Expression expression)
-                {
-                    var gatherer = new ColumnGatherer();
-                    gatherer.Rewrite(expression);
-                    return gatherer.columns.Values;
-                }
-
-                protected override Expression VisitColumn(ColumnExpression column)
-                {
-                    if (!this.columns.ContainsKey(column.Name))
-                    {
-                        this.columns.Add(column.Name, column);
-                    }
-
-                    return column;
-                }
-            }
-#endif
-
-            private sealed class VariableSubstitutor : DbExpressionRewriter
-            {
-                private readonly Dictionary<string, Expression> _map;
-
-                private VariableSubstitutor(Dictionary<string, Expression> map)
-                {
-                    _map = map;
-                }
-
-                public static Expression Substitute(Dictionary<string, Expression> map, Expression expression)
-                {
-                    return new VariableSubstitutor(map).Rewrite(expression)!;
-                }
-
-                protected override Expression RewriteVariable(VariableExpression vex)
-                {
-                    if (_map.TryGetValue(vex.Name, out var sub))
-                    {
-                        return sub;
-                    }
-
-                    return vex;
-                }
-            }
-
-            private sealed class EntityFinder : DbExpressionRewriter
-            {
-                private MappingEntity? _entity;
-
-                public static MappingEntity? Find(Expression expression)
-                {
-                    var finder = new EntityFinder();
-                    finder.Rewrite(expression);
-                    return finder._entity;
-                }
-
-                public override Expression Rewrite(Expression exp)
-                {
-                    if (_entity == null)
-                        return base.Rewrite(exp);
-                    return exp;
-                }
-
-                protected override Expression RewriteEntity(EntityExpression entity)
-                {
-                    if (_entity == null)
-                        _entity = entity.Entity;
-                    return entity;
-                }
-
-                protected override Expression RewriteNew(NewExpression nex)
-                {
-                    return nex;
-                }
-
-                protected override Expression RewriteMemberInit(MemberInitExpression init)
-                {
-                    return init;
-                }
-            }
-        }
-    }
-
-    public static class QueryExecutionHelper
-    {
-        public static T Assign<T>(ref T variable, T value)
-        {
-            variable = value;
-            return value;
-        }
-
-        public static object GetLastElement(params object[] values)
-        {
-            return values[values.Length - 1];
         }
     }
 }

@@ -5,6 +5,9 @@ using System;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// Base class for database scalar functions and operators.
+    /// </summary>
     public abstract class DbOperation : DbExpression
     {
         public override bool IsPredicate { get; }

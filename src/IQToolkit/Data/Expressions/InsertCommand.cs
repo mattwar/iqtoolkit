@@ -7,9 +7,19 @@ namespace IQToolkit.Data.Expressions
 {
     using Utils;
 
+    /// <summary>
+    /// A SQL INSERT command.
+    /// </summary>
     public sealed class InsertCommand : CommandExpression
     {
+        /// <summary>
+        /// The table to insert to.
+        /// </summary>
         public TableExpression Table { get; }
+
+        /// <summary>
+        /// The column assignments defining the row to insert.
+        /// </summary>
         public IReadOnlyList<ColumnAssignment> Assignments { get; }
 
         public InsertCommand(TableExpression table, IEnumerable<ColumnAssignment> assignments)
@@ -20,7 +30,7 @@ namespace IQToolkit.Data.Expressions
         }
 
         public override DbExpressionType DbNodeType =>
-            DbExpressionType.Insert;
+            DbExpressionType.InsertCommand;
 
         public InsertCommand Update(TableExpression table, IEnumerable<ColumnAssignment> assignments)
         {

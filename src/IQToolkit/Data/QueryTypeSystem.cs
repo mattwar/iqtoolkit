@@ -6,7 +6,7 @@ using System;
 namespace IQToolkit.Data
 {
     /// <summary>
-    /// A type system used by a query provider's database language.
+    /// A type system used by a database <see cref="QueryLanguage"/>.
     /// </summary>
     public abstract class QueryTypeSystem
     {

@@ -7,7 +7,6 @@ using System.Reflection;
 
 namespace IQToolkit.Data.Mapping
 {
-    using Translation;
     using Utils;
 
     /// <summary>

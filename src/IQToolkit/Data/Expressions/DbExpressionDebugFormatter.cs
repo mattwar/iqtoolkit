@@ -14,8 +14,8 @@ namespace IQToolkit.Data.Expressions
     using Sql;
 
     /// <summary>
-    /// Writes an expression tree to a pseudo language syntax.
-    /// For debug visualization purposes only.
+    /// Formats an expressions tree into pseudo language syntax.
+    /// Useful debug visualization purposes.
     /// </summary>
     public class DbExpressionDebugFormatter : ExpressionFormatter
     {

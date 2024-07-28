@@ -6,12 +6,20 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// Represents an outer joined expression (for example the right-side of left-outer-join)
-    /// that includes a Test expression to determine the outer-joined part exists.
+    /// Represents an outer joined expression in an projection.
+    /// Includes both the normal projected expression and a test to determine 
+    /// if the outer join value exists (typically a test for null on a non-nullable column).
     /// </summary>
     public sealed class OuterJoinedExpression : DbExpression
     {
+        /// <summary>
+        /// The test expression that determines if the outer joined part exists.
+        /// </summary>
         public Expression Test { get; }
+
+        /// <summary>
+        /// The expression based on the outer-joined source.
+        /// </summary>
         public Expression Expression { get; }
 
         public OuterJoinedExpression(Expression test, Expression expression)

@@ -436,7 +436,7 @@ namespace IQToolkit
         /// <returns>A sequence of results corresponding to each invocation.</returns>
         public static IEnumerable<S> Batch<U, T, S>(this IUpdatable<U> collection, IEnumerable<T> instances, Expression<Func<IUpdatable<U>, T, S>> fnOperation)
         {
-            return Batch<U, T, S>(collection, instances, fnOperation, 50, false);
+            return Batch(collection, instances, fnOperation, 50, false);
         }
     }
 }

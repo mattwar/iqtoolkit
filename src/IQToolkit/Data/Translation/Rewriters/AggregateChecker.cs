@@ -12,7 +12,8 @@ namespace IQToolkit.Data.Translation
     /// </summary>
     class AggregateChecker : DbExpressionRewriter
     {
-        bool hasAggregate = false;
+        private bool _hasAggregate = false;
+
         private AggregateChecker()
         {
         }
@@ -21,12 +22,12 @@ namespace IQToolkit.Data.Translation
         {
             AggregateChecker checker = new AggregateChecker();
             checker.Rewrite(expression);
-            return checker.hasAggregate;
+            return checker._hasAggregate;
         }
 
         protected override Expression RewriteAggregate(AggregateExpression aggregate)
         {
-            this.hasAggregate = true;
+            _hasAggregate = true;
             return aggregate;
         }
 

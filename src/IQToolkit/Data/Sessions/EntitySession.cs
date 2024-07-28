@@ -374,7 +374,7 @@ namespace IQToolkit.Data.Sessions
                         this.Table.InsertOrUpdate(item.Instance);
                         return true;
 
-                    case SubmitAction.PossibleUpdate:
+                    case SubmitAction.ConditionalUpdate:
                         if (item.Original != null &&
                             this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
                         {
@@ -469,15 +469,15 @@ namespace IQToolkit.Data.Sessions
                         break;
                     case SubmitAction.Insert:
                         this.AddToCache((TEntity)item.Instance);
-                        this.AssignAction((TEntity)item.Instance, SubmitAction.PossibleUpdate);
+                        this.AssignAction((TEntity)item.Instance, SubmitAction.ConditionalUpdate);
                         break;
                     case SubmitAction.InsertOrUpdate:
                         this.AddToCache((TEntity)item.Instance);
-                        this.AssignAction((TEntity)item.Instance, SubmitAction.PossibleUpdate);
+                        this.AssignAction((TEntity)item.Instance, SubmitAction.ConditionalUpdate);
                         break;
-                    case SubmitAction.PossibleUpdate:
+                    case SubmitAction.ConditionalUpdate:
                     case SubmitAction.Update:
-                        this.AssignAction((TEntity)item.Instance, SubmitAction.PossibleUpdate);
+                        this.AssignAction((TEntity)item.Instance, SubmitAction.ConditionalUpdate);
                         break;
                     default:
                         break; // do nothing
@@ -495,7 +495,7 @@ namespace IQToolkit.Data.Sessions
                 var cached = this.AddToCache(typedInstance)!;
                 if ((object)cached == (object)typedInstance)
                 {
-                    this.AssignAction(typedInstance, SubmitAction.PossibleUpdate);
+                    this.AssignAction(typedInstance, SubmitAction.ConditionalUpdate);
                 }
 
                 return cached;
@@ -509,7 +509,7 @@ namespace IQToolkit.Data.Sessions
                 TrackedItem ti;
                 if (_tracked.TryGetValue(instance, out ti))
                 {
-                    if (ti.State == SubmitAction.PossibleUpdate)
+                    if (ti.State == SubmitAction.ConditionalUpdate)
                     {
                         if (ti.Original != null && this.Mapping.IsModified(ti.Entity, ti.Instance, ti.Original))
                         {
@@ -531,7 +531,7 @@ namespace IQToolkit.Data.Sessions
                 switch (action)
                 {
                     case SubmitAction.None:
-                    case SubmitAction.PossibleUpdate:
+                    case SubmitAction.ConditionalUpdate:
                     case SubmitAction.Update:
                     case SubmitAction.Delete:
                         var cached = this.AddToCache(instance)!;
@@ -592,19 +592,19 @@ namespace IQToolkit.Data.Sessions
                     case SubmitAction.None:
                         _tracked[instance] = new TrackedItem(this, instance, ti?.Original, action, ti?.HookedEvent ?? false);
                         break;
-                    case SubmitAction.PossibleUpdate:
+                    case SubmitAction.ConditionalUpdate:
                         if (instance is INotifyPropertyChanging notify)
                         {
                             if (!ti.HookedEvent)
                             {
                                 notify.PropertyChanging += new PropertyChangingEventHandler(this.OnPropertyChanging);
                             }
-                            _tracked[instance] = new TrackedItem(this, instance, null, SubmitAction.PossibleUpdate, true);
+                            _tracked[instance] = new TrackedItem(this, instance, null, SubmitAction.ConditionalUpdate, true);
                         }
                         else
                         {
                             var original = this.Mapping.CloneEntity(this.Entity, instance);
-                            _tracked[instance] = new TrackedItem(this, instance, original, SubmitAction.PossibleUpdate, false);
+                            _tracked[instance] = new TrackedItem(this, instance, original, SubmitAction.ConditionalUpdate, false);
                         }
                         break;
                     default:
@@ -615,7 +615,7 @@ namespace IQToolkit.Data.Sessions
             protected virtual void OnPropertyChanging(object sender, PropertyChangingEventArgs args)
             {
                 TrackedItem ti;
-                if (_tracked.TryGetValue((TEntity)sender, out ti) && ti.State == SubmitAction.PossibleUpdate)
+                if (_tracked.TryGetValue((TEntity)sender, out ti) && ti.State == SubmitAction.ConditionalUpdate)
                 {
                     object clone = this.Mapping.CloneEntity(ti.Entity, ti.Instance);
                     _tracked[(TEntity)sender] = new TrackedItem(this, ti.Instance, clone, SubmitAction.Update, true);

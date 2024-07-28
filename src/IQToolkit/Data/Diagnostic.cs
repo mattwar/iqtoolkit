@@ -1,18 +1,18 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using System;
-
-namespace IQToolkit.Data.Expressions
+namespace IQToolkit.Data
 {
     /// <summary>
-    /// The base type of all command expressions.
+    /// Represents an error.
     /// </summary>
-    public abstract class CommandExpression : DbExpression
+    public class Diagnostic
     {
-        protected CommandExpression(Type type)
-            : base(type)
+        public string Message { get; }
+
+        public Diagnostic(string message)
         {
+            this.Message = message;
         }
     }
 }

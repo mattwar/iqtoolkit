@@ -5,9 +5,19 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// A SQL DELETE command.
+    /// </summary>
     public sealed class DeleteCommand : CommandExpression
     {
+        /// <summary>
+        /// The table to delete from.
+        /// </summary>
         public TableExpression Table { get; }
+
+        /// <summary>
+        /// The predicate that determines which rows to delete.
+        /// </summary>
         public Expression? Where { get; }
 
         public DeleteCommand(TableExpression table, Expression? where)
@@ -18,7 +28,7 @@ namespace IQToolkit.Data.Expressions
         }
 
         public override DbExpressionType DbNodeType => 
-            DbExpressionType.Delete;
+            DbExpressionType.DeleteCommand;
 
         public DeleteCommand Update(TableExpression table, Expression? where)
         {

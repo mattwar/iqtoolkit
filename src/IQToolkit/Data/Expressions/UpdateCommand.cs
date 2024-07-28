@@ -8,10 +8,24 @@ namespace IQToolkit.Data.Expressions
 {
     using Utils;
 
+    /// <summary>
+    /// A SQL UPDATE command.
+    /// </summary>
     public sealed class UpdateCommand : CommandExpression
     {
+        /// <summary>
+        /// The table to be updated.
+        /// </summary>
         public TableExpression Table { get; }
+
+        /// <summary>
+        /// The predicate that determines which rows are updated.
+        /// </summary>
         public Expression Where { get; }
+
+        /// <summary>
+        /// The assignments that update the columns of each row.
+        /// </summary>
         public IReadOnlyList<ColumnAssignment> Assignments { get; }
 
         public UpdateCommand(
@@ -26,7 +40,7 @@ namespace IQToolkit.Data.Expressions
         }
 
         public override DbExpressionType DbNodeType =>
-            DbExpressionType.Update;
+            DbExpressionType.UpdateCommand;
 
         public UpdateCommand Update(
             TableExpression table, 

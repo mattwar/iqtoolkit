@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// Gathers all columns referenced by the given expression
+    /// Returns the set of all columns referenced by the given expression
     /// </summary>
     public class ReferencedColumnGatherer : DbExpressionRewriter
     {

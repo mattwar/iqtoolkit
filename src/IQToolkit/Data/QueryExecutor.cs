@@ -11,7 +11,7 @@ namespace IQToolkit.Data
     using Utils;
 
     /// <summary>
-    /// An abstraction that represents the execution of database commands.
+    /// A base class for executors that execute database queries and commands.
     /// </summary>
     public abstract class QueryExecutor
     {

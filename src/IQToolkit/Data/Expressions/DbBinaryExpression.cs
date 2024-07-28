@@ -11,8 +11,19 @@ namespace IQToolkit.Data.Expressions
     /// </summary>
     public sealed class DbBinaryExpression : DbOperation
     {
+        /// <summary>
+        /// The left operand.
+        /// </summary>
         public Expression Left { get; }
+
+        /// <summary>
+        /// The text of the operator.
+        /// </summary>
         public string Operator { get; }
+
+        /// <summary>
+        /// The right operand.
+        /// </summary>
         public Expression Right { get; }
 
         public DbBinaryExpression(

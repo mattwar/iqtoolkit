@@ -27,7 +27,6 @@ namespace IQToolkit.Data.Translation
         private class Remover : DbExpressionRewriter
         {
             private readonly ImmutableDictionary<SelectExpression, ImmutableHashSet<string>> _selectColumnsReferenced;
-            private bool _retainAllColumns;
 
             public Remover(
                 ImmutableDictionary<SelectExpression, ImmutableHashSet<string>> selectColumnsReferenced)

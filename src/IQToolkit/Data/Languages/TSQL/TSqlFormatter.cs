@@ -642,7 +642,7 @@ namespace IQToolkit.Data.TSql
                 {
                     this.WriteLine();
                     this.Write("IF ");
-                    this.WritePredicate(ifx.Check);
+                    this.WritePredicate(ifx.Test);
 
                     this.WriteLine();
                     this.Write("BEGIN");

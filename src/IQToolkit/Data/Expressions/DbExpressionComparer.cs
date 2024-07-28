@@ -12,7 +12,8 @@ namespace IQToolkit.Data.Expressions
     using System.Collections.Immutable;
 
     /// <summary>
-    /// Determines if two expressions are equivalent. Supports DbExpression nodes.
+    /// Determines if two expressions are equivalent. 
+    /// Supports <see cref="DbExpression"/> nodes.
     /// </summary>
     public class DbExpressionComparer : ExpressionComparer
     {
@@ -121,7 +122,6 @@ namespace IQToolkit.Data.Expressions
 
             return scope.WithAliasMap(aliasMap);
         }
-
 
         protected override bool Compare(
             Expression? a, 
@@ -381,7 +381,7 @@ namespace IQToolkit.Data.Expressions
             IfCommand y,
             DbScope s)
         {
-            return this.Compare(x.Check, y.Check, s)
+            return this.Compare(x.Test, y.Test, s)
                 && this.Compare(x.IfTrue, y.IfTrue, s)
                 && this.Compare(x.IfFalse, y.IfFalse, s);
         }

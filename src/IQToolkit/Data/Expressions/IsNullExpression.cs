@@ -6,7 +6,8 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// Allows is-null tests against value-types like int and float
+    /// A SQL IS NULL operator.
+    /// Allows tests against value types like int and float.
     /// </summary>
     public sealed class IsNullExpression : DbExpression
     {

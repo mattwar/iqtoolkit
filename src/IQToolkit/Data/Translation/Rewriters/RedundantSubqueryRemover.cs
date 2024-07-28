@@ -38,16 +38,6 @@ namespace IQToolkit.Data.Translation
             return modified;
         }
 
-#if false
-        private static IReadOnlyList<SelectExpression> GetRedundantSubqueries(SelectExpression select) =>
-            select.From != null
-                ? select.From.FindAll<SelectExpression>(
-                    s => IsRedudantSubquery(s),
-                    e => !(e is SubqueryExpression)
-                    )
-                : ReadOnlyList<SelectExpression>.Empty;
-#endif
-
         protected override Expression RewriteClientProjection(ClientProjectionExpression original)
         {
             var modified = (ClientProjectionExpression)base.RewriteClientProjection(original);
@@ -118,50 +108,5 @@ namespace IQToolkit.Data.Translation
                 && select.OrderBy.Count == 0
                 && select.GroupBy.Count == 0;
         }
-
-#if false
-        class RedundantSubqueryGatherer : DbExpressionRewriter
-        {
-            private List<SelectExpression>? _redundant;
-
-            private RedundantSubqueryGatherer()
-            {
-            }
-
-            internal static IReadOnlyList<SelectExpression> Gather(Expression? source)
-            {
-                RedundantSubqueryGatherer gatherer = new RedundantSubqueryGatherer();
-                gatherer.RewriteN(source);
-                return gatherer._redundant ?? ReadOnlyList<SelectExpression>.Empty; 
-            }
-
-            public override Expression Rewrite(Expression exp)
-            {
-                if (exp is SubqueryExpression)
-                {
-                    // don't visit inside subqueries
-                    return exp;
-                }
-                else if (exp is SelectExpression select)
-                {
-                    if (IsRedudantSubquery(select))
-                    {
-                        if (_redundant == null)
-                        {
-                            _redundant = new List<SelectExpression>();
-                        }
-
-                        _redundant.Add(select);
-                    }
-
-                    return select;
-                }
-                else
-                {
-                    return base.Rewrite(exp);
-                }
-            }
-        }
-#endif
     }
 }

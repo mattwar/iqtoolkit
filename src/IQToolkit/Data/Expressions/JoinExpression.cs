@@ -6,13 +6,28 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// Represents a SQL join operation.
+    /// A SQL JOIN operation.
     /// </summary>
     public sealed class JoinExpression : DbExpression
     {
+        /// <summary>
+        /// The type of the join.
+        /// </summary>
         public JoinType JoinType { get; }
+
+        /// <summary>
+        /// The left operand of the join.
+        /// </summary>
         public Expression Left { get; }
+
+        /// <summary>
+        /// The right operand of the join.
+        /// </summary>
         public Expression Right { get; }
+
+        /// <summary>
+        /// An optional join condition.
+        /// </summary>
         public new Expression? Condition { get; }
 
         public JoinExpression(JoinType joinType, Expression left, Expression right, Expression? condition)

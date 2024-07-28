@@ -9,25 +9,45 @@ namespace IQToolkit.Data.Expressions
 {
     /// <summary>
     /// A batch of multiple commands/operations.
+    /// Corresponds to the <see cref="Updatable.Batch{U, T, S}(IUpdatable{U}, IEnumerable{T}, Expression{Func{IUpdatable{U}, T, S}}, int, bool)"/> method.
     /// </summary>
-    public sealed class BatchExpression : Expression
+    public sealed class BatchExpression : DbExpression
     {
-        public override Type Type { get; }
+        /// <summary>
+        /// The collection of input items/instances.
+        /// </summary>
         public Expression Input { get; }
+
+        /// <summary>
+        /// The operation applied to each item.
+        /// </summary>
         public LambdaExpression Operation { get; }
+
+        /// <summary>
+        /// The number of operations to be batched together.
+        /// </summary>
         public Expression BatchSize { get; }
+
+        /// <summary>
+        /// Boolean, whether to stream the results or buffer them.
+        /// </summary>
         public Expression Stream { get; }
 
-        public BatchExpression(Expression input, LambdaExpression operation, Expression batchSize, Expression stream)
+        public BatchExpression(
+            Expression input, 
+            LambdaExpression operation, 
+            Expression batchSize, 
+            Expression stream)
+            : base(typeof(IEnumerable<>).MakeGenericType(operation.Body.Type))
         {
             this.Input = input;
             this.Operation = operation;
             this.BatchSize = batchSize;
             this.Stream = stream;
-            this.Type = typeof(IEnumerable<>).MakeGenericType(operation.Body.Type);
         }
 
-        public override ExpressionType NodeType => (ExpressionType)DbExpressionType.Batch;
+        public override DbExpressionType DbNodeType => 
+            DbExpressionType.Batch;
 
         public BatchExpression Update(
             Expression input, 

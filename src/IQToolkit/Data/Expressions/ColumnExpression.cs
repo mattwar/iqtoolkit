@@ -6,21 +6,28 @@ using System;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// A custom expression node that represents a reference to a column in a SQL query
+    /// A reference to a column in a query
     /// </summary>
     public sealed class ColumnExpression : DbExpression, IEquatable<ColumnExpression>
     {
+        /// <summary>
+        /// The alias of the table that the column belongs to.
+        /// </summary>
         public TableAlias Alias { get; }
+
+        /// <summary>
+        /// The name of the column.
+        /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// The database type of the column.
+        /// </summary>
         public QueryType QueryType { get; }
 
         public ColumnExpression(Type type, QueryType queryType, TableAlias alias, string name)
             : base(type)
         {
-            if (queryType == null)
-                throw new ArgumentNullException("queryType");
-            if (name == null)
-                throw new ArgumentNullException("name");
             this.Alias = alias;
             this.Name = name;
             this.QueryType = queryType;

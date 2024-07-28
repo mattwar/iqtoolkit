@@ -4,7 +4,7 @@
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// Extended node types for custom expressions
+    /// Extended node types for <see cref="DbExpression"/> nodes.
     /// </summary>
     public enum DbExpressionType
     {
@@ -16,23 +16,23 @@ namespace IQToolkit.Data.Expressions
         Entity              = 1005,
         Join                = 1006,
         Aggregate           = 1007,
-        ScalarSubquery              = 1008,
-        ExistsSubquery              = 1009,
+        ScalarSubquery      = 1008,
+        ExistsSubquery      = 1009,
         InSubquery          = 1010,
         Grouping            = 1011,
-        Tagged   = 1012,
+        Tagged              = 1012,
         IsNull              = 1013,
         Between             = 1014,
-        RowNumber            = 1015,
+        RowNumber           = 1015,
         ClientParameter     = 1016,
         OuterJoined         = 1017,
-        Insert              = 1018,
-        Update              = 1019,
-        Delete              = 1020,
+        InsertCommand       = 1018,
+        UpdateCommand       = 1019,
+        DeleteCommand       = 1020,
         Batch               = 1021,
         Function            = 1022,
         Block               = 1023,
-        If                  = 1024,
+        IfCommand           = 1024,
         Declaration         = 1025,
         Variable            = 1026,
         DbLiteral           = 1027,

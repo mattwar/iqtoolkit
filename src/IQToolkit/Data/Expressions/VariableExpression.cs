@@ -8,11 +8,18 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// Variables declared in a <see cref="DeclarationCommand"/>.
+    /// A reference to a variable declared in a <see cref="DeclarationCommand"/>.
     /// </summary>
     public sealed class VariableExpression : DbExpression
     {
+        /// <summary>
+        /// The name of the variable.
+        /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// The database type of the variable.
+        /// </summary>
         public QueryType QueryType { get; }
 
         public VariableExpression(string name, Type type, QueryType queryType)

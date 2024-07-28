@@ -6,10 +6,24 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// An individual variable declaration used by the <see cref="DeclarationCommand"/>.
+    /// </summary>
     public sealed class VariableDeclaration
     {
+        /// <summary>
+        /// The name of the variable.
+        /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// The database type of the variable.
+        /// </summary>
         public QueryType QueryType { get; }
+
+        /// <summary>
+        /// The variable's initial value expression.
+        /// </summary>
         public Expression Expression { get; }
 
         public VariableDeclaration(string name, QueryType queryType, Expression expression)

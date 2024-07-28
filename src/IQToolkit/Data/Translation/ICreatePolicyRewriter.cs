@@ -1,6 +1,6 @@
 ﻿namespace IQToolkit.Data.Translation
 {
-    public interface ICreatePolicyTranslator
+    public interface ICreatePolicyRewriter
     {
         QueryPolicyRewriter CreatePolicyTranslator(QueryTranslator translator);
     }

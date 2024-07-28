@@ -10,7 +10,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// An extended expression visitor including custom DbExpression nodes
+    /// An extended expression rewriter including custom DbExpression nodes
     /// </summary>
     public abstract class DbExpressionRewriter : ExpressionRewriter
     {
@@ -215,7 +215,7 @@ namespace IQToolkit.Data.Expressions
 
         protected virtual Expression RewriteIfCommand(IfCommand original)
         {
-            var check = this.Rewrite(original.Check);
+            var check = this.Rewrite(original.Test);
             var ifTrue = this.Rewrite(original.IfTrue);
             var ifFalse = this.RewriteN(original.IfFalse);
             return original.Update(check, ifTrue, ifFalse);

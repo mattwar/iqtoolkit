@@ -6,7 +6,8 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    /// A pairing of an expression and an order type for use in a SQL Order By clause
+    /// A pairing of an expression and an <see cref="OrderType"/>,
+    /// used in <see cref="SelectExpression.OrderBy"/>.
     /// </summary>
     public sealed class OrderExpression
     {

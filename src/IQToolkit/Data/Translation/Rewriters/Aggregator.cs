@@ -7,7 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace IQToolkit.Data.Expressions
+namespace IQToolkit.Data.Translation
 {
     using Utils;
 

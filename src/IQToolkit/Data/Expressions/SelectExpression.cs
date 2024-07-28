@@ -10,7 +10,7 @@ namespace IQToolkit.Data.Expressions
     using Utils;
 
     /// <summary>
-    /// A custom expression node used to represent a SQL SELECT expression
+    /// A SQL SELECT expression.
     /// </summary>
     public sealed class SelectExpression : AliasedExpression
     {

@@ -11,18 +11,23 @@ namespace IQToolkit.Data.Expressions
     /// </summary>
     public sealed class ColumnDeclaration
     {
+        /// <summary>
+        /// The name of the column.
+        /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// The value of the column.
+        /// </summary>
         public Expression Expression { get; }
+
+        /// <summary>
+        /// The database type of the column.
+        /// </summary>
         public QueryType QueryType { get; }
 
         public ColumnDeclaration(string name, Expression expression, QueryType queryType)
         {
-            if (name == null)
-                throw new ArgumentNullException("name");
-            if (expression == null)
-                throw new ArgumentNullException("expression");
-            if (queryType == null)
-                throw new ArgumentNullException("queryType");
             this.Name = name;
             this.Expression = expression;
             this.QueryType = queryType;

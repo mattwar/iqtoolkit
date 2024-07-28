@@ -10,8 +10,19 @@ namespace IQToolkit.Data.Expressions
     /// </summary>
     public sealed class BetweenExpression : DbExpression
     {
+        /// <summary>
+        /// The expression to test.
+        /// </summary>
         public Expression Expression { get; }
+
+        /// <summary>
+        /// The lower bound of the between operator.
+        /// </summary>
         public Expression Lower { get; }
+
+        /// <summary>
+        /// The upper bound of the between operator.
+        /// </summary>
         public Expression Upper { get; }
 
         public BetweenExpression(

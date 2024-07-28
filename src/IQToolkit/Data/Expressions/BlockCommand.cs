@@ -8,8 +8,14 @@ namespace IQToolkit.Data.Expressions
 {
     using Utils;
 
+    /// <summary>
+    /// A sequence of command expressions.
+    /// </summary>
     public sealed class BlockCommand : CommandExpression
     {
+        /// <summary>
+        /// The commands that are executed sequentially in the block.
+        /// </summary>
         public IReadOnlyList<Expression> Commands { get; }
 
         public BlockCommand(IReadOnlyList<Expression> commands)

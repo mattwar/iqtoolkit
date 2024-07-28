@@ -15,13 +15,13 @@ namespace IQToolkit.Expressions
     /// </summary>
     public class ExpressionReplacer : ExpressionRewriter
     {
-        private readonly Expression searchFor;
-        private readonly Expression replaceWith;
+        private readonly Expression _searchFor;
+        private readonly Expression _replaceWith;
 
         private ExpressionReplacer(Expression searchFor, Expression replaceWith)
         {
-            this.searchFor = searchFor;
-            this.replaceWith = replaceWith;
+            _searchFor = searchFor;
+            _replaceWith = replaceWith;
         }
 
         public static Expression Replace(Expression expression, Expression searchFor, Expression replaceWith)
@@ -35,14 +35,15 @@ namespace IQToolkit.Expressions
             {
                 expression = Replace(expression, searchFor[i], replaceWith[i]);
             }
+
             return expression;
         }
 
         public override Expression Rewrite(Expression exp)
         {
-            if (exp == this.searchFor)
+            if (exp == _searchFor)
             {
-                return this.replaceWith;
+                return _replaceWith;
             }
 
             return base.Rewrite(exp);

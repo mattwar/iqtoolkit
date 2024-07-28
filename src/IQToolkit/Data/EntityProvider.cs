@@ -289,7 +289,7 @@ namespace IQToolkit.Data
 
         protected virtual QueryLanguageRewriter CreateLanguageTranslator(QueryTranslator translator)
         {
-            if (this.Language is ICreateLanguageTranslator clt)
+            if (this.Language is ICreateLanguageRewriter clt)
                 return clt.CreateLanguageTranslator(translator);
 
             return new QueryLanguageRewriter(translator, this.Language);
@@ -297,7 +297,7 @@ namespace IQToolkit.Data
 
         protected virtual QueryMappingRewriter CreateMappingTranslator(QueryTranslator translator)
         {
-            if (this.Mapping is ICreateMappingTranslator cmt)
+            if (this.Mapping is ICreateMappingRewriter cmt)
                 return cmt.CreateMappingTranslator(translator);
 
             if (this.Mapping is AdvancedMapping advMapping)
@@ -319,7 +319,7 @@ namespace IQToolkit.Data
 
         protected virtual QueryPolicyRewriter CreatePolicyTranslator(QueryTranslator translator)
         {
-            if (this.Policy is ICreatePolicyTranslator cpt)
+            if (this.Policy is ICreatePolicyRewriter cpt)
                 return cpt.CreatePolicyTranslator(translator);
 
             if (this.Policy is EntityPolicy entityPolicy)

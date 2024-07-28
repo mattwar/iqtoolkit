@@ -6,6 +6,9 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// The base type of all database query expression nodes.
+    /// </summary>
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name}: {this.DbNodeType}")]
     public abstract class DbExpression : Expression 
     {

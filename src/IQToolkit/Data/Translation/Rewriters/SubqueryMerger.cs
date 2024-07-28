@@ -24,12 +24,12 @@ namespace IQToolkit.Data.Translation
             return new SubqueryMerger().Rewrite(expression);
         }
 
-        bool isTopLevel = true;
+        private bool _isTopLevel = true;
 
         protected override Expression RewriteSelect(SelectExpression select)
         {
-            bool wasTopLevel = isTopLevel;
-            isTopLevel = false;
+            bool wasTopLevel = _isTopLevel;
+            _isTopLevel = false;
 
             select = (SelectExpression)base.RewriteSelect(select);
 

@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Data.Expressions
 {
     /// <summary>
-    ///  returns the set of all aliases produced by a query source
+    /// Returns the set of all table aliases referenced in the source.
     /// </summary>
     public class ReferencedAliasGatherer : DbExpressionRewriter
     {

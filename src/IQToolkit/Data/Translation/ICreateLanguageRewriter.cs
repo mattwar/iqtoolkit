@@ -1,6 +1,6 @@
 ﻿namespace IQToolkit.Data.Translation
 {
-    internal interface ICreateLanguageTranslator
+    internal interface ICreateLanguageRewriter
     {
         QueryLanguageRewriter CreateLanguageTranslator(QueryTranslator translator);
     }

@@ -14,7 +14,7 @@ namespace IQToolkit.Data.TSql
     /// <summary>
     /// Microsoft Transact SQL (TSQL) <see cref="QueryLanguage"/>
     /// </summary>
-    public sealed class TSqlLanguage : QueryLanguage, ICreateLanguageTranslator
+    public sealed class TSqlLanguage : QueryLanguage, ICreateLanguageRewriter
     {
         public TSqlLanguage()
         {
@@ -29,8 +29,8 @@ namespace IQToolkit.Data.TSql
         public override QueryFormatter Formatter =>
             TSqlFormatter.Singleton;
 
-        QueryLanguageRewriter ICreateLanguageTranslator.CreateLanguageTranslator(QueryTranslator translator) =>
-            new TSqlLanguageTranslator(translator, this);
+        QueryLanguageRewriter ICreateLanguageRewriter.CreateLanguageTranslator(QueryTranslator translator) =>
+            new TSqlLanguageRewriter(translator, this);
 
         public override string Quote(string name)
         {

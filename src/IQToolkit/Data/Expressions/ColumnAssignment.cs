@@ -5,9 +5,19 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// The assignment of a column in an <see cref="InsertCommand"/> or <see cref="UpdateCommand"/>.
+    /// </summary>
     public sealed class ColumnAssignment
     {
+        /// <summary>
+        /// The column to assigned.
+        /// </summary>
         public ColumnExpression Column { get; }
+
+        /// <summary>
+        /// The value to assign the column.
+        /// </summary>
         public Expression Expression { get; }
 
         public ColumnAssignment(ColumnExpression column, Expression expression)

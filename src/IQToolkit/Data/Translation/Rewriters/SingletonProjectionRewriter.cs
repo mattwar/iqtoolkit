@@ -33,18 +33,6 @@ namespace IQToolkit.Data.Translation
             return base.Rewrite(exp);
         }
 
-#if false
-        protected override Expression RewriteClientJoin(ClientJoinExpression join)
-        {
-            // treat client joins as new top level
-            var saveTop = _isTopLevel;
-            _isTopLevel = true;
-            var result = base.RewriteClientJoin(join);
-            _isTopLevel = saveTop;
-            return result;
-        }
-#endif
-
         protected override Expression RewriteSelect(SelectExpression original)
         {
             // find all client projections in this select

@@ -38,7 +38,7 @@ namespace IQToolkit.Expressions
             var node = base.Rewrite(exp);
 
             // remember the first sub-expression that is of an appropriate type
-            if (_found == null && _type.GetTypeInfo().IsAssignableFrom(node.Type.GetTypeInfo()))
+            if (_found == null && _type.IsAssignableFrom(node.Type))
             {
                 _found = node;
             }

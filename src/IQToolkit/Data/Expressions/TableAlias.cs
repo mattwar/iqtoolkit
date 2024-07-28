@@ -3,6 +3,9 @@
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// An alias for a database table in a SQL query.
+    /// </summary>
     public sealed class TableAlias
     {
         private readonly int _sequenceId;

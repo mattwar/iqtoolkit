@@ -8,8 +8,7 @@ namespace IQToolkit.Data.Expressions
     using Utils;
 
     /// <summary>
-    /// An expression that evaluates the current row number.
-    /// TSQL only?
+    /// A TSQL expression that evaluates the current row number.
     /// </summary>
     public sealed class RowNumberExpression : DbExpression
     {

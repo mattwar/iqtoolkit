@@ -23,13 +23,13 @@ namespace IQToolkit.Data.Translation
 
         public RedundantColumnRemover()
         {
-            this._map = new Dictionary<ColumnExpression, ColumnExpression>();
+            _map = new Dictionary<ColumnExpression, ColumnExpression>();
         }
 
         protected override Expression RewriteColumn(ColumnExpression column)
         {
             ColumnExpression mapped;
-            if (this._map.TryGetValue(column, out mapped))
+            if (_map.TryGetValue(column, out mapped))
             {
                 return mapped;
             }
@@ -61,7 +61,7 @@ namespace IQToolkit.Data.Translation
                         {
                             // any reference to 'j' should now just be a reference to 'i'
                             ColumnExpression cxj = new ColumnExpression(cj.Expression.Type, qt, select.Alias, cj.Name);
-                            this._map.Add(cxj, cxi);
+                            _map.Add(cxj, cxi);
                             removed.Set(j, true);
                             anyRemoved = true;
                         }

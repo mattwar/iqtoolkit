@@ -9,9 +9,9 @@ namespace IQToolkit.Data.TSql
     /// <summary>
     /// Microsoft Transact SQL (TSQL) <see cref="QueryLanguageRewriter"/>
     /// </summary>
-    internal class TSqlLanguageTranslator : QueryLanguageRewriter
+    internal class TSqlLanguageRewriter : QueryLanguageRewriter
     {
-        public TSqlLanguageTranslator(QueryTranslator translator, TSqlLanguage language)
+        public TSqlLanguageRewriter(QueryTranslator translator, TSqlLanguage language)
             : base(translator, language)
         {
         }

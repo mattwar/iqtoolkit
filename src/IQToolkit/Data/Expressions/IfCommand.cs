@@ -10,31 +10,42 @@ namespace IQToolkit.Data.Expressions
     /// </summary>
     public sealed class IfCommand : CommandExpression
     {
-        public Expression Check { get; }
+        /// <summary>
+        /// The predicate expression.
+        /// </summary>
+        public Expression Test { get; }
+
+        /// <summary>
+        /// The action taken if the test is true.
+        /// </summary>
         public Expression IfTrue { get; }
+
+        /// <summary>
+        /// The optional action taken if the test is false.
+        /// </summary>
         public Expression? IfFalse { get; }
 
-        public IfCommand(Expression check, Expression ifTrue, Expression? ifFalse = null)
+        public IfCommand(Expression test, Expression ifTrue, Expression? ifFalse = null)
             : base(ifTrue.Type)
         {
-            this.Check = check;
+            this.Test = test;
             this.IfTrue = ifTrue;
             this.IfFalse = ifFalse;
         }
 
         public override DbExpressionType DbNodeType =>
-            DbExpressionType.If;
+            DbExpressionType.IfCommand;
 
         public IfCommand Update(
-            Expression check, 
+            Expression test, 
             Expression ifTrue, 
             Expression? ifFalse)
         {
-            if (check != this.Check 
+            if (test != this.Test 
                 || ifTrue != this.IfTrue 
                 || ifFalse != this.IfFalse)
             {
-                return new IfCommand(check, ifTrue, ifFalse);
+                return new IfCommand(test, ifTrue, ifFalse);
             }
             else
             {

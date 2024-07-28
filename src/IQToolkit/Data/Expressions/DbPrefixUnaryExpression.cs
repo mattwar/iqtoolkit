@@ -11,7 +11,14 @@ namespace IQToolkit.Data.Expressions
     /// </summary>
     public sealed class DbPrefixUnaryExpression : DbOperation
     {
+        /// <summary>
+        /// The text of the operator.
+        /// </summary>
         public string Operator { get; }
+
+        /// <summary>
+        /// The operand.
+        /// </summary>
         public Expression Operand { get; }
 
         public DbPrefixUnaryExpression(Type type, bool isPredicate, string @operator, Expression operand)

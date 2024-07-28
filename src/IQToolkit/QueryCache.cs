@@ -69,7 +69,7 @@ namespace IQToolkit
         /// </summary>
         public int Count
         {
-            get { return this._cache.Count; }
+            get { return _cache.Count; }
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace IQToolkit
         /// </summary>
         public void Clear()
         {
-            this._cache.Clear();
+            _cache.Clear();
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace IQToolkit
             var pq = this.Parameterize(query, out args);
             var cq = new QueryCompiler.CompiledQuery(pq);
             QueryCompiler.CompiledQuery cached;
-            this._cache.Lookup(cq, add, out cached);
+            _cache.Lookup(cq, add, out cached);
             return cached;
         }
 

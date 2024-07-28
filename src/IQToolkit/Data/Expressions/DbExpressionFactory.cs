@@ -8,6 +8,9 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
+    /// <summary>
+    /// A static factory for constructing <see cref="DbExpression"/> nodes.
+    /// </summary>
     public static class DbExpressionFactory
     {
         public static DbBinaryExpression Concat(this Expression left, Expression right) =>

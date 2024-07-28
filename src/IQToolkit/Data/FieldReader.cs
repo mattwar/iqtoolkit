@@ -16,7 +16,7 @@ namespace IQToolkit.Data
     /// </summary>
     public abstract class FieldReader
     {
-        private TypeCode[] typeCodes = default!;
+        private TypeCode[] _typeCodes = default!;
 
         public FieldReader()
         {
@@ -24,7 +24,7 @@ namespace IQToolkit.Data
 
         protected void Init()
         {
-            this.typeCodes = new TypeCode[this.FieldCount];
+            _typeCodes = new TypeCode[this.FieldCount];
         }
 
         protected abstract int FieldCount { get; }
@@ -71,10 +71,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return this.GetByte(ordinal);
@@ -104,10 +104,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return this.GetByte(ordinal);
@@ -137,10 +137,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Char)this.GetByte(ordinal);
@@ -170,10 +170,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Char)this.GetByte(ordinal);
@@ -203,10 +203,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.DateTime:
                         return this.GetDateTime(ordinal);
@@ -224,10 +224,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.DateTime:
                         return this.GetDateTime(ordinal);
@@ -245,10 +245,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Decimal)this.GetByte(ordinal);
@@ -278,10 +278,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Decimal)this.GetByte(ordinal);
@@ -311,10 +311,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Double)this.GetByte(ordinal);
@@ -344,10 +344,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Double)this.GetByte(ordinal);
@@ -377,10 +377,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Single)this.GetByte(ordinal);
@@ -410,10 +410,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Single)this.GetByte(ordinal);
@@ -443,10 +443,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case tcGuid:
                         return this.GetGuid(ordinal);
@@ -464,10 +464,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case tcGuid:
                         return this.GetGuid(ordinal);
@@ -485,10 +485,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Int16)this.GetByte(ordinal);
@@ -518,10 +518,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Int16)this.GetByte(ordinal);
@@ -551,10 +551,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Int32)this.GetByte(ordinal);
@@ -584,10 +584,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Int32)this.GetByte(ordinal);
@@ -617,10 +617,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Int64)this.GetByte(ordinal);
@@ -650,10 +650,10 @@ namespace IQToolkit.Data
             }
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return (Int64)this.GetByte(ordinal);
@@ -684,10 +684,10 @@ namespace IQToolkit.Data
 
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = Type.GetTypeCode(this.GetFieldType(ordinal));
+                        _typeCodes[ordinal] = Type.GetTypeCode(this.GetFieldType(ordinal));
                         continue;
                     case TypeCode.Byte:
                         return this.GetByte(ordinal).ToString();
@@ -724,10 +724,10 @@ namespace IQToolkit.Data
 
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Byte:
                         return new Byte[] { this.GetByte(ordinal) };
@@ -746,10 +746,10 @@ namespace IQToolkit.Data
 
             while (true)
             {
-                switch (typeCodes[ordinal])
+                switch (_typeCodes[ordinal])
                 {
                     case TypeCode.Empty:
-                        typeCodes[ordinal] = GetTypeCode(ordinal);
+                        _typeCodes[ordinal] = GetTypeCode(ordinal);
                         continue;
                     case TypeCode.Char:
                         return new Char[] { this.GetChar(ordinal) };

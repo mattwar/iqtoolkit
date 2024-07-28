@@ -9,6 +9,9 @@ using System.Reflection;
 
 namespace IQToolkit
 {
+    using Expressions;
+    using Utils;
+
     /// <summary>
     /// Creates a reusable, parameterized representation of a query that caches the execution plan
     /// </summary>
@@ -20,7 +23,7 @@ namespace IQToolkit
         public static Delegate Compile(LambdaExpression query)
         {
             CompiledQuery cq = new CompiledQuery(query);
-            return StrongDelegate.CreateDelegate(query.Type, (Func<object[], object>)cq.Invoke);
+            return StrongDelegate.CreateDelegate(query.Type, (Func<object?[], object?>)cq.Invoke);
         }
 
         /// <summary>
@@ -83,100 +86,103 @@ namespace IQToolkit
 
         public class CompiledQuery
         {
-            private readonly LambdaExpression query;
-            private Delegate fnQuery;
+            private readonly LambdaExpression _query;
+            private Delegate? _fnQuery;
 
             internal CompiledQuery(LambdaExpression query)
             {
-                this.query = query;
+                _query = query;
             }
 
-            public LambdaExpression Query
-            {
-                get { return this.query; }
-            }
+            public LambdaExpression Query => _query;
 
-            internal void Compile(params object[] args)
+            internal void Compile(params object?[] args)
             {
-                if (this.fnQuery == null)
+                if (_fnQuery == null)
                 {
                     // first identify the query provider being used
-                    Expression body = this.query.Body;
+                    Expression body = _query.Body;
 
                     // ask the query provider to compile the query by 'executing' the lambda expression
-                    IQueryProvider provider = this.FindProvider(body, args);
+                    var provider = this.FindProvider(body, args);
                     if (provider == null)
                     {
                         throw new InvalidOperationException("Could not find query provider");
                     }
 
-                    Delegate result = (Delegate)provider.Execute(this.query);
-                    System.Threading.Interlocked.CompareExchange(ref this.fnQuery, result, null);
+                    Delegate result = (Delegate)provider.Execute(_query);
+                    System.Threading.Interlocked.CompareExchange(ref _fnQuery, result, null);
                 }
             }
 
-            internal IQueryProvider FindProvider(Expression expression, object[] args)
+            internal IQueryProvider? FindProvider(Expression expression, object?[] args)
             {
-                Expression root = this.FindProviderInExpression(expression) as ConstantExpression;
+                Expression? root = this.FindProviderInExpression(expression) as ConstantExpression;
+                
                 if (root == null && args != null && args.Length > 0)
                 {
                     Expression replaced = ExpressionReplacer.ReplaceAll(
                         expression,
-                        this.query.Parameters.ToArray(),
-                        args.Select((a, i) => Expression.Constant(a, this.query.Parameters[i].Type)).ToArray()
+                        _query.Parameters.ToArray(),
+                        args.Select((a, i) => Expression.Constant(a, _query.Parameters[i].Type)).ToArray()
                         );
                     root = this.FindProviderInExpression(replaced);
                 }
+
                 if (root != null) 
                 {
-                    ConstantExpression cex = root as ConstantExpression;
+                    var cex = root as ConstantExpression;
                     if (cex == null)
                     {
                         cex = PartialEvaluator.Eval(root) as ConstantExpression;
                     }
                     if (cex != null)
                     {
-                        IQueryProvider provider = cex.Value as IQueryProvider;
+                        var provider = cex.Value as IQueryProvider;
                         if (provider == null)
                         {
-                            IQueryable query = cex.Value as IQueryable;
+                            var query = cex.Value as IQueryable;
                             if (query != null)
                             {
                                 provider = query.Provider;
                             }
                         }
+
                         return provider;
                     }
                 }
+
                 return null;
             }
 
-            private Expression FindProviderInExpression(Expression expression)
+            private Expression? FindProviderInExpression(Expression expression)
             {
-                Expression root = TypedSubtreeFinder.Find(expression, typeof(IQueryProvider));
+                var root = TypedSubtreeFinder.Find(expression, typeof(IQueryProvider));
+                
                 if (root == null)
                 {
-                    root = TypedSubtreeFinder.Find(expression, typeof(IQueryable));
+                    root = TypedSubtreeFinder.Find(expression, typeof(IQueryable));            
                 }
+
                 return root;
             }
 
-            public object Invoke(object[] args)
+            public object? Invoke(object?[] args)
             {
                 this.Compile(args);
-                if (invoker == null)
+                if (_invoker == null)
                 {
-                    invoker = GetInvoker();
+                    _invoker = GetInvoker();
                 }
-                if (invoker != null)
+                if (_invoker != null)
                 {
-                    return invoker(args);
+                    return _invoker(args);
                 }
                 else
                 {
                     try
                     {
-                        return this.fnQuery.DynamicInvoke(args);
+                        return _fnQuery!.DynamicInvoke(args);
                     }
                     catch (TargetInvocationException tie)
                     {
@@ -185,15 +191,15 @@ namespace IQToolkit
                 }
             }
 
-            Func<object[], object> invoker;
+            Func<object?[], object?>? _invoker;
             bool checkedForInvoker;
 
-            private Func<object[], object> GetInvoker()
+            private Func<object?[], object?>? GetInvoker()
             {
-                if (this.fnQuery != null && this.invoker == null && !checkedForInvoker)
+                if (_fnQuery != null && _invoker == null && !checkedForInvoker)
                 {
                     this.checkedForInvoker = true;
-                    Type fnType = this.fnQuery.GetType();
+                    Type fnType = _fnQuery.GetType();
 
                     if (fnType.FullName.StartsWith("System.Func`"))
                     {
@@ -201,66 +207,68 @@ namespace IQToolkit
                         MethodInfo method = this.GetType().GetTypeInfo().GetDeclaredMethod("FastInvoke"+typeArgs.Length);
                         if (method != null)
                         {
-                            this.invoker = (Func<object[], object>)method.MakeGenericMethod(typeArgs).CreateDelegate(typeof(Func<object[], object>), this);
+                            _invoker = (Func<object?[], object?>)method.MakeGenericMethod(typeArgs).CreateDelegate(typeof(Func<object[], object>), this);
                         }
                     }
                 }
-                return this.invoker;
+                return _invoker;
             }
 
-            public object FastInvoke1<R>(object[] args)
+            public object? FastInvoke1<R>(object?[] args)
             {
-                return ((Func<R>)this.fnQuery)();
+                return ((Func<R>)_fnQuery!)();
             }
 
-            public object FastInvoke2<A1, R>(object[] args)
+            public object? FastInvoke2<A1, R>(object?[] args)
             {
-                return ((Func<A1, R>)this.fnQuery)((A1)args[0]);
+                return ((Func<A1, R>)_fnQuery!)((A1)args[0]!);
             }
 
-            public object FastInvoke3<A1, A2, R>(object[] args)
+            public object? FastInvoke3<A1, A2, R>(object?[] args)
             {
-                return ((Func<A1, A2, R>)this.fnQuery)((A1)args[0], (A2)args[1]);
+                return ((Func<A1, A2, R>)_fnQuery!)((A1)args[0]!, (A2)args[1]!);
             }
 
-            public object FastInvoke4<A1, A2, A3, R>(object[] args)
+            public object? FastInvoke4<A1, A2, A3, R>(object?[] args)
             {
-                return ((Func<A1, A2, A3, R>)this.fnQuery)((A1)args[0], (A2)args[1], (A3)args[2]);
+                return ((Func<A1, A2, A3, R>)_fnQuery!)((A1)args[0]!, (A2)args[1]!, (A3)args[2]!);
             }
 
-            public object FastInvoke5<A1, A2, A3, A4, R>(object[] args)
+            public object? FastInvoke5<A1, A2, A3, A4, R>(object?[] args)
             {
-                return ((Func<A1, A2, A3, A4, R>)this.fnQuery)((A1)args[0], (A2)args[1], (A3)args[2], (A4)args[3]);
+                return ((Func<A1, A2, A3, A4, R>)_fnQuery!)((A1)args[0]!, (A2)args[1]!, (A3)args[2]!, (A4)args[3]!);
             }
+
+            private static object?[] _noArgs = new object?[0];
 
             internal TResult Invoke<TResult>()
             {
-                this.Compile(null);
-                return ((Func<TResult>)this.fnQuery)();
+                this.Compile(_noArgs);
+                return ((Func<TResult>)_fnQuery!)();
             }
 
             internal TResult Invoke<T1, TResult>(T1 arg)
             {
                 this.Compile(arg);
-                return ((Func<T1, TResult>)this.fnQuery)(arg);
+                return ((Func<T1, TResult>)_fnQuery!)(arg);
             }
 
             internal TResult Invoke<T1, T2, TResult>(T1 arg1, T2 arg2)
             {
                 this.Compile(arg1, arg2);
-                return ((Func<T1, T2, TResult>)this.fnQuery)(arg1, arg2);
+                return ((Func<T1, T2, TResult>)_fnQuery!)(arg1, arg2);
             }
 
             internal TResult Invoke<T1, T2, T3, TResult>(T1 arg1, T2 arg2, T3 arg3)
             {
                 this.Compile(arg1, arg2, arg3);
-                return ((Func<T1, T2, T3, TResult>)this.fnQuery)(arg1, arg2, arg3);
+                return ((Func<T1, T2, T3, TResult>)_fnQuery!)(arg1, arg2, arg3);
             }
 
             internal TResult Invoke<T1, T2, T3, T4, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4)
             {
                 this.Compile(arg1, arg2, arg3, arg4);
-                return ((Func<T1, T2, T3, T4, TResult>)this.fnQuery)(arg1, arg2, arg3, arg4);
+                return ((Func<T1, T2, T3, T4, TResult>)_fnQuery!)(arg1, arg2, arg3, arg4);
             }
         }
     }

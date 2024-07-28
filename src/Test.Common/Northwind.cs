@@ -5,11 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+#nullable disable
 namespace Test
 {
-    using IQToolkit;
     using IQToolkit.Data;
     using IQToolkit.Data.Mapping;
+    using IQToolkit.Data.Sessions;
 
     public class Customer
     {
@@ -274,11 +275,11 @@ namespace Test
 
     public class NorthwindX
     {
-        EntityProvider provider;
+        private readonly IEntityProvider _provider;
 
-        public NorthwindX(EntityProvider provider)
+        public NorthwindX(IEntityProvider provider)
         {
-            this.provider = provider;
+            _provider = provider;
         }
 
         [Table]
@@ -291,7 +292,7 @@ namespace Test
         [Association(Member = nameof(CustomerX.Orders), KeyMembers = nameof(CustomerX.CustomerID), RelatedKeyMembers = nameof(OrderX.CustomerID))]
         public IQueryable<CustomerX> Customers
         {
-            get { return this.provider.GetTable<CustomerX>(); }
+            get { return _provider.GetTable<CustomerX>(); }
         }
 
         [Table]
@@ -301,7 +302,7 @@ namespace Test
         [Association(Member = nameof(OrderX.Customer), KeyMembers = nameof(OrderX.CustomerID), RelatedKeyMembers = nameof(CustomerX.CustomerID))]
         public IEntityTable<OrderX> Orders
         {
-            get { return this.provider.GetTable<OrderX>(); }
+            get { return _provider.GetTable<OrderX>(); }
         }
     }
 }

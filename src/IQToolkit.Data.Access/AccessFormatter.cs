@@ -10,7 +10,8 @@ using System.Text;
 
 namespace IQToolkit.Data.Access
 {
-    using IQToolkit.Data.Common;
+    using Expressions;
+    using Formatting;
 
     /// <summary>
     /// Formats a query expression into MS Access query syntax
@@ -21,6 +22,8 @@ namespace IQToolkit.Data.Access
             : base(language)
         {
         }
+
+        public new QueryLanguage Language => (QueryLanguage)base.Language!;
 
         public static new string Format(Expression expression)
         {
@@ -61,7 +64,7 @@ namespace IQToolkit.Data.Access
         {
             if (select.Skip != null)
             {
-                if (select.OrderBy == null && select.OrderBy.Count == 0)
+                if (select.OrderBy.Count == 0)
                 {
                     throw new NotSupportedException("Access cannot support the 'skip' operation without explicit ordering");
                 }
@@ -121,7 +124,7 @@ namespace IQToolkit.Data.Access
             return base.VisitDeclaration(decl);
         }
 
-        protected override void WriteColumns(System.Collections.ObjectModel.ReadOnlyCollection<ColumnDeclaration> columns)
+        protected override void WriteColumns(IReadOnlyList<ColumnDeclaration> columns)
         {
             if (columns.Count == 0)
             {
@@ -135,6 +138,9 @@ namespace IQToolkit.Data.Access
 
         protected override Expression VisitMemberAccess(MemberExpression m)
         {
+            if (m.Expression == null)
+                return m;
+
             if (m.Member.DeclaringType == typeof(string))
             {
                 switch (m.Member.Name)
@@ -187,12 +193,14 @@ namespace IQToolkit.Data.Access
                         return m;
                 }
             }
+
             return base.VisitMemberAccess(m);
         }
 
         protected override Expression VisitMethodCall(MethodCallExpression m)
         {
-            if (m.Method.DeclaringType == typeof(string))
+            if (m.Method.DeclaringType == typeof(string)
+                && m.Object != null)
             {
                 switch (m.Method.Name)
                 {
@@ -293,61 +301,70 @@ namespace IQToolkit.Data.Access
             }
             else if (m.Method.DeclaringType == typeof(DateTime))
             {
-                switch (m.Method.Name)
+                if (m.Object == null)
                 {
-                    case "op_Subtract":
-                        if (m.Arguments[1].Type == typeof(DateTime))
-                        {
-                            this.Write("DateDiff(\"d\",");
+                    switch (m.Method.Name)
+                    {
+                        case "op_Subtract":
+                            if (m.Arguments[1].Type == typeof(DateTime))
+                            {
+                                this.Write("DateDiff(\"d\",");
+                                this.Visit(m.Arguments[0]);
+                                this.Write(",");
+                                this.Visit(m.Arguments[1]);
+                                this.Write(")");
+                                return m;
+                            }
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (m.Method.Name)
+                    {
+                        case "AddYears":
+                            this.Write("DateAdd(\"yyyy\",");
                             this.Visit(m.Arguments[0]);
                             this.Write(",");
-                            this.Visit(m.Arguments[1]);
+                            this.Visit(m.Object);
                             this.Write(")");
                             return m;
-                        }
-                        break;
-                    case "AddYears":
-                        this.Write("DateAdd(\"yyyy\",");
-                        this.Visit(m.Arguments[0]);
-                        this.Write(",");
-                        this.Visit(m.Object);
-                        this.Write(")");
-                        return m;
-                    case "AddMonths":
-                        this.Write("DateAdd(\"m\",");
-                        this.Visit(m.Arguments[0]);
-                        this.Write(",");
-                        this.Visit(m.Object);
-                        this.Write(")");
-                        return m;
-                    case "AddDays":
-                        this.Write("DateAdd(\"d\",");
-                        this.Visit(m.Arguments[0]);
-                        this.Write(",");
-                        this.Visit(m.Object);
-                        this.Write(")");
-                        return m;
-                    case "AddHours":
-                        this.Write("DateAdd(\"h\",");
-                        this.Visit(m.Arguments[0]);
-                        this.Write(",");
-                        this.Visit(m.Object);
-                        this.Write(")");
-                        return m;
-                    case "AddMinutes":
-                        this.Write("DateAdd(\"n\",");
-                        this.Visit(m.Arguments[0]);
-                        this.Write(",");
-                        this.Visit(m.Object);
-                        this.Write(")");
-                        return m;
-                    case "AddSeconds":
-                        this.Write("DateAdd(\"s\",");
-                        this.Visit(m.Arguments[0]);
-                        this.Write(",");
-                        this.Visit(m.Object);
-                        this.Write(")");
-                        return m;
+                        case "AddMonths":
+                            this.Write("DateAdd(\"m\",");
+                            this.Visit(m.Arguments[0]);
+                            this.Write(",");
+                            this.Visit(m.Object);
+                            this.Write(")");
+                            return m;
+                        case "AddDays":
+                            this.Write("DateAdd(\"d\",");
+                            this.Visit(m.Arguments[0]);
+                            this.Write(",");
+                            this.Visit(m.Object);
+                            this.Write(")");
+                            return m;
+                        case "AddHours":
+                            this.Write("DateAdd(\"h\",");
+                            this.Visit(m.Arguments[0]);
+                            this.Write(",");
+                            this.Visit(m.Object);
+                            this.Write(")");
+                            return m;
+                        case "AddMinutes":
+                            this.Write("DateAdd(\"n\",");
+                            this.Visit(m.Arguments[0]);
+                            this.Write(",");
+                            this.Visit(m.Object);
+                            this.Write(")");
+                            return m;
+                        case "AddSeconds":
+                            this.Write("DateAdd(\"s\",");
+                            this.Visit(m.Arguments[0]);
+                            this.Write(",");
+                            this.Visit(m.Object);
+                            this.Write(")");
+                            return m;
+                    }
                 }
             }
             else if (m.Method.DeclaringType == typeof(Decimal))
@@ -362,7 +379,7 @@ namespace IQToolkit.Data.Access
                         this.Write("(");
                         this.VisitValue(m.Arguments[0]);
                         this.Write(" ");
-                        this.Write(GetOperator(m.Method.Name));
+                        this.Write(GetOperator(m.Method.Name)!);
                         this.Write(" ");
                         this.VisitValue(m.Arguments[1]);
                         this.Write(")");
@@ -448,7 +465,8 @@ namespace IQToolkit.Data.Access
                         return m;
                 }
             }
-            if (m.Method.Name == "ToString")
+            if (m.Method.Name == "ToString"
+                && m.Object != null)
             {
                 if (m.Object.Type != typeof(string))
                 {
@@ -462,7 +480,11 @@ namespace IQToolkit.Data.Access
                 }
                 return m;
             }
-            else if (!m.Method.IsStatic && m.Method.Name == "CompareTo" && m.Method.ReturnType == typeof(int) && m.Arguments.Count == 1)
+            else if (!m.Method.IsStatic 
+                && m.Method.Name == "CompareTo" 
+                && m.Method.ReturnType == typeof(int) 
+                && m.Arguments.Count == 1
+                && m.Object != null)
             {
                 this.Write("IIF(");
                 this.Visit(m.Object);
@@ -475,7 +497,10 @@ namespace IQToolkit.Data.Access
                 this.Write(", -1, 1))");
                 return m;
             }
-            else if (m.Method.IsStatic && m.Method.Name == "Compare" && m.Method.ReturnType == typeof(int) && m.Arguments.Count == 2)
+            else if (m.Method.IsStatic 
+                && m.Method.Name == "Compare" 
+                && m.Method.ReturnType == typeof(int) 
+                && m.Arguments.Count == 2)
             {
                 this.Write("IIF(");
                 this.Visit(m.Arguments[0]);
@@ -493,7 +518,8 @@ namespace IQToolkit.Data.Access
 
         protected override NewExpression VisitNew(NewExpression nex)
         {
-            if (nex.Constructor.DeclaringType == typeof(DateTime))
+            if (nex.Constructor != null
+                && nex.Constructor.DeclaringType == typeof(DateTime))
             {
                 if (nex.Arguments.Count == 3)
                 {
@@ -622,7 +648,7 @@ namespace IQToolkit.Data.Access
             }
         }
 
-        protected override string GetOperator(string methodName)
+        protected override string? GetOperator(string methodName)
         {
             if (methodName == "Remainder")
             {
@@ -634,7 +660,7 @@ namespace IQToolkit.Data.Access
             }
         }
 
-        protected override void WriteValue(object value)
+        protected override void WriteValue(object? value)
         {
             if (value != null && value.GetType() == typeof(bool))
             {

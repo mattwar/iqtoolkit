@@ -12,35 +12,28 @@ using System.Text;
 namespace IQToolkit
 {
     /// <summary>
-    /// Optional interface for <see cref="IQueryProvider"/> to implement <see cref="Query{T}.QueryText"/> property.
-    /// </summary>
-    public interface IQueryText
-    {
-        string GetQueryText(Expression expression);
-    }
-
-    /// <summary>
     /// A default implementation of IQueryable for use with QueryProvider
     /// </summary>
-    public class Query<T> : IQueryable<T>, IQueryable, IEnumerable<T>, IEnumerable, IOrderedQueryable<T>, IOrderedQueryable
+    public class Query<T> 
+        : IQueryable<T>, IQueryable, IEnumerable<T>, IEnumerable, IOrderedQueryable<T>, IOrderedQueryable
     {
-        private readonly IQueryProvider provider;
-        private readonly Expression expression;
+        private readonly IQueryProvider _provider;
+        private readonly Expression _expression;
 
         public Query(IQueryProvider provider)
             : this(provider, null)
         {
         }
 
-        public Query(IQueryProvider provider, Type staticType)
+        public Query(IQueryProvider provider, Type? staticType)
         {
             if (provider == null)
             {
                 throw new ArgumentNullException("Provider");
             }
 
-            this.provider = provider;
-            this.expression = staticType != null ? Expression.Constant(this, staticType) : Expression.Constant(this);
+            _provider = provider;
+            _expression = staticType != null ? Expression.Constant(this, staticType) : Expression.Constant(this);
         }
 
         public Query(QueryProvider provider, Expression expression)
@@ -60,61 +53,30 @@ namespace IQToolkit
                 throw new ArgumentOutOfRangeException("expression");
             }
 
-            this.provider = provider;
-            this.expression = expression;
+            _provider = provider;
+            _expression = expression;
         }
 
-        public Expression Expression
-        {
-            get { return this.expression; }
-        }
+        public Expression Expression => _expression;
+        public Type ElementType => typeof(T);
+        public IQueryProvider Provider => _provider;
 
-        public Type ElementType
-        {
-            get { return typeof(T); }
-        }
+        public IEnumerator<T> GetEnumerator() =>
+            ((IEnumerable<T>)_provider.Execute(_expression)).GetEnumerator();
 
-        public IQueryProvider Provider
-        {
-            get { return this.provider; }
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return ((IEnumerable<T>)this.provider.Execute(this.expression)).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)this.provider.Execute(this.expression)).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() =>
+            ((IEnumerable)_provider.Execute(_expression)).GetEnumerator();
 
         public override string ToString()
         {
-            if (this.expression.NodeType == ExpressionType.Constant &&
-                ((ConstantExpression)this.expression).Value == this)
+            if (_expression.NodeType == ExpressionType.Constant &&
+                ((ConstantExpression)_expression).Value == this)
             {
                 return "Query(" + typeof(T) + ")";
             }
             else
             {
-                return this.expression.ToString();
-            }
-        }
-
-        public string QueryText
-        {
-            get 
-            {
-                IQueryText iqt = this.provider as IQueryText;
-                if (iqt != null)
-                {
-                    return iqt.GetQueryText(this.expression);
-                }
-                else
-                {
-                    return "";
-                }
+                return _expression.ToString();
             }
         }
     }

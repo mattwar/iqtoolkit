@@ -1,0 +1,19 @@
+﻿using System;
+using System.Data;
+using IQToolkit.Data;
+
+namespace Test
+{
+    public static class TestProviders
+    {
+        public static IDbConnection CreateConnection()
+        {
+            throw new NotImplementedException();
+        }
+
+        public static EntityProvider CreateProvider(IDbConnection connection, QueryMapping mapping)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

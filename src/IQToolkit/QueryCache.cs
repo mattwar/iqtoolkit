@@ -2,32 +2,35 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading;
+using IQToolkit.Expressions;
 
 namespace IQToolkit
 {
+    using Data;
+    using Utils;
+
     /// <summary>
     /// A cache of compiled queries.
     /// </summary>
     public class QueryCache
     {
-        private readonly MostRecentlyUsedCache<QueryCompiler.CompiledQuery> cache;
-
-        static readonly Func<QueryCompiler.CompiledQuery, QueryCompiler.CompiledQuery, bool> fnCompareQueries = CompareQueries;
-        static readonly Func<object, object, bool> fnCompareValues = CompareConstantValues;
+        private readonly MostRecentlyUsedCache<QueryCompiler.CompiledQuery> _cache;
 
         public QueryCache(int maxSize)
         {
-            this.cache = new MostRecentlyUsedCache<QueryCompiler.CompiledQuery>(maxSize, fnCompareQueries);
+            _cache = new MostRecentlyUsedCache<QueryCompiler.CompiledQuery>(maxSize, _fnCompareQueries);
         }
+
+        private static readonly Func<QueryCompiler.CompiledQuery, QueryCompiler.CompiledQuery, bool> _fnCompareQueries = CompareQueries;
+        private static readonly Func<object?, object?, bool> _fnCompareValues = CompareConstantValues;
+        private static readonly ExpressionComparer _comparer = ExpressionComparer.Default.WithValueComparer(_fnCompareValues);
 
         private static bool CompareQueries(QueryCompiler.CompiledQuery x, QueryCompiler.CompiledQuery y)
         {
-            return ExpressionComparer.AreEqual(x.Query, y.Query, fnCompareValues);
+            return _comparer.Equals(x.Query, y.Query);
         }
 
-        private static bool CompareConstantValues(object x, object y)
+        private static bool CompareConstantValues(object? x, object? y)
         {
             if (x == y) return true;
             if (x == null || y == null) return false;
@@ -38,7 +41,7 @@ namespace IQToolkit
         /// <summary>
         /// Executes a cached query.
         /// </summary>
-        public object Execute(Expression query)
+        public object? Execute(Expression query)
         {
             object[] args;
             var cached = this.Find(query, true, out args);
@@ -48,7 +51,7 @@ namespace IQToolkit
         /// <summary>
         /// Executes a cached query.
         /// </summary>
-        public object Execute(IQueryable query)
+        public object? Execute(IQueryable query)
         {
             return this.Execute(query.Expression);
         }
@@ -58,7 +61,7 @@ namespace IQToolkit
         /// </summary>
         public IEnumerable<T> Execute<T>(IQueryable<T> query)
         {
-            return (IEnumerable<T>)this.Execute(query.Expression);
+            return (IEnumerable<T>)this.Execute(query.Expression)!;
         }
 
         /// <summary>
@@ -66,7 +69,7 @@ namespace IQToolkit
         /// </summary>
         public int Count
         {
-            get { return this.cache.Count; }
+            get { return this._cache.Count; }
         }
 
         /// <summary>
@@ -74,7 +77,7 @@ namespace IQToolkit
         /// </summary>
         public void Clear()
         {
-            this.cache.Clear();
+            this._cache.Clear();
         }
 
         /// <summary>
@@ -99,22 +102,22 @@ namespace IQToolkit
             var pq = this.Parameterize(query, out args);
             var cq = new QueryCompiler.CompiledQuery(pq);
             QueryCompiler.CompiledQuery cached;
-            this.cache.Lookup(cq, add, out cached);
+            this._cache.Lookup(cq, add, out cached);
             return cached;
         }
 
         private LambdaExpression Parameterize(Expression query, out object[] arguments)
         {
-            IQueryProvider provider = this.FindProvider(query);
+            var provider = this.FindProvider(query);
             if (provider == null)
             {
                 throw new ArgumentException("Cannot deduce query provider from query");
             }
 
             var ep = provider as IEntityProvider;
-            Func<Expression, bool> fn = ep != null ? (Func<Expression, bool>)ep.CanBeEvaluatedLocally : null;
-            List<ParameterExpression> parameters = new List<ParameterExpression>();
-            List<object> values = new List<object>();
+            var fn = ep != null ? (Func<Expression, bool>)ep.CanBeEvaluatedLocally : null;
+            var parameters = new List<ParameterExpression>();
+            var values = new List<object>();
 
             var body = PartialEvaluator.Eval(query, fn, c =>
             {
@@ -145,30 +148,33 @@ namespace IQToolkit
             }
         }
 
-        private IQueryProvider FindProvider(Expression expression)
+        private IQueryProvider? FindProvider(Expression expression)
         {
-            ConstantExpression root = TypedSubtreeFinder.Find(expression, typeof(IQueryProvider)) as ConstantExpression;
+            var root = TypedSubtreeFinder.Find(expression, typeof(IQueryProvider)) as ConstantExpression;
             if (root == null)
             {
                 root = TypedSubtreeFinder.Find(expression, typeof(IQueryable)) as ConstantExpression;
             }
+
             if (root != null)
             {
-                IQueryProvider provider = root.Value as IQueryProvider;
+                var provider = root.Value as IQueryProvider;
                 if (provider == null)
                 {
-                    IQueryable query = root.Value as IQueryable;
+                    var query = root.Value as IQueryable;
                     if (query != null)
                     {
                         provider = query.Provider;
                     }
                 }
+
                 return provider;
             }
+
             return null;
         }
 
-        private class ExplicitToObjectArray : ExpressionVisitor
+        private class ExplicitToObjectArray : ExpressionRewriter
         {
             private readonly IList<ParameterExpression> parameters;
             private readonly ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
@@ -181,10 +187,10 @@ namespace IQToolkit
             internal static LambdaExpression Rewrite(Expression body, IList<ParameterExpression> parameters)
             {
                 var visitor = new ExplicitToObjectArray(parameters);
-                return Expression.Lambda(visitor.Visit(body), visitor.array);                  
+                return Expression.Lambda(visitor.Rewrite(body), visitor.array);                  
             }
 
-            protected override Expression VisitParameter(ParameterExpression p)
+            protected override Expression RewriteParameter(ParameterExpression p)
             {
                 for (int i = 0, n = this.parameters.Count; i < n; i++)
                 {

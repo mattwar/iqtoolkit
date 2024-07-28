@@ -11,10 +11,12 @@ using System.Text;
 
 namespace IQToolkit
 {
+    using Utils;
+
     /// <summary>
     /// A basic abstract LINQ query provider
     /// </summary>
-    public abstract class QueryProvider : IQueryProvider, IQueryText
+    public abstract class QueryProvider : IQueryProvider
     {
         protected QueryProvider()
         {
@@ -27,7 +29,7 @@ namespace IQToolkit
 
         IQueryable IQueryProvider.CreateQuery(Expression expression)
         {
-            Type elementType = TypeHelper.GetElementType(expression.Type);
+            Type elementType = TypeHelper.GetSequenceElementType(expression.Type);
             try
             {
                 return (IQueryable)Activator.CreateInstance(typeof(Query<>).MakeGenericType(elementType), new object[] { this, expression });
@@ -40,15 +42,14 @@ namespace IQToolkit
 
         S IQueryProvider.Execute<S>(Expression expression)
         {
-            return (S)this.Execute(expression);
+            return (S)this.Execute(expression)!;
         }
 
-        object IQueryProvider.Execute(Expression expression)
+        object? IQueryProvider.Execute(Expression expression)
         {
             return this.Execute(expression);
         }
 
-        public abstract string GetQueryText(Expression expression);
-        public abstract object Execute(Expression expression);
+        public abstract object? Execute(Expression expression);
     }
 }

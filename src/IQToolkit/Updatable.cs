@@ -6,10 +6,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace IQToolkit
 {
+    using Utils;
+
     /// <summary>
     /// An interface that indicates that a <see cref="IQueryable"/> source is also updatable.
     /// </summary>
@@ -56,7 +57,7 @@ namespace IQToolkit
         /// <param name="instance">The instance to insert.</param>
         /// <param name="resultSelector">The function that produces the result.</param>
         /// <returns>The value of the result if the insert succeed, otherwise null.</returns>
-        public static S Insert<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, S>> resultSelector)
+        public static S Insert<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, S>>? resultSelector)
         {
             var thisMethod = TypeHelper.FindMethod(typeof(Updatable),
                 nameof(Insert), 
@@ -125,7 +126,7 @@ namespace IQToolkit
         /// <param name="updateCheck">A predicate testing the suitability of the object in the collection (often used to make sure assumptions have not changed.)</param>
         /// <param name="resultSelector">A function that produces a result based on the object in the collection after the update succeeds.</param>
         /// <returns>The value of the result function if the update succeeds, otherwise null.</returns>
-        public static S Update<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>> updateCheck, Expression<Func<T, S>> resultSelector)
+        public static S Update<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>>? updateCheck, Expression<Func<T, S>>? resultSelector)
         {
             var thisMethod = TypeHelper.FindMethod(typeof(Updatable),
                 nameof(Update), 
@@ -152,7 +153,7 @@ namespace IQToolkit
         /// <param name="instance">The instance to update.</param>
         /// <param name="updateCheck">A predicate testing the suitability of the object in the collection.</param>
         /// <returns>The value 1 if the update succeeds, otherwise 0.</returns>
-        public static int Update<T>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>> updateCheck)
+        public static int Update<T>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>>? updateCheck)
         {
             return Update<T, int>(collection, instance, updateCheck, null);
         }
@@ -208,7 +209,7 @@ namespace IQToolkit
         /// <param name="updateCheck">A predicate testing the suitablilty of the object in the collection if an update is required.</param>
         /// <param name="resultSelector">A function producing a result based on the object in the collection after the insert or update succeeds.</param>
         /// <returns>The value of the result if the insert or update succeeds, otherwise null.</returns>
-        public static S InsertOrUpdate<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>> updateCheck, Expression<Func<T, S>> resultSelector)
+        public static S InsertOrUpdate<T, S>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>>? updateCheck, Expression<Func<T, S>>? resultSelector)
         {
             var thisMethod = TypeHelper.FindMethod(typeof(Updatable),
                 nameof(InsertOrUpdate), 
@@ -235,7 +236,7 @@ namespace IQToolkit
         /// <param name="instance">The instance to insert or update.</param>
         /// <param name="updateCheck">A function producing a result based on the object in the collection after the insert or update succeeds.</param>
         /// <returns>The value 1 if the insert or update succeeds, otherwise 0.</returns>
-        public static int InsertOrUpdate<T>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>> updateCheck)
+        public static int InsertOrUpdate<T>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>>? updateCheck)
         {
             return InsertOrUpdate<T, int>(collection, instance, updateCheck, null);
         }
@@ -259,7 +260,7 @@ namespace IQToolkit
         /// <param name="instance">The instance to delete.</param>
         /// <param name="deleteCheck">A predicate testing the suitability of the corresponding object in the collection.</param>
         /// <returns>The value 1 if the delete succeeds, otherwise 0.</returns>
-        public static object Delete(IUpdatable collection, object instance, LambdaExpression deleteCheck)
+        public static object Delete(IUpdatable collection, object instance, LambdaExpression? deleteCheck)
         {
             var thisMethod = TypeHelper.FindMethod(typeof(Updatable),
                 nameof(Delete),
@@ -273,6 +274,7 @@ namespace IQToolkit
                 Expression.Constant(instance),
                 deleteCheck != null ? (Expression)Expression.Quote(deleteCheck) : Expression.Constant(null, typeof(LambdaExpression))
                 );
+
             return collection.Provider.Execute(callMyself);
         }
 
@@ -284,7 +286,7 @@ namespace IQToolkit
         /// <param name="instance">The instance to delete.</param>
         /// <param name="deleteCheck">A predicate testing the suitability of the corresponding object in the collection.</param>
         /// <returns>The value 1 if the delete succeeds, otherwise 0.</returns>
-        public static int Delete<T>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>> deleteCheck)
+        public static int Delete<T>(this IUpdatable<T> collection, T instance, Expression<Func<T, bool>>? deleteCheck)
         {
             var thisMethod = TypeHelper.FindMethod(typeof(Updatable),
                 nameof(Delete),

@@ -1,21 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Data;
-using System.Data.OleDb;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 
 namespace IQToolkit.Data.Access
 {
-    using IQToolkit.Data.Common;
-
     public class AccessTypeSystem : SqlTypeSystem
     {
         public override int StringDefaultSize
@@ -28,7 +17,7 @@ namespace IQToolkit.Data.Access
             get { return 4000; }
         }
 
-        public override QueryType GetQueryType(string typeName, string[] args, bool isNotNull)
+        public override QueryType GetQueryType(string typeName, string[]? args, bool isNotNull)
         {
             if (String.Compare(typeName, "Memo", StringComparison.OrdinalIgnoreCase) == 0)
             {

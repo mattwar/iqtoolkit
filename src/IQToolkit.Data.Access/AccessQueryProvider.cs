@@ -2,39 +2,95 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Data.Common;
 using System.Data.OleDb;
-using System.IO;
 
 namespace IQToolkit.Data.Access
 {
-    using IQToolkit.Data.Common;
-    using IQToolkit.Data.OleDb;
-
     /// <summary>
     /// A <see cref="DbEntityProvider"/> for Microsoft Access databases
     /// </summary>
-    public class AccessQueryProvider : OleDb.OleDbQueryProvider
+    public class AccessQueryProvider : OleDbQueryProvider
     {
         /// <summary>
         /// Construct a <see cref="AccessQueryProvider"/>
         /// </summary>
-        public AccessQueryProvider(OleDbConnection connection, QueryMapping mapping = null, QueryPolicy policy = null)
-            : base(connection, AccessLanguage.Default, mapping, policy)
+        private AccessQueryProvider(
+            QueryExecutor executor,
+            QueryLanguage? language,
+            QueryMapping? mapping,
+            QueryPolicy? policy,
+            TextWriter? log,
+            QueryCache? cache)
+            : base(
+                  executor,
+                  language ?? AccessLanguage.Default,
+                  mapping,
+                  policy,
+                  log,
+                  cache)
         {
         }
 
         /// <summary>
-        /// Constructs a <see cref="AccessQueryProvider"/>
+        /// Construct a <see cref="AccessQueryProvider"/>
         /// </summary>
-        public AccessQueryProvider(string connectionStringOrDatabaseFile, QueryMapping mapping = null, QueryPolicy policy = null)
-            : this(CreateConnection(connectionStringOrDatabaseFile), mapping, policy)
+        public AccessQueryProvider(
+            QueryExecutor executor)
+            : this(
+                  executor,
+                  language: null, 
+                  mapping: null,
+                  policy: null, 
+                  log: null, 
+                  cache: null)
         {
         }
 
-        protected override DbEntityProvider New(DbConnection connection, QueryMapping mapping, QueryPolicy policy)
+        /// <summary>
+        /// Construct a <see cref="AccessQueryProvider"/>
+        /// </summary>
+        public AccessQueryProvider(
+            OleDbConnection connection)
+            : this(new OleDbQueryExecutor(connection, language: AccessLanguage.Default))
         {
-            return new AccessQueryProvider((OleDbConnection)connection, mapping, policy);
+        }
+
+        /// <summary>
+        /// Construct a <see cref="AccessQueryProvider"/>
+        /// </summary>
+        public AccessQueryProvider(
+            string connectionStringOrFile)
+            : this(CreateConnection(connectionStringOrFile))
+        {
+        }
+
+        public new AccessQueryProvider WithExecutor(QueryExecutor executor) =>
+            (AccessQueryProvider)With(executor: executor);
+
+        public new AccessQueryProvider WithLanguage(QueryLanguage language) =>
+            (AccessQueryProvider)With(language: language);
+
+        public new AccessQueryProvider WithMapping(QueryMapping mapping) =>
+            (AccessQueryProvider)With(mapping: mapping);
+
+        public new AccessQueryProvider WithPolicy(QueryPolicy policy) =>
+            (AccessQueryProvider)With(policy: policy);
+
+        public new AccessQueryProvider WithLog(TextWriter? log) =>
+            (AccessQueryProvider)With(log: log);
+
+        public new AccessQueryProvider WithCache(QueryCache? cache) =>
+            (AccessQueryProvider)With(cache: cache);
+
+        protected override EntityProvider Construct(
+            QueryExecutor executor,
+            QueryLanguage language,
+            QueryMapping? mapping,
+            QueryPolicy? policy,
+            TextWriter? log,
+            QueryCache? cache)
+        {
+            return new AccessQueryProvider(executor, language, mapping, policy, log, cache);
         }
 
         /// <summary>
@@ -78,47 +134,5 @@ namespace IQToolkit.Data.Access
 
         public static readonly string AccessOleDbProvider2000 = "Microsoft.Jet.OLEDB.4.0";
         public static readonly string AccessOleDbProvider2007 = "Microsoft.ACE.OLEDB.12.0";
-
-        protected override QueryExecutor CreateExecutor()
-        {
-            return new Executor(this);
-        }
-
-        public new class Executor : OleDbQueryProvider.Executor
-        {
-            AccessQueryProvider provider;
-
-            public Executor(AccessQueryProvider provider)
-                : base(provider)
-            {
-                this.provider = provider;
-            }
-
-            protected override DbCommand GetCommand(QueryCommand query, object[] paramValues)
-            {
-                var cmd = (OleDbCommand)this.provider.Connection.CreateCommand();
-                cmd.CommandText = query.CommandText;
-                
-                this.SetParameterValues(query, cmd, paramValues);
-                
-                if (this.provider.Transaction != null)
-                {
-                    cmd.Transaction = (OleDbTransaction)this.provider.Transaction;
-                }
-
-                return cmd;
-            }
-
-            protected override OleDbType GetOleDbType(QueryType type)
-            {
-                SqlQueryType sqlType = type as SqlQueryType;
-                if (sqlType != null)
-                {
-                    return ToOleDbType(sqlType.SqlType);
-                }
-
-                return base.GetOleDbType(type);
-            }
-        }
     }
 }

@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace IQToolkit.Data.Access
 {
-    using Sql;
+    using AnsiSql;
 
     /// <summary>
     /// Microsoft Access SQL <see cref="QueryTypeSystem"/>
@@ -186,7 +186,7 @@ namespace IQToolkit.Data.Access
             }
 
             // look for generic sql type and try to convert to access type
-            if (SqlTypeSystem.Singleton.TryGetSqlType(typeName, out var sqlType)
+            if (AnsiSqlTypeSystem.Singleton.TryGetSqlType(typeName, out var sqlType)
                 && sqlType.TryGetAccessType(out accessType))
             {
                 return true;

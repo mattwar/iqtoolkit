@@ -7,7 +7,7 @@ using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
-    using Sql;
+    using AnsiSql;
     using Utils;
 
     /// <summary>
@@ -85,7 +85,7 @@ namespace IQToolkit.Data.Expressions
             DbExpressionType.Select;
 
         public string QueryText => 
-            SqlFormatter.Default.Format(this, FormattingOptions.DebugDefault).Text;
+            AnsiSqlFormatter.Default.Format(this, FormattingOptions.DebugDefault).Text;
 
         public SelectExpression Update(
             TableAlias alias,

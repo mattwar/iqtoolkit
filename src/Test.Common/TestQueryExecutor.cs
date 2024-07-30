@@ -7,7 +7,7 @@ using System.IO;
 using IQToolkit;
 using IQToolkit.Data;
 using IQToolkit.Data.Mapping;
-using IQToolkit.Data.Sql;
+using IQToolkit.Data.AnsiSql;
 using IQToolkit.Utils;
 
 namespace Test
@@ -27,7 +27,7 @@ namespace Test
             DataSet results)
         {
             this.Converter = converter ?? TypeConverter.Default;
-            this.TypeSystem = typeSystem ?? SqlTypeSystem.Singleton;
+            this.TypeSystem = typeSystem ?? AnsiSqlTypeSystem.Singleton;
             this.Log = log;
             _results = results;
         }

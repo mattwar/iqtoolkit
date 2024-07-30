@@ -9,7 +9,7 @@ using System.IO;
 
 namespace IQToolkit.Data.Odbc
 {
-    using Sql;
+    using AnsiSql;
     using Utils;
 
     public class OdbcQueryExecutor : DbQueryExecutor
@@ -84,7 +84,7 @@ namespace IQToolkit.Data.Odbc
         /// <summary>
         /// Override this in a custom <see cref="OdbcQueryExecutor"/>
         /// if you have a better way to go from language specific <see cref="QueryType"/>
-        /// to <see cref="OdbcType"/> than first converting to <see cref="SqlType"/>.
+        /// to <see cref="OdbcType"/> than first converting to <see cref="AnsiSqlType"/>.
         /// </summary>
         protected virtual bool TryGetOdbcType(QueryType type, out OdbcType odbcType)
         {

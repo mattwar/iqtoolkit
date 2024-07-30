@@ -11,7 +11,7 @@ using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
-    using Sql;
+    using AnsiSql;
 
     /// <summary>
     /// Formats an expressions tree into pseudo language syntax.
@@ -87,7 +87,7 @@ namespace IQToolkit.Data.Expressions
 
             private string FormatQuery(Expression query)
             {
-                return SqlFormatter.Default.Format(query, FormattingOptions.DebugDefault).Text;
+                return AnsiSqlFormatter.Default.Format(query, FormattingOptions.DebugDefault).Text;
             }
 
             public override void Write(Expression exp)

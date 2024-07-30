@@ -3,85 +3,85 @@ using System.Data.Odbc;
 
 namespace IQToolkit.Data.Odbc
 {
-    using Sql;
+    using AnsiSql;
 
     public static class OdbcTypeExtensions
     {
         /// <summary>
-        /// Gets the corresponding <see cref="SqlType"/>.
+        /// Gets the corresponding <see cref="AnsiSqlType"/>.
         /// </summary>
-        public static bool TryGetSqlType(this OdbcType odbcType, out SqlType sqlType)
+        public static bool TryGetSqlType(this OdbcType odbcType, out AnsiSqlType sqlType)
         {
             switch (odbcType)
             {
                 case OdbcType.BigInt:
-                    sqlType = SqlType.BigInt;
+                    sqlType = AnsiSqlType.BigInt;
                     return true;
                 case OdbcType.Binary:
-                    sqlType = SqlType.Binary;
+                    sqlType = AnsiSqlType.Binary;
                     return true;
                 case OdbcType.Bit:
-                    sqlType = SqlType.Bit;
+                    sqlType = AnsiSqlType.Bit;
                     return true;
                 case OdbcType.Char:
-                    sqlType = SqlType.Char;
+                    sqlType = AnsiSqlType.Char;
                     return true;
                 case OdbcType.Date:
-                    sqlType = SqlType.Date;
+                    sqlType = AnsiSqlType.Date;
                     return true;
                 case OdbcType.DateTime:
-                    sqlType = SqlType.DateTime;
+                    sqlType = AnsiSqlType.DateTime;
                     return true;
                 case OdbcType.Decimal:
-                    sqlType = SqlType.Decimal;
+                    sqlType = AnsiSqlType.Decimal;
                     return true;
                 case OdbcType.Double:
-                    sqlType = SqlType.Float;
+                    sqlType = AnsiSqlType.Float;
                     return true;
                 case OdbcType.Image:
-                    sqlType = SqlType.Image;
+                    sqlType = AnsiSqlType.Image;
                     return true;
                 case OdbcType.Int:
-                    sqlType = SqlType.Integer;
+                    sqlType = AnsiSqlType.Integer;
                     return true;
                 case OdbcType.NChar:
-                    sqlType = SqlType.NChar;
+                    sqlType = AnsiSqlType.NChar;
                     return true;
                 case OdbcType.NText:
-                    sqlType = SqlType.NText;
+                    sqlType = AnsiSqlType.NText;
                     return true;
                 case OdbcType.NVarChar:
-                    sqlType = SqlType.NVarChar;
+                    sqlType = AnsiSqlType.NVarChar;
                     return true;
                 case OdbcType.Real:
-                    sqlType = SqlType.Real;
+                    sqlType = AnsiSqlType.Real;
                     return true;
                 case OdbcType.SmallDateTime:
-                    sqlType = SqlType.SmallDateTime;
+                    sqlType = AnsiSqlType.SmallDateTime;
                     return true;
                 case OdbcType.SmallInt:
-                    sqlType = SqlType.SmallInt;
+                    sqlType = AnsiSqlType.SmallInt;
                     return true;
                 case OdbcType.Text:
-                    sqlType = SqlType.Text;
+                    sqlType = AnsiSqlType.Text;
                     return true;
                 case OdbcType.Time:
-                    sqlType = SqlType.Time;
+                    sqlType = AnsiSqlType.Time;
                     return true;
                 case OdbcType.Timestamp:
-                    sqlType = SqlType.Timestamp;
+                    sqlType = AnsiSqlType.Timestamp;
                     return true;
                 case OdbcType.TinyInt:
-                    sqlType = SqlType.TinyInt;
+                    sqlType = AnsiSqlType.TinyInt;
                     return true;
                 case OdbcType.UniqueIdentifier:
-                    sqlType = SqlType.UniqueIdentifier;
+                    sqlType = AnsiSqlType.UniqueIdentifier;
                     return true;
                 case OdbcType.VarBinary:
-                    sqlType = SqlType.VarBinary;
+                    sqlType = AnsiSqlType.VarBinary;
                     return true;
                 case OdbcType.VarChar:
-                    sqlType = SqlType.VarChar;
+                    sqlType = AnsiSqlType.VarChar;
                     return true;
                 default:
                     sqlType = default;
@@ -92,87 +92,87 @@ namespace IQToolkit.Data.Odbc
         /// <summary>
         /// Gets the correspondg <see cref="OdbcType"/>.
         /// </summary>
-        public static bool TryGetOdbcType(this SqlType sqlType, out OdbcType odbcType)
+        public static bool TryGetOdbcType(this AnsiSqlType sqlType, out OdbcType odbcType)
         {
             switch (sqlType)
             {
-                case SqlType.BigInt:
+                case AnsiSqlType.BigInt:
                     odbcType = OdbcType.BigInt;
                     return true;
-                case SqlType.Binary:
+                case AnsiSqlType.Binary:
                     odbcType = OdbcType.Binary;
                     return true;
-                case SqlType.Bit:
+                case AnsiSqlType.Bit:
                     odbcType = OdbcType.Bit;
                     return true;
-                case SqlType.Char:
+                case AnsiSqlType.Char:
                     odbcType = OdbcType.Char;
                     return true;
-                case SqlType.DateTime:
-                case SqlType.DateTime2:
-                case SqlType.DateTimeOffset:
+                case AnsiSqlType.DateTime:
+                case AnsiSqlType.DateTime2:
+                case AnsiSqlType.DateTimeOffset:
                     odbcType = OdbcType.DateTime;
                     return true;
-                case SqlType.Decimal:
-                case SqlType.Money:
-                case SqlType.SmallMoney:
+                case AnsiSqlType.Decimal:
+                case AnsiSqlType.Money:
+                case AnsiSqlType.SmallMoney:
                     odbcType = OdbcType.Decimal;
                     return true;
-                case SqlType.Real:
+                case AnsiSqlType.Real:
                     odbcType = OdbcType.Real;
                     return true;
-                case SqlType.Float:
+                case AnsiSqlType.Float:
                     odbcType = OdbcType.Double;
                     return true;
-                case SqlType.Image:
+                case AnsiSqlType.Image:
                     odbcType = OdbcType.Image;
                     return true;
-                case SqlType.Integer:
+                case AnsiSqlType.Integer:
                     odbcType = OdbcType.Int;
                     return true;
-                case SqlType.NChar:
+                case AnsiSqlType.NChar:
                     odbcType = OdbcType.NChar;
                     return true;
-                case SqlType.NText:
+                case AnsiSqlType.NText:
                     odbcType = OdbcType.NText;
                     return true;
-                case SqlType.NVarChar:
+                case AnsiSqlType.NVarChar:
                     odbcType = OdbcType.NVarChar;
                     return true;
-                case SqlType.UniqueIdentifier:
+                case AnsiSqlType.UniqueIdentifier:
                     odbcType = OdbcType.UniqueIdentifier;
                     return true;
-                case SqlType.SmallDateTime:
+                case AnsiSqlType.SmallDateTime:
                     odbcType = OdbcType.SmallDateTime;
                     return true;
-                case SqlType.SmallInt:
+                case AnsiSqlType.SmallInt:
                     odbcType = OdbcType.SmallInt;
                     return true;
-                case SqlType.Text:
+                case AnsiSqlType.Text:
                     odbcType = OdbcType.Text;
                     return true;
-                case SqlType.Timestamp:
+                case AnsiSqlType.Timestamp:
                     odbcType = OdbcType.Timestamp;
                     return true;
-                case SqlType.TinyInt:
+                case AnsiSqlType.TinyInt:
                     odbcType = OdbcType.TinyInt;
                     return true;
-                case SqlType.VarBinary:
+                case AnsiSqlType.VarBinary:
                     odbcType = OdbcType.VarBinary;
                     return true;
-                case SqlType.VarChar:
+                case AnsiSqlType.VarChar:
                     odbcType = OdbcType.VarChar;
                     return true;
-                case SqlType.Date:
+                case AnsiSqlType.Date:
                     odbcType = OdbcType.Date;
                     return true;
-                case SqlType.Time:
+                case AnsiSqlType.Time:
                     odbcType = OdbcType.Time;
                     return true;
-                case SqlType.Variant:
-                case SqlType.Xml:
-                case SqlType.Udt:
-                case SqlType.Structured:
+                case AnsiSqlType.Variant:
+                case AnsiSqlType.Xml:
+                case AnsiSqlType.Udt:
+                case AnsiSqlType.Structured:
                 default:
                     odbcType = default;
                     return false;

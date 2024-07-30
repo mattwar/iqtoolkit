@@ -4,7 +4,7 @@ using System.Data;
 
 namespace IQToolkit.Data
 {
-    using Sql;
+    using AnsiSql;
 
     /// <summary>
     /// A scalar type as understood by the database.
@@ -19,12 +19,12 @@ namespace IQToolkit.Data
         public abstract short Scale { get; }
 
         public static QueryType Unknown = 
-            new SqlQueryType(SqlType.NVarChar, false, 0, 0, 0);
+            new AnsiSqlQueryType(AnsiSqlType.NVarChar, false, 0, 0, 0);
 
         /// <summary>
         /// Returns true if this type can be represented as an ANSI SQL type.
         /// </summary>
-        public abstract bool TryGetSqlType(out SqlType sqlType);
+        public abstract bool TryGetSqlType(out AnsiSqlType sqlType);
 
         /// <summary>
         /// Returns true if this type can be represented as <see cref="DbType"/>.

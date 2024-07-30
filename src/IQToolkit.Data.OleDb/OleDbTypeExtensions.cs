@@ -4,95 +4,95 @@ using System.Data.OleDb;
 
 namespace IQToolkit.Data.OleDb
 {
-    using Sql;
+    using AnsiSql;
 
     public static class OleDbTypeExtensions
     {
         /// <summary>
         /// Get the corresponding <see cref="OleDbType"/>.
         /// </summary>
-        public static bool TryGetOleDbType(this SqlType sqlType, out OleDbType oleDbType)
+        public static bool TryGetOleDbType(this AnsiSqlType sqlType, out OleDbType oleDbType)
         {
             switch (sqlType)
             {
-                case SqlType.BigInt:
+                case AnsiSqlType.BigInt:
                     oleDbType = OleDbType.BigInt;
                     return true;
-                case SqlType.Binary:
+                case AnsiSqlType.Binary:
                     oleDbType = OleDbType.Binary;
                     return true;
-                case SqlType.Bit:
+                case AnsiSqlType.Bit:
                     oleDbType = OleDbType.Boolean;
                     return true;
-                case SqlType.Char:
+                case AnsiSqlType.Char:
                     oleDbType = OleDbType.Char;
                     return true;
-                case SqlType.Date:
+                case AnsiSqlType.Date:
                     oleDbType = OleDbType.Date;
                     return true;
-                case SqlType.DateTime:
-                case SqlType.SmallDateTime:
-                case SqlType.DateTime2:
-                case SqlType.DateTimeOffset:
+                case AnsiSqlType.DateTime:
+                case AnsiSqlType.SmallDateTime:
+                case AnsiSqlType.DateTime2:
+                case AnsiSqlType.DateTimeOffset:
                     oleDbType = OleDbType.DBTimeStamp;
                     return true;
-                case SqlType.Decimal:
+                case AnsiSqlType.Decimal:
                     oleDbType = OleDbType.Decimal;
                     return true;
-                case SqlType.Float:
-                case SqlType.Real:
+                case AnsiSqlType.Float:
+                case AnsiSqlType.Real:
                     oleDbType = OleDbType.Double;
                     return true;
-                case SqlType.Image:
+                case AnsiSqlType.Image:
                     oleDbType = OleDbType.LongVarBinary;
                     return true;
-                case SqlType.Integer:
+                case AnsiSqlType.Integer:
                     oleDbType = OleDbType.Integer;
                     return true;
-                case SqlType.Money:
-                case SqlType.SmallMoney:
+                case AnsiSqlType.Money:
+                case AnsiSqlType.SmallMoney:
                     oleDbType = OleDbType.Currency;
                     return true;
-                case SqlType.NChar:
+                case AnsiSqlType.NChar:
                     oleDbType = OleDbType.WChar;
                     return true;
-                case SqlType.NText:
+                case AnsiSqlType.NText:
                     oleDbType = OleDbType.LongVarChar;
                     return true;
-                case SqlType.NVarChar:
+                case AnsiSqlType.NVarChar:
                     oleDbType = OleDbType.VarWChar;
                     return true;
-                case SqlType.SmallInt:
+                case AnsiSqlType.SmallInt:
                     oleDbType = OleDbType.SmallInt;
                     return true;
-                case SqlType.Text:
+                case AnsiSqlType.Text:
                     oleDbType = OleDbType.LongVarChar;
                     return true;
-                case SqlType.Time:
+                case AnsiSqlType.Time:
                     oleDbType = OleDbType.DBTime;
                     return true;
-                case SqlType.Timestamp:
+                case AnsiSqlType.Timestamp:
                     oleDbType = OleDbType.Binary;
                     return true;
-                case SqlType.TinyInt:
+                case AnsiSqlType.TinyInt:
                     oleDbType = OleDbType.TinyInt;
                     return true;
-                case SqlType.Udt:
+                case AnsiSqlType.Udt:
                     oleDbType = OleDbType.Variant;
                     return true;
-                case SqlType.UniqueIdentifier:
+                case AnsiSqlType.UniqueIdentifier:
                     oleDbType = OleDbType.Guid;
                     return true;
-                case SqlType.VarBinary:
+                case AnsiSqlType.VarBinary:
                     oleDbType = OleDbType.VarBinary;
                     return true;
-                case SqlType.VarChar:
+                case AnsiSqlType.VarChar:
                     oleDbType = OleDbType.VarChar;
                     return true;
-                case SqlType.Variant:
+                case AnsiSqlType.Variant:
                     oleDbType = OleDbType.Variant;
                     return true;
-                case SqlType.Xml:
+                case AnsiSqlType.Xml:
                     oleDbType = OleDbType.VarWChar;
                     return true;
                 default:

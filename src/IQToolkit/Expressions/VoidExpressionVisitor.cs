@@ -8,11 +8,11 @@ using System.Linq.Expressions;
 namespace IQToolkit.Expressions
 {
     /// <summary>
-    /// The base class of an expression visitor.
+    /// The base class of an void returning expression visitor.
     /// </summary>
-    public abstract class TrueExpressionVisitor
+    public abstract class VoidExpressionVisitor
     {
-        protected TrueExpressionVisitor()
+        protected VoidExpressionVisitor()
         {
         }
 
@@ -66,7 +66,7 @@ namespace IQToolkit.Expressions
                     this.VisitLoop(loop);
                     break;
                 case MemberExpression me:
-                    this.VisitMemberAccess(me);
+                    this.VisitMember(me);
                     break;
                 case MemberInitExpression mi:
                     this.VisitMemberInit(mi);
@@ -118,7 +118,7 @@ namespace IQToolkit.Expressions
         protected virtual void VisitLambda(LambdaExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitLoop(LoopExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitListInit(ListInitExpression expr) => VisitUnhandled(expr);
-        protected virtual void VisitMemberAccess(MemberExpression expr) => VisitUnhandled(expr);
+        protected virtual void VisitMember(MemberExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitMemberInit(MemberInitExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitMethodCall(MethodCallExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitNew(NewExpression expr) => VisitUnhandled(expr);
@@ -129,7 +129,6 @@ namespace IQToolkit.Expressions
         protected virtual void VisitTry(TryExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitTypeBinary(TypeBinaryExpression expr) => VisitUnhandled(expr);
         protected virtual void VisitUnary(UnaryExpression expr) => VisitUnhandled(expr);
-
 
         /// <summary>
         /// Called when an unknown expression type is encountered.

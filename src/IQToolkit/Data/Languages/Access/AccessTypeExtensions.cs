@@ -6,55 +6,55 @@ using System.Data;
 
 namespace IQToolkit.Data.Access
 {
-    using Sql;
+    using AnsiSql;
 
     public static class AccessTypeExtensions
     {
         /// <summary>
         /// Gets the corresponding ANSI SQL type.
         /// </summary>
-        public static bool TryGetSqlType(this AccessType accessType, out SqlType sqlType)
+        public static bool TryGetSqlType(this AccessType accessType, out AnsiSqlType sqlType)
         {
             switch (accessType)
             {
                 case AccessType.Binary:
-                    sqlType = SqlType.Binary;
+                    sqlType = AnsiSqlType.Binary;
                     return true;
                 case AccessType.Bit:
-                    sqlType = SqlType.Bit;
+                    sqlType = AnsiSqlType.Bit;
                     return true;
                 case AccessType.TinyInt:
-                    sqlType = SqlType.TinyInt;
+                    sqlType = AnsiSqlType.TinyInt;
                     return true;
                 case AccessType.Money:
-                    sqlType = SqlType.Money;
+                    sqlType = AnsiSqlType.Money;
                     return true;
                 case AccessType.DateTime:
-                    sqlType = SqlType.DateTime;
+                    sqlType = AnsiSqlType.DateTime;
                     return true;
                 case AccessType.UniqueIdentifier:
-                    sqlType = SqlType.UniqueIdentifier;
+                    sqlType = AnsiSqlType.UniqueIdentifier;
                     return true;
                 case AccessType.Real:
-                    sqlType = SqlType.Real;
+                    sqlType = AnsiSqlType.Real;
                     return true;
                 case AccessType.Float:
-                    sqlType = SqlType.Float;
+                    sqlType = AnsiSqlType.Float;
                     return true;
                 case AccessType.SmallInt:
-                    sqlType = SqlType.SmallInt;
+                    sqlType = AnsiSqlType.SmallInt;
                     return true;
                 case AccessType.Integer:
-                    sqlType = SqlType.Integer;
+                    sqlType = AnsiSqlType.Integer;
                     return true;
                 case AccessType.Text:
-                    sqlType = SqlType.Text;
+                    sqlType = AnsiSqlType.Text;
                     return true;
                 case AccessType.Image:
-                    sqlType = SqlType.Image;
+                    sqlType = AnsiSqlType.Image;
                     return true;
                 case AccessType.Char:
-                    sqlType = SqlType.NVarChar;
+                    sqlType = AnsiSqlType.NVarChar;
                     return true;
                 default:
                     sqlType = default;
@@ -65,59 +65,59 @@ namespace IQToolkit.Data.Access
         /// <summary>
         /// Gets the corresponding Microsoft Access SQL type.
         /// </summary>
-        public static bool TryGetAccessType(this SqlType sqlType, out AccessType accessType)
+        public static bool TryGetAccessType(this AnsiSqlType sqlType, out AccessType accessType)
         {
             switch (sqlType)
             {
-                case SqlType.Binary:
-                case SqlType.VarBinary:
+                case AnsiSqlType.Binary:
+                case AnsiSqlType.VarBinary:
                     accessType = AccessType.Binary;
                     break;
-                case SqlType.Bit:
+                case AnsiSqlType.Bit:
                     accessType = AccessType.Bit;
                     break;
-                case SqlType.TinyInt:
+                case AnsiSqlType.TinyInt:
                     accessType = AccessType.TinyInt;
                     break;
-                case SqlType.Money:
-                case SqlType.SmallMoney:
+                case AnsiSqlType.Money:
+                case AnsiSqlType.SmallMoney:
                     accessType = AccessType.Money;
                     break;
-                case SqlType.Date:
-                case SqlType.DateTime:
-                case SqlType.DateTime2:
-                case SqlType.DateTimeOffset:
-                case SqlType.SmallDateTime:
-                case SqlType.Time:
-                case SqlType.Timestamp:
+                case AnsiSqlType.Date:
+                case AnsiSqlType.DateTime:
+                case AnsiSqlType.DateTime2:
+                case AnsiSqlType.DateTimeOffset:
+                case AnsiSqlType.SmallDateTime:
+                case AnsiSqlType.Time:
+                case AnsiSqlType.Timestamp:
                     accessType = AccessType.DateTime;
                     break;
-                case SqlType.UniqueIdentifier:
+                case AnsiSqlType.UniqueIdentifier:
                     accessType = AccessType.UniqueIdentifier;
                     break;
-                case SqlType.Decimal:
-                case SqlType.BigInt:
+                case AnsiSqlType.Decimal:
+                case AnsiSqlType.BigInt:
                     accessType = AccessType.Decimal;
                     break;
-                case SqlType.Real:
+                case AnsiSqlType.Real:
                     accessType = AccessType.Real;
                     break;
-                case SqlType.Float:
+                case AnsiSqlType.Float:
                     accessType = AccessType.Float;
                     break;
-                case SqlType.SmallInt:
+                case AnsiSqlType.SmallInt:
                     accessType = AccessType.SmallInt;
                     break;
-                case SqlType.Integer:
+                case AnsiSqlType.Integer:
                     accessType = AccessType.Integer;
                     break;
-                case SqlType.Image:
+                case AnsiSqlType.Image:
                     accessType = AccessType.Image;
                     break;
-                case SqlType.Char:
-                case SqlType.VarChar:
-                case SqlType.NChar:
-                case SqlType.NVarChar:
+                case AnsiSqlType.Char:
+                case AnsiSqlType.VarChar:
+                case AnsiSqlType.NChar:
+                case AnsiSqlType.NVarChar:
                     accessType = AccessType.Char;
                     break;
                 default:

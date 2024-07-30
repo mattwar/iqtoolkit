@@ -63,7 +63,7 @@ namespace IQToolkit.Data
             TextWriter? log = null,
             QueryCache? cache = null)
         {
-            this.Language = language ?? Sql.SqlLanguage.Singleton;
+            this.Language = language ?? AnsiSql.AnsiSqlLanguage.Singleton;
             this.Mapping = mapping ?? new AttributeMapping();
             this.Policy = policy ?? QueryPolicy.Default;
             this.Executor = executor;

@@ -39,7 +39,7 @@ namespace IQToolkit.Data.Access
                 );
         }
 
-        public class AccessFormatterVisitor : Sql.SqlFormatter.SqlFormatterVisitor
+        public class AccessFormatterVisitor : AnsiSql.AnsiSqlFormatter.SqlFormatterVisitor
         {
             public AccessFormatterVisitor(
                 FormattingOptions? options, 
@@ -203,7 +203,7 @@ namespace IQToolkit.Data.Access
                 }
             }
 
-            protected override void VisitMemberAccess(MemberExpression m)
+            protected override void VisitMember(MemberExpression m)
             {
                 if (m.Expression == null)
                     return;
@@ -262,7 +262,7 @@ namespace IQToolkit.Data.Access
                     }
                 }
 
-                base.VisitMemberAccess(m);
+                base.VisitMember(m);
             }
 
             protected override void VisitMethodCall(MethodCallExpression m)

@@ -10,7 +10,7 @@ namespace IQToolkit.Data.Expressions
     /// An extended expression visitor.
     /// Includes <see cref="DbExpression"/> nodes.
     /// </summary>
-    public abstract class DbTrueExpressionVisitor : IQToolkit.Expressions.TrueExpressionVisitor
+    public abstract class DbVoidExpressionVisitor : IQToolkit.Expressions.VoidExpressionVisitor
     {
         public override void Visit(Expression? exp)
         {

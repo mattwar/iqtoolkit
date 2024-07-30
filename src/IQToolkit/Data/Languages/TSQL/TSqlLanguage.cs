@@ -24,7 +24,7 @@ namespace IQToolkit.Data.TSql
             new TSqlLanguage();
 
         public override QueryTypeSystem TypeSystem => 
-            Sql.SqlTypeSystem.Singleton;
+            AnsiSql.AnsiSqlTypeSystem.Singleton;
 
         public override QueryFormatter Formatter =>
             TSqlFormatter.Singleton;

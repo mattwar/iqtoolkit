@@ -5,7 +5,7 @@ using System;
 
 namespace IQToolkit.Data.Access
 {
-    using Sql;
+    using AnsiSql;
     using System.Data;
 
     /// <summary>
@@ -36,7 +36,7 @@ namespace IQToolkit.Data.Access
         public override QueryTypeSystem TypeSystem =>
             AccessTypeSystem.Singleton;
 
-        public override bool TryGetSqlType(out SqlType sqlType)
+        public override bool TryGetSqlType(out AnsiSqlType sqlType)
         {
             return this.Type.TryGetSqlType(out sqlType);
         }

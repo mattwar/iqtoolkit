@@ -36,7 +36,7 @@ namespace IQToolkit.Data.TSql
                 );
         }
 
-        public class TSqlFormatterVisitor : Sql.SqlFormatter.SqlFormatterVisitor
+        public class TSqlFormatterVisitor : AnsiSql.AnsiSqlFormatter.SqlFormatterVisitor
         {
             public TSqlFormatterVisitor(
                 FormattingOptions? options,
@@ -62,7 +62,7 @@ namespace IQToolkit.Data.TSql
                 }
             }
 
-            protected override void VisitMemberAccess(MemberExpression m)
+            protected override void VisitMember(MemberExpression m)
             {
                 if (m.Member.DeclaringType == typeof(string))
                 {
@@ -127,7 +127,7 @@ namespace IQToolkit.Data.TSql
                     }
                 }
 
-                base.VisitMemberAccess(m);
+                base.VisitMember(m);
             }
 
             protected override void VisitMethodCall(MethodCallExpression m)

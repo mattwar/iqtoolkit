@@ -8,7 +8,7 @@ using System.IO;
 namespace IQToolkit.Data
 {
     using Mapping;
-    using Sql;
+    using AnsiSql;
     using Utils;
      
     /// <summary>
@@ -71,7 +71,7 @@ namespace IQToolkit.Data
             this.Isolation = isolation;
             this.Transaction = transaction;
             this.Converter = converter ?? TypeConverter.Default;
-            this.TypeSystem = typeSystem ?? SqlTypeSystem.Singleton;
+            this.TypeSystem = typeSystem ?? AnsiSqlTypeSystem.Singleton;
             this.Log = log;
         }
 

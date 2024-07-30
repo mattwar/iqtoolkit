@@ -127,8 +127,7 @@ namespace IQToolkit
                     && args != null 
                     && args.Length > 0)
                 {
-                    var replaced = ExpressionReplacer.ReplaceAll(
-                        expression,
+                    var replaced = expression.ReplaceAll(
                         _query.Parameters.ToArray(),
                         args.Select((a, i) => Expression.Constant(a, _query.Parameters[i].Type)).ToArray()
                         );
@@ -164,8 +163,8 @@ namespace IQToolkit
             /// </summary>
             private Expression? FindProvider(Expression expression)
             {
-                return TypedSubtreeFinder.Find(expression, typeof(IQueryProvider))
-                    ?? TypedSubtreeFinder.Find(expression, typeof(IQueryable));
+                return expression.FindFirstUpOrDefault(expr => typeof(IQueryProvider).IsAssignableFrom(expr.Type))
+                    ?? expression.FindFirstUpOrDefault(expr => typeof(IQueryable).IsAssignableFrom(expr.Type));
             }
 
             public object? Invoke(object?[] args)

@@ -12,7 +12,7 @@ namespace IQToolkit.Data.Expressions
     /// <summary>
     ///  returns the set of all aliases produced by a query source
     /// </summary>
-    public class DeclaredAliasGatherer : DbExpressionRewriter
+    public class DeclaredAliasGatherer : DbExpressionVisitor
     {
         private readonly HashSet<TableAlias> _aliases;
 
@@ -24,17 +24,17 @@ namespace IQToolkit.Data.Expressions
         public static HashSet<TableAlias> Gather(Expression? source)
         {
             var gatherer = new DeclaredAliasGatherer();
-            gatherer.RewriteN(source);
+            gatherer.Visit(source);
             return gatherer._aliases;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             _aliases.Add(select.Alias);
             return select;
         }
 
-        protected override Expression RewriteTable(TableExpression table)
+        protected internal override Expression VisitTable(TableExpression table)
         {
             _aliases.Add(table.Alias);
             return table;

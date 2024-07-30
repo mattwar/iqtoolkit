@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
@@ -57,6 +58,21 @@ namespace IQToolkit.Data.Expressions
             {
                 return this;
             }
+        }
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitClientJoin(this);
+            return base.Accept(visitor);
+        }
+
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            var projection = (ClientProjectionExpression)visitor.Visit(this.Projection);
+            var outerKey = this.OuterKey.Rewrite(visitor);
+            var innerKey = this.InnerKey.Rewrite(visitor);
+            return this.Update(projection, outerKey, innerKey);
         }
     }
 }

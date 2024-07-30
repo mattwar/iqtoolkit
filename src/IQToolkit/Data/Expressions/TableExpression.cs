@@ -4,6 +4,7 @@
 namespace IQToolkit.Data.Expressions
 {
     using Mapping;
+    using System.Linq.Expressions;
 
     /// <summary>
     /// A table reference in a SQL query.
@@ -50,6 +51,18 @@ namespace IQToolkit.Data.Expressions
             {
                 return this;
             }
+        }
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitTable(this);
+            return base.Accept(visitor);
+        }
+
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            return this;
         }
     }
 }

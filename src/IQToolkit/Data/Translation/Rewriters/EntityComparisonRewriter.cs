@@ -16,7 +16,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Rewrites comparisions of entities into comparisons of the primary key values.
     /// </summary>
-    public class EntityComparisonRewriter : DbExpressionRewriter
+    public class EntityComparisonRewriter : DbExpressionVisitor
     {
         private readonly QueryMapping _mapping;
 
@@ -25,9 +25,9 @@ namespace IQToolkit.Data.Translation
             _mapping = mapping;
         }
 
-        protected override Expression RewriteMemberAccess(MemberExpression original)
+        protected override Expression VisitMember(MemberExpression original)
         {
-            var modified = (MemberExpression)base.RewriteMemberAccess(original);
+            var modified = (MemberExpression)base.VisitMember(original);
 
             if (modified.Expression.TryResolveMemberAccess(modified.Member, out var resolvedAccess))
             {
@@ -39,7 +39,7 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteBinary(BinaryExpression b)
+        protected override Expression VisitBinary(BinaryExpression b)
         {
             switch (b.NodeType)
             {
@@ -48,9 +48,9 @@ namespace IQToolkit.Data.Translation
                     Expression result = this.MakeComparison(b);
                     if (result == b)
                         goto default;
-                    return this.Rewrite(result);
+                    return this.Visit(result);
                 default:
-                    return base.RewriteBinary(b);
+                    return base.VisitBinary(b);
             }
         }
 

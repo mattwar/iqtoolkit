@@ -62,7 +62,7 @@ namespace IQToolkit.Data.Translation
     ///   1) a list of column declarations for sub-expressions that must be evaluated on the server
     ///   2) a expression that describes how to combine/project the columns back together into the correct result
     /// </summary>
-    public class ColumnProjector : DbExpressionRewriter
+    public class ColumnProjector : DbExpressionVisitor
     {
         private readonly QueryLanguage _language;
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
@@ -109,7 +109,7 @@ namespace IQToolkit.Data.Translation
             IEnumerable<TableAlias> existingAliases)
         {
             var projector = new ColumnProjector(language, affinity, expression, existingColumns, newAlias, existingAliases);
-            var expr = projector.Rewrite(expression);
+            var expr = projector.Visit(expression);
             return new ProjectedColumns(expr, projector._columns.AsReadOnly());
         }
 
@@ -144,8 +144,11 @@ namespace IQToolkit.Data.Translation
             return ProjectColumns(language, expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
         }
 
-        public override Expression Rewrite(Expression expression)
+        public override Expression Visit(Expression expression)
         {
+            if (expression == null)
+                return null!;
+
             if (_candidates.Contains(expression))
             {
                 if (expression is ColumnExpression column)
@@ -190,13 +193,8 @@ namespace IQToolkit.Data.Translation
             }
             else
             {
-                return base.Rewrite(expression);
+                return base.Visit(expression);
             }
-        }
-
-        protected override Expression RewriteColumn(ColumnExpression original)
-        {
-            return base.RewriteColumn(original);
         }
 
         private bool IsColumnNameInUse(string name)
@@ -226,7 +224,7 @@ namespace IQToolkit.Data.Translation
         /// Nominator is a class that determining the set of 
         /// candidate expressions that are possible columns of a select expression
         /// </summary>
-        private class Nominator : DbExpressionRewriter
+        private class Nominator : DbExpressionVisitor
         {
             private readonly QueryLanguage _language;
             private readonly HashSet<Expression> _candidates;
@@ -262,7 +260,7 @@ namespace IQToolkit.Data.Translation
                 Expression expression)
             {
                 Nominator nominator = new Nominator(language, affinity, validAliases);
-                nominator.Rewrite(expression);
+                nominator.Visit(expression);
                 return nominator._candidates;
             }
 
@@ -295,13 +293,16 @@ namespace IQToolkit.Data.Translation
                 }
             }
 
-            public override Expression Rewrite(Expression expression)
+            public override Expression Visit(Expression expression)
             {
+                if (expression == null)
+                    return null!;
+
                 // reset from incoming state from peers
                 var oldState = _state;
                 _state = State.CanBeColumn;
 
-                base.Rewrite(expression);
+                base.Visit(expression);
 
                 // get current expression's state
                 var exprState = GetState(expression);
@@ -340,22 +341,22 @@ namespace IQToolkit.Data.Translation
 
             // if we start with a client project, don't nominate expressions that are not part of the
             // projection, except for direct referenced to external columns (probably in where clause)
-            protected override Expression RewriteClientProjection(ClientProjectionExpression proj)
+            protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
             {
                 if (_validColumnsOnly)
                 {
                     // still only nominate references to valid columns
-                    base.RewriteClientProjection(proj);
+                    base.VisitClientProjection(proj);
                 }
                 else
                 {
                     // only nominate references to valid columns
                     _validColumnsOnly = true;
-                    this.Rewrite(proj.Select);
+                    this.Visit(proj.Select);
 
                     // normal rules apply on projection expressions
                     _validColumnsOnly = false;
-                    this.Rewrite(proj.Projector);
+                    this.Visit(proj.Projector);
                 }
 
                 return proj;

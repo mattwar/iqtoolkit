@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Attempts to rewrite cross-apply and outer-apply joins as inner and left-outer joins
     /// </summary>
-    public class CrossApplyToLeftJoinRewriter : DbExpressionRewriter
+    public class CrossApplyToLeftJoinRewriter : DbExpressionVisitor
     {
         private readonly QueryLanguage _language;
 
@@ -26,9 +26,9 @@ namespace IQToolkit.Data.Translation
             _language = language;
         }
 
-        protected override Expression RewriteJoin(JoinExpression join)
+        protected internal override Expression VisitJoin(JoinExpression join)
         {
-            join = (JoinExpression)base.RewriteJoin(join);
+            join = (JoinExpression)base.VisitJoin(join);
 
             if (join.JoinType == JoinType.CrossApply || join.JoinType == JoinType.OuterApply)
             {

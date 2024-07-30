@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Translation
     /// Merges select expressions with their immediate nested select (from)
     /// if their parts of mergeable.
     /// </summary>
-    public class SubqueryMerger : DbExpressionRewriter
+    public class SubqueryMerger : DbExpressionVisitor
     {
         private SubqueryMerger()
         {
@@ -21,17 +21,17 @@ namespace IQToolkit.Data.Translation
 
         internal static Expression Merge(Expression expression)
         {
-            return new SubqueryMerger().Rewrite(expression);
+            return new SubqueryMerger().Visit(expression);
         }
 
         private bool _isTopLevel = true;
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             bool wasTopLevel = _isTopLevel;
             _isTopLevel = false;
 
-            select = (SelectExpression)base.RewriteSelect(select);
+            select = (SelectExpression)base.VisitSelect(select);
 
             // next attempt to merge subqueries that would have been removed by the above
             // logic except for the existence of a where clause

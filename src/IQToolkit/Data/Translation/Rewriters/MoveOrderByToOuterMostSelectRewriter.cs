@@ -12,7 +12,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Moves order-bys to the outermost select if possible
     /// </summary>
-    public class MoveOrderByToOuterMostSelectRewriter : DbExpressionRewriter
+    public class MoveOrderByToOuterMostSelectRewriter : DbExpressionVisitor
     {
         private readonly QueryLanguage _language;
         private List<OrderExpression>? _gatheredOrderings;
@@ -24,13 +24,13 @@ namespace IQToolkit.Data.Translation
             _isOuterMostSelect = true;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             var saveIsOuterMostSelect = _isOuterMostSelect;
             try
             {
                 _isOuterMostSelect = false;
-                select = (SelectExpression)base.RewriteSelect(select);
+                select = (SelectExpression)base.VisitSelect(select);
 
                 var hasOrderBy = select.OrderBy.Count > 0;
                 var hasGroupBy = select.GroupBy.Count > 0;
@@ -92,48 +92,44 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteScalarSubquery(ScalarSubqueryExpression scalar)
+        protected internal override Expression VisitScalarSubquery(ScalarSubqueryExpression scalar)
         {
             var saveOrderings = _gatheredOrderings;
             _gatheredOrderings = null;
-            var result = base.RewriteScalarSubquery(scalar);
+            var result = base.VisitScalarSubquery(scalar);
             _gatheredOrderings = saveOrderings;
             return result;
         }
 
-        protected override Expression RewriteExistsSubquery(ExistsSubqueryExpression exists)
+        protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
         {
             var saveOrderings = _gatheredOrderings;
             _gatheredOrderings = null;
-            var result = base.RewriteExistsSubquery(exists);
+            var result = base.VisitExistsSubquery(exists);
             _gatheredOrderings = saveOrderings;
             return result;
         }
 
-        protected override Expression RewriteInSubquery(InSubqueryExpression @in)
+        protected internal override Expression VisitInSubquery(InSubqueryExpression @in)
         {
             var saveOrderings = _gatheredOrderings;
             _gatheredOrderings = null;
-            var result = base.RewriteInSubquery(@in);
+            var result = base.VisitInSubquery(@in);
             _gatheredOrderings = saveOrderings;
             return result;
         }
 
-        protected override Expression RewriteJoin(JoinExpression join)
+        protected internal override Expression VisitJoin(JoinExpression join)
         {
             // make sure order by expressions lifted up from the left side are not lost
             // when visiting the right side
-            var left = this.Rewrite(join.Left);
+            var left = this.Visit(join.Left);
             var leftOrders = _gatheredOrderings;
             _gatheredOrderings = null; // start on the right with a clean slate
-            var right = this.Rewrite(join.Right);
+            var right = this.Visit(join.Right);
             this.PrependOrderings(leftOrders);
-            var condition = this.RewriteN(join.Condition);
-            if (left != join.Left || right != join.Right || condition != join.Condition)
-            {
-                return new JoinExpression(join.JoinType, left, right, condition);
-            }
-            return join;
+            var condition = this.Visit(join.Condition);
+            return join.Update(join.JoinType, left, right, condition);
         }
 
         /// <summary>

@@ -12,25 +12,25 @@ namespace IQToolkit.Data.Expressions
     /// <summary>
     /// Returns the set of all table aliases referenced in the source.
     /// </summary>
-    public class ReferencedAliasGatherer : DbExpressionRewriter
+    public class ReferencedAliasGatherer : DbExpressionVisitor
     {
-        HashSet<TableAlias> aliases;
+        private readonly HashSet<TableAlias> _aliases;
 
         private ReferencedAliasGatherer()
         {
-            this.aliases = new HashSet<TableAlias>();
+            _aliases = new HashSet<TableAlias>();
         }
 
         public static HashSet<TableAlias> Gather(Expression source)
         {
             var gatherer = new ReferencedAliasGatherer();
-            gatherer.Rewrite(source);
-            return gatherer.aliases;
+            gatherer.Visit(source);
+            return gatherer._aliases;
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
-            this.aliases.Add(column.Alias);
+            _aliases.Add(column.Alias);
             return column;
         }
     }

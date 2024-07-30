@@ -9,31 +9,32 @@ namespace IQToolkit.Data.Expressions
     /// <summary>
     /// Returns the set of all columns referenced by the given expression
     /// </summary>
-    public class ReferencedColumnGatherer : DbExpressionRewriter
+    public class ReferencedColumnGatherer : DbExpressionVisitor
     {
-        HashSet<ColumnExpression> columns = new HashSet<ColumnExpression>();
-        bool first = true;
+        private readonly HashSet<ColumnExpression> _columns = new HashSet<ColumnExpression>();
+        private bool _first = true;
 
         public static HashSet<ColumnExpression> Gather(Expression expression)
         {
             var visitor = new ReferencedColumnGatherer();
-            visitor.Rewrite(expression);
-            return visitor.columns;
+            visitor.Visit(expression);
+            return visitor._columns;
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
-            this.columns.Add(column);
+            _columns.Add(column);
             return column;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
-            if (first)
+            if (_first)
             {
-                first = false;
-                return base.RewriteSelect(select);
+                _first = false;
+                return base.VisitSelect(select);
             }
+
             return select;
         }
     }

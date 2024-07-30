@@ -35,5 +35,18 @@ namespace IQToolkit.Data.Expressions
                 return this;
             }
         }
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitIsNull(this);
+            return base.Accept(visitor);
+        }
+
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            var expr = visitor.Visit(this.Expression);
+            return this.Update(expr);
+        }
     }
 }

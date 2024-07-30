@@ -42,7 +42,7 @@ namespace IQToolkit.Expressions
         /// <summary>
         /// Evaluates and replaces sub-trees when first candidate is reached (top-down)
         /// </summary>
-        class SubtreeEvaluator : ExpressionRewriter
+        class SubtreeEvaluator : ExpressionVisitor
         {
             private readonly HashSet<Expression> _candidates;
             private readonly Func<ConstantExpression, Expression>? _fnOnEval;
@@ -60,20 +60,20 @@ namespace IQToolkit.Expressions
                 Func<ConstantExpression, Expression>? fnOnEval, 
                 Expression exp)
             {
-                return new SubtreeEvaluator(candidates, fnOnEval).Rewrite(exp);
+                return new SubtreeEvaluator(candidates, fnOnEval).Visit(exp);
             }
 
-            public override Expression Rewrite(Expression exp)
+            public override Expression Visit(Expression exp)
             {
-                if (_candidates.Contains(exp))
+                if (exp != null && _candidates.Contains(exp))
                 {
                     return this.Evaluate(exp);
                 }
 
-                return base.Rewrite(exp);
+                return base.Visit(exp);
             }
 
-            protected override Expression RewriteConditional(ConditionalExpression c)
+            protected override Expression VisitConditional(ConditionalExpression c)
             {
                 // if the conditional test can be evaluated locally, rewrite expression
                 // to the valid case
@@ -85,16 +85,16 @@ namespace IQToolkit.Expressions
                     {
                         if ((Boolean)((ConstantExpression)test).Value)
                         {
-                            return Rewrite(c.IfTrue);
+                            return this.Visit(c.IfTrue);
                         }
                         else
                         {
-                            return Rewrite(c.IfFalse);
+                            return this.Visit(c.IfFalse);
                         }
                     }
                 }
 
-                return base.RewriteConditional(c);
+                return base.VisitConditional(c);
             }
 
             private Expression PostEval(ConstantExpression e)
@@ -167,7 +167,7 @@ namespace IQToolkit.Expressions
         /// Performs bottom-up analysis to determine which nodes can possibly
         /// be part of an evaluated sub-tree.
         /// </summary>
-        class Nominator : ExpressionRewriter
+        class Nominator : ExpressionVisitor
         {
             private readonly Func<Expression, bool> _fnCanBeEvaluated;
             private readonly HashSet<Expression> _candidates;
@@ -181,22 +181,20 @@ namespace IQToolkit.Expressions
 
             internal static HashSet<Expression> Nominate(Func<Expression, bool> fnCanBeEvaluated, Expression expression)
             {
-                Nominator nominator = new Nominator(fnCanBeEvaluated);
-                nominator.Rewrite(expression);
+                var nominator = new Nominator(fnCanBeEvaluated);
+                nominator.Visit(expression);
                 return nominator._candidates;
             }
 
-            protected override Expression RewriteConstant(ConstantExpression c)
+            public override Expression Visit(Expression expression)
             {
-                return base.RewriteConstant(c);
-            }
+                if (expression == null)
+                    return null!;
 
-            public override Expression Rewrite(Expression expression)
-            {
                 bool saveCannotBeEvaluated = _cannotBeEvaluated;
                 _cannotBeEvaluated = false;
                 
-                base.Rewrite(expression);
+                base.Visit(expression);
                 
                 if (!_cannotBeEvaluated)
                 {

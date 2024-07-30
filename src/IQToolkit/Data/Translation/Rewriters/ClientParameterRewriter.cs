@@ -13,11 +13,11 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Converts all external input expressions into client parameters.
     /// </summary>
-    public class ClientParameterRewriter : DbExpressionRewriter
+    public class ClientParameterRewriter : DbExpressionVisitor
     {
         public static Expression Rewrite(QueryLanguage language, Expression expression)
         {
-            return new ClientParameterRewriter(language).Rewrite(expression);
+            return new ClientParameterRewriter(language).Visit(expression);
         }
 
         private readonly QueryLanguage _language;
@@ -31,14 +31,14 @@ namespace IQToolkit.Data.Translation
             _pmap = new Dictionary<HashedExpression, ClientParameterExpression>();
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression proj)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
         {
             // don't parameterize the projector or aggregator!
-            var select = (SelectExpression)this.Rewrite(proj.Select);
+            var select = (SelectExpression)this.Visit(proj.Select);
             return proj.Update(select, proj.Projector, proj.Aggregator);
         }
 
-        protected override Expression RewriteUnary(UnaryExpression u)
+        protected override Expression VisitUnary(UnaryExpression u)
         {
             if (u.NodeType == ExpressionType.Convert
                 && u.Operand.NodeType == ExpressionType.ArrayIndex)
@@ -51,7 +51,7 @@ namespace IQToolkit.Data.Translation
                 }
             }
 
-            return base.RewriteUnary(u);
+            return base.VisitUnary(u);
         }
 
         private static bool IsConstantOrParameter(Expression e)
@@ -59,10 +59,10 @@ namespace IQToolkit.Data.Translation
             return e.NodeType == ExpressionType.Constant || e.NodeType == ExpressionType.Parameter;
         }
 
-        protected override Expression RewriteBinary(BinaryExpression b)
+        protected override Expression VisitBinary(BinaryExpression b)
         {
-            var left = this.Rewrite(b.Left);
-            var right = this.Rewrite(b.Right);
+            var left = this.Visit(b.Left);
+            var right = this.Visit(b.Right);
 
             if (left.NodeType == (ExpressionType)DbExpressionType.ClientParameter
                     && right.NodeType == (ExpressionType)DbExpressionType.Column)
@@ -82,7 +82,7 @@ namespace IQToolkit.Data.Translation
             return b.Update(left, b.Conversion, right);
         }
 
-        protected override ColumnAssignment VisitColumnAssignment(ColumnAssignment ca)
+        protected internal override ColumnAssignment VisitColumnAssignment(ColumnAssignment ca)
         {
             ca = base.VisitColumnAssignment(ca);
             var expression = ca.Expression;
@@ -97,7 +97,7 @@ namespace IQToolkit.Data.Translation
 
         private int _iParam = 0;
 
-        protected override Expression RewriteConstant(ConstantExpression c)
+        protected override Expression VisitConstant(ConstantExpression c)
         {
             if (c.Value != null && !IsNumeric(c.Value.GetType()))
             {
@@ -116,14 +116,14 @@ namespace IQToolkit.Data.Translation
             return c;
         }
 
-        protected override Expression RewriteParameter(ParameterExpression p)
+        protected override Expression VisitParameter(ParameterExpression p)
         {
             return this.GetClientParameter(p);
         }
 
-        protected override Expression RewriteMemberAccess(MemberExpression m)
+        protected override Expression VisitMember(MemberExpression m)
         {
-            m = (MemberExpression)base.RewriteMemberAccess(m);
+            m = (MemberExpression)base.VisitMember(m);
 
             if (m.Expression is ClientParameterExpression nv)
             {
@@ -230,18 +230,18 @@ namespace IQToolkit.Data.Translation
                 return _hashCode;
             }
 
-            class Hasher : DbExpressionRewriter
+            class Hasher : DbExpressionVisitor
             {
                 int hc;
 
                 internal static int ComputeHash(Expression expression)
                 {
                     var hasher = new Hasher();
-                    hasher.Rewrite(expression);
+                    hasher.Visit(expression);
                     return hasher.hc;
                 }
 
-                protected override Expression RewriteConstant(ConstantExpression c)
+                protected override Expression VisitConstant(ConstantExpression c)
                 {
                     hc = hc + ((c.Value != null) ? c.Value.GetHashCode() : 0);
                     return c;

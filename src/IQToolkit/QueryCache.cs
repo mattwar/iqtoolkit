@@ -150,10 +150,10 @@ namespace IQToolkit
 
         private IQueryProvider? FindProvider(Expression expression)
         {
-            var root = TypedSubtreeFinder.Find(expression, typeof(IQueryProvider)) as ConstantExpression;
+            var root = expression.FindFirstUpOrDefault(expr => typeof(IQueryProvider).IsAssignableFrom(expr.Type)) as ConstantExpression;
             if (root == null)
             {
-                root = TypedSubtreeFinder.Find(expression, typeof(IQueryable)) as ConstantExpression;
+                root = expression.FindFirstUpOrDefault(expr => typeof(IQueryable).IsAssignableFrom(expr.Type)) as ConstantExpression;
             }
 
             if (root != null)
@@ -174,7 +174,7 @@ namespace IQToolkit
             return null;
         }
 
-        private class ExplicitToObjectArray : ExpressionRewriter
+        private class ExplicitToObjectArray : ExpressionVisitor
         {
             private readonly IList<ParameterExpression> parameters;
             private readonly ParameterExpression array = Expression.Parameter(typeof(object[]), "array");
@@ -187,10 +187,10 @@ namespace IQToolkit
             internal static LambdaExpression Rewrite(Expression body, IList<ParameterExpression> parameters)
             {
                 var visitor = new ExplicitToObjectArray(parameters);
-                return Expression.Lambda(visitor.Rewrite(body), visitor.array);                  
+                return Expression.Lambda(visitor.Visit(body), visitor.array);                  
             }
 
-            protected override Expression RewriteParameter(ParameterExpression p)
+            protected override Expression VisitParameter(ParameterExpression p)
             {
                 for (int i = 0, n = this.parameters.Count; i < n; i++)
                 {
@@ -199,6 +199,7 @@ namespace IQToolkit
                         return Expression.Convert(Expression.ArrayIndex(this.array, Expression.Constant(i)), p.Type);
                     }
                 }
+
                 return p;
             }
         }

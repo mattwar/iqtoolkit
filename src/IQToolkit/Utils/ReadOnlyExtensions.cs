@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -59,6 +60,49 @@ namespace IQToolkit.Utils
 
         public static IReadOnlyList<T> RemoveRange<T>(this IReadOnlyList<T> list, IEnumerable<T> values) =>
             list.ToImmutable().RemoveRange(values);
+
+
+        /// <summary>
+        /// Rewrites a list given an item rewriter function.
+        /// If no items are rewritten, the original list is returned.
+        /// </summary>
+        public static IReadOnlyList<T> Rewrite<T>(
+            this IReadOnlyList<T> original,
+            Func<T, T?> fnItemRewriter)
+            where T : class
+        {
+            List<T>? list = null;
+
+            for (int i = 0, n = original.Count; i < n; i++)
+            {
+                var newT = fnItemRewriter(original[i]);
+                if (newT != null)
+                {
+                    if (list != null)
+                    {
+                        list.Add(newT);
+                    }
+                    else if (newT != original[i])
+                    {
+                        list = new List<T>(n);
+
+                        for (int j = 0; j < i; j++)
+                        {
+                            list.Add(original[j]);
+                        }
+
+                        list.Add(newT);
+                    }
+                }
+            }
+
+            if (list != null)
+            {
+                return list.AsReadOnly();
+            }
+
+            return original;
+        }
     }
 
     public static class ReadOnlyList<T>

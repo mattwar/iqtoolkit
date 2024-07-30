@@ -21,11 +21,11 @@ namespace IQToolkit.Data.Translation
         public static bool IsSelfContained(Expression expression, IEnumerable<TableAlias>? validAliases)
         {
             var referencer = new SelfContainedReferencer(validAliases);
-            referencer.Rewrite(expression);
+            referencer.Visit(expression);
             return referencer._isSelfContained;
         }
 
-        protected override Expression RewriteColumn(ColumnExpression original)
+        protected internal override Expression VisitColumn(ColumnExpression original)
         {
             _isSelfContained |= this.IsInScope(original.Alias);
             return original;

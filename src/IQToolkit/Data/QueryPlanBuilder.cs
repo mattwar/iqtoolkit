@@ -20,7 +20,7 @@ namespace IQToolkit.Data.Execution
     /// Transforms a translated query expression into an executable expression that 
     /// will query the database and convert the tabular results into objects.
     /// </summary>
-    public class QueryPlanBuilder : DbExpressionRewriter
+    public class QueryPlanBuilder
     {
         public static QueryPlan Build(
             QueryLanguageRewriter linguist,
@@ -53,7 +53,7 @@ namespace IQToolkit.Data.Execution
             return new QueryPlan(executor, diagnostics);
         }
 
-        private class Builder : DbExpressionRewriter
+        private class Builder : DbExpressionVisitor
         {
             private readonly QueryPolicy _policy;
             private readonly QueryLanguageRewriter _linguist;
@@ -95,7 +95,7 @@ namespace IQToolkit.Data.Execution
 
             public Expression Build(Expression expression)
             {
-                expression = this.Rewrite(expression)!;
+                expression = this.Visit(expression)!;
                 expression = this.AddVariables(expression);
                 return expression;
             }
@@ -144,11 +144,11 @@ namespace IQToolkit.Data.Execution
                 return eb.Build(expression);
             }
 
-            protected override MemberBinding RewriteBinding(MemberBinding binding)
+            protected override MemberBinding VisitMemberBinding(MemberBinding binding)
             {
                 var save = _receivingMember;
                 _receivingMember = binding.Member;
-                var result = base.RewriteBinding(binding);
+                var result = base.VisitMemberBinding(binding);
                 _receivingMember = save;
                 return result;
             }
@@ -172,7 +172,7 @@ namespace IQToolkit.Data.Execution
                 }
             }
 
-            protected override Expression RewriteClientJoin(ClientJoinExpression join)
+            protected internal override Expression VisitClientJoin(ClientJoinExpression join)
             {
                 // convert client join into a up-front lookup table builder & replace client-join in tree with lookup accessor
 
@@ -207,7 +207,7 @@ namespace IQToolkit.Data.Execution
                 // 2) agg(lookup[outer])
                 var lookup = Expression.Parameter(toLookup.Type, "lookup" + iLookup);
                 var property = lookup.Type.GetTypeInfo().GetDeclaredProperty("Item");
-                Expression access = Expression.Call(lookup, property.GetMethod, this.Rewrite(outerKey));
+                Expression access = Expression.Call(lookup, property.GetMethod, this.Visit(outerKey));
 
                 if (join.Projection.Aggregator != null)
                 {
@@ -224,7 +224,7 @@ namespace IQToolkit.Data.Execution
                 return access;
             }
 
-            protected override Expression RewriteClientProjection(ClientProjectionExpression projection)
+            protected internal override Expression VisitClientProjection(ClientProjectionExpression projection)
             {
                 if (_isTop)
                 {
@@ -295,7 +295,7 @@ namespace IQToolkit.Data.Execution
                         new QueryCommand(commandText, parameters));
 
                 values = clientParameters
-                    .Select(v => Expression.Convert(this.Rewrite(v.Value), typeof(object)))
+                    .Select(v => Expression.Convert(this.Visit(v.Value), typeof(object)))
                     .ToList();
             }
 
@@ -310,10 +310,10 @@ namespace IQToolkit.Data.Execution
                 var saveScope = _scope;
                 var reader = Expression.Parameter(typeof(FieldReader), "reader" + _nReaders++);
                 _scope = new Scope(_scope, reader, projection.Select.Alias, projection.Select.Columns);
-                var projector = Expression.Lambda(this.Rewrite(projection.Projector), reader);
+                var projector = Expression.Lambda(this.Visit(projection.Projector), reader);
                 _scope = saveScope;
 
-                var entity = projection.Projector.FindFirstOrDefault<EntityExpression>()?.Entity;
+                var entity = projection.Projector.FindFirstDownOrDefault<EntityExpression>()?.Entity;
 
                 string methExecute = okayToDefer
                     ? "ExecuteDeferred"
@@ -336,7 +336,7 @@ namespace IQToolkit.Data.Execution
                 return result;
             }
 
-            protected override Expression RewriteBatch(BatchExpression batch)
+            protected internal override Expression VisitBatch(BatchExpression batch)
             {
                 if (_linguist.Language.AllowsMultipleCommands 
                     || !IsMultipleCommands(batch.Operation.Body as CommandExpression))
@@ -345,8 +345,8 @@ namespace IQToolkit.Data.Execution
                 }
                 else
                 {
-                    var source = this.Rewrite(batch.Input)!;
-                    var op = this.Rewrite(batch.Operation.Body);
+                    var source = this.Visit(batch.Input)!;
+                    var op = this.Visit(batch.Operation.Body);
                     var fn = Expression.Lambda(op, batch.Operation.Parameters[1]);
                     return Expression.Call(this.GetType(), "Batch", new Type[] { TypeHelper.GetSequenceElementType(source.Type), batch.Operation.Body.Type }, source, fn, batch.Stream);
                 }
@@ -372,16 +372,16 @@ namespace IQToolkit.Data.Execution
 
                 Expression? plan = null;
 
-                var projection = operation.FindFirstOrDefault<ClientProjectionExpression>();
+                var projection = operation.FindFirstDownOrDefault<ClientProjectionExpression>();
                 if (projection != null)
                 {
                     var saveScope = _scope;
                     var reader = Expression.Parameter(typeof(FieldReader), "reader" + _nReaders++);
                     _scope = new Scope(_scope, reader, projection.Select.Alias, projection.Select.Columns);
-                    LambdaExpression projector = Expression.Lambda(this.Rewrite(projection.Projector), reader);
+                    LambdaExpression projector = Expression.Lambda(this.Visit(projection.Projector), reader);
                     _scope = saveScope;
 
-                    var entity = projection.Projector.FindFirstOrDefault<EntityExpression>()?.Entity;
+                    var entity = projection.Projector.FindFirstDownOrDefault<EntityExpression>()?.Entity;
 
                     plan = Expression.Call(_executor, "ExecuteBatch", new Type[] { projector.Body.Type },
                         command,
@@ -421,29 +421,29 @@ namespace IQToolkit.Data.Execution
                 }
             }
 
-            protected override Expression RewriteInsertCommand(InsertCommand insert)
+            protected internal override Expression VisitInsertCommand(InsertCommand insert)
             {
                 return this.BuildExecuteCommand(insert);
             }
 
-            protected override Expression RewriteUpdateCommand(UpdateCommand update)
+            protected internal override Expression VisitUpdateCommand(UpdateCommand update)
             {
                 return this.BuildExecuteCommand(update);
             }
 
-            protected override Expression RewriteDeleteCommand(DeleteCommand delete)
+            protected internal override Expression VisitDeleteCommand(DeleteCommand delete)
             {
                 return this.BuildExecuteCommand(delete);
             }
 
-            protected override Expression RewriteBlockCommand(BlockCommand block)
+            protected internal override Expression VisitBlockCommand(BlockCommand block)
             {
                 return Expression.Block(
-                    this.RewriteExpressionList(block.Commands)
+                    block.Commands.Rewrite(this)
                     );
             }
 
-            protected override Expression RewriteIfCommand(IfCommand ifx)
+            protected internal override Expression VisitIfCommand(IfCommand ifx)
             {
                 var test =
                     Expression.Condition(
@@ -456,19 +456,20 @@ namespace IQToolkit.Data.Execution
                                 : (Expression)Expression.Constant(TypeHelper.GetDefault(ifx.IfTrue.Type), ifx.IfTrue.Type)
                                 );
 
-                return this.Rewrite(test)!;
+                return this.Visit(test)!;
             }
 
-            protected override Expression RewriteDbFunctionCall(FunctionCallExpression func)
+            protected internal override Expression VisitDbFunctionCall(DbFunctionCallExpression func)
             {
                 if (_linguist.Language.IsRowsAffectedExpressions(func))
                 {
                     return Expression.Property(_executor, "RowsAffected");
                 }
-                return base.RewriteDbFunctionCall(func);
+
+                return base.VisitDbFunctionCall(func);
             }
 
-            protected override Expression RewriteExistsSubquery(ExistsSubqueryExpression exists)
+            protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
             {
                 // how did we get here? Translate exists into count query
                 var colType = _linguist.Language.TypeSystem.GetQueryType(typeof(int));
@@ -485,10 +486,10 @@ namespace IQToolkit.Data.Execution
 
                 var expression = projection.GreaterThan(Expression.Constant(0));
 
-                return this.Rewrite(expression)!;
+                return this.Visit(expression)!;
             }
 
-            protected override Expression RewriteDeclarationCommand(DeclarationCommand decl)
+            protected internal override Expression VisitDeclarationCommand(DeclarationCommand decl)
             {
                 if (decl.Source != null)
                 {
@@ -521,7 +522,7 @@ namespace IQToolkit.Data.Execution
                     }
 
                     // make sure the execution of the select stuffs the results into the new vars array
-                    return Expression.Assign(vars, this.Rewrite(projection)!);
+                    return Expression.Assign(vars, this.Visit(projection)!);
                 }
 
                 // probably bad if we get here since we must not allow mulitple commands
@@ -535,7 +536,7 @@ namespace IQToolkit.Data.Execution
 
                 GetQueryCommandAndValues(expression, out var queryCommand, out var values);
 
-                var projection = expression.FindFirstOrDefault<ClientProjectionExpression>();
+                var projection = expression.FindFirstDownOrDefault<ClientProjectionExpression>();
                 if (projection != null)
                 {
                     return this.GetProjectionExecutor(projection, false, queryCommand, values);
@@ -549,14 +550,14 @@ namespace IQToolkit.Data.Execution
                 return plan;
             }
 
-            protected override Expression RewriteEntity(EntityExpression entity)
+            protected internal override Expression VisitEntity(EntityExpression entity)
             {
-                return this.Rewrite(entity.Expression)!;
+                return this.Visit(entity.Expression)!;
             }
 
-            protected override Expression RewriteOuterJoined(OuterJoinedExpression outer)
+            protected internal override Expression VisitOuterJoined(OuterJoinedExpression outer)
             {
-                var expr = this.Rewrite(outer.Expression)!;
+                var expr = this.Visit(outer.Expression)!;
                 ColumnExpression column = (ColumnExpression)outer.Test;
                 int iOrdinal;
                 if (_scope != null && _scope.TryGetValue(column, out var reader, out iOrdinal))
@@ -570,7 +571,7 @@ namespace IQToolkit.Data.Execution
                 return expr;
             }
 
-            protected override Expression RewriteColumn(ColumnExpression column)
+            protected internal override Expression VisitColumn(ColumnExpression column)
             {
                 int iOrdinal;
                 if (_scope != null && _scope.TryGetValue(column, out var fieldReader, out iOrdinal))
@@ -624,7 +625,7 @@ namespace IQToolkit.Data.Execution
             /// <summary>
             /// columns referencing the outer alias are turned into special client parameters
             /// </summary>
-            private sealed class OuterParameterizer : DbExpressionRewriter
+            private sealed class OuterParameterizer : DbExpressionVisitor
             {
                 private readonly TableAlias _outerAlias;
                 private readonly Dictionary<ColumnExpression, ClientParameterExpression> _map =
@@ -639,16 +640,16 @@ namespace IQToolkit.Data.Execution
                 internal static Expression Parameterize(TableAlias outerAlias, Expression expr)
                 {
                     var op = new OuterParameterizer(outerAlias);
-                    return op.Rewrite(expr)!;
+                    return op.Visit(expr)!;
                 }
 
-                protected override Expression RewriteClientProjection(ClientProjectionExpression proj)
+                protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
                 {
-                    SelectExpression select = (SelectExpression)this.Rewrite(proj.Select)!;
+                    SelectExpression select = (SelectExpression)this.Visit(proj.Select)!;
                     return proj.Update(select, proj.Projector, proj.Aggregator);
                 }
 
-                protected override Expression RewriteColumn(ColumnExpression column)
+                protected internal override Expression VisitColumn(ColumnExpression column)
                 {
                     if (column.Alias == _outerAlias)
                     {

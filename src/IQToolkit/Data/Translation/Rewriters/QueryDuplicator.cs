@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Translation
 {
@@ -15,7 +16,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Deep clone's the expression, creating new parameter and table aliases when they are declared.
     /// </summary>
-    public class QueryDuplicator : DbExpressionRewriter
+    public class QueryDuplicator : DbExpressionVisitor
     {
         private ImmutableDictionary<ParameterExpression, ParameterExpression> _parameterMap;
         private ImmutableDictionary<TableAlias, TableAlias> _aliasMap;
@@ -31,7 +32,7 @@ namespace IQToolkit.Data.Translation
             var duplicator = new QueryDuplicator();
             if (expression is AliasedExpression aliased)
                 duplicator.RedeclareAlias(aliased);
-            return duplicator.Rewrite(expression);
+            return duplicator.Visit(expression);
         }
 
         /// <summary>
@@ -76,12 +77,15 @@ namespace IQToolkit.Data.Translation
             return parameters.Select(p => this.RedeclareParameter(p)).ToImmutableArray();
         }
 
-        public override Expression Rewrite(Expression expression)
+        public override Expression Visit(Expression expression)
         {
+            if (expression == null)
+                return null!;
+
             var oldAliasMap = _aliasMap;
             var oldParameterMap = _parameterMap;
 
-            var result = base.Rewrite(expression);
+            var result = base.Visit(expression);
 
             _aliasMap = oldAliasMap;
             _parameterMap = oldParameterMap;
@@ -89,7 +93,7 @@ namespace IQToolkit.Data.Translation
             return result;
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
             if (_aliasMap.TryGetValue(column.Alias, out var newAlias))
             {
@@ -102,13 +106,13 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteConstant(ConstantExpression original)
+        protected override Expression VisitConstant(ConstantExpression original)
         {
             // always duplicate constants
             return Expression.Constant(original.Value, original.Type);
         }
 
-        protected override Expression RewriteParameter(ParameterExpression original)
+        protected override Expression VisitParameter(ParameterExpression original)
         {
             if (_parameterMap.TryGetValue(original, out var mapped))
             {
@@ -122,33 +126,34 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteLambda(LambdaExpression original)
+        protected override Expression VisitLambda<T>(Expression<T> original)
         {
             var remapped = this.RemapParameters(original.Parameters);
-            original = (LambdaExpression)base.RewriteLambda(original);
-            return Expression.Lambda(original.Type, original.Body, remapped);
+            var body = this.Visit(original.Body);
+            return original.Update(body, remapped);
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression original)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression original)
         {
             this.RedeclareAlias(original.Select);
 
-            var select = (SelectExpression)this.Rewrite(original.Select);
-            var projector = this.Rewrite(original.Projector);
-            var aggregator = (LambdaExpression?)this.RewriteN(original.Aggregator);
+            var select = (SelectExpression)this.Visit(original.Select);
+            var projector = this.Visit(original.Projector);
+            var aggregator = (LambdaExpression?)this.Visit(original.Aggregator!);
+
             return original.Update(select, projector, aggregator);
         }
 
-        protected override Expression RewriteClientJoin(ClientJoinExpression original)
+        protected internal override Expression VisitClientJoin(ClientJoinExpression original)
         {
             this.RedeclareAlias(original.Projection.Select);
 
             // do client projection manually here because we already mapped the select's alias.
-            var select = (SelectExpression)this.Rewrite(original.Projection.Select);
-            var projector = this.Rewrite(original.Projection.Projector);
-            var aggregator = (LambdaExpression?)this.RewriteN(original.Projection.Aggregator);
-            var outerKey = this.RewriteExpressionList(original.OuterKey);
-            var innerKey = this.RewriteExpressionList(original.InnerKey);
+            var select = (SelectExpression)this.Visit(original.Projection.Select);
+            var projector = this.Visit(original.Projection.Projector);
+            var aggregator = (LambdaExpression?)this.Visit(original.Projection.Aggregator!);
+            var outerKey = original.OuterKey.Rewrite(this);
+            var innerKey = original.InnerKey.Rewrite(this);
 
             return original.Update(
                 original.Projection.Update(select, projector, aggregator),
@@ -156,7 +161,7 @@ namespace IQToolkit.Data.Translation
                 innerKey);
         }
 
-        protected override Expression RewriteTable(TableExpression table)
+        protected internal override Expression VisitTable(TableExpression table)
         {
             if (_aliasMap.TryGetValue(table.Alias, out var newAlias))
             {
@@ -169,11 +174,11 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteSelect(SelectExpression original)
+        protected internal override Expression VisitSelect(SelectExpression original)
         {
             this.RedeclareFromAliases(original.From);
 
-            var modified = (SelectExpression)base.RewriteSelect(original);
+            var modified = (SelectExpression)base.VisitSelect(original);
 
             if (_aliasMap.TryGetValue(original.Alias, out var newAlias))
                 modified = modified.WithAlias(newAlias);
@@ -182,22 +187,22 @@ namespace IQToolkit.Data.Translation
         }
 
         // additional nodes that may not refer to other expressions
-        protected override Expression RewriteAggregate(AggregateExpression original)
+        protected internal override Expression VisitAggregate(AggregateExpression original)
         {
-            var argument = this.RewriteN(original.Argument);
-            return new AggregateExpression(original.Type, original.AggregateName, argument, original.IsDistinct);
+            var argument = this.Visit(original.Argument!);
+            return original.Update(original.Type, original.AggregateName, argument, original.IsDistinct);
         }
 
-        protected override Expression RewriteDbFunctionCall(FunctionCallExpression original)
+        protected internal override Expression VisitDbFunctionCall(DbFunctionCallExpression original)
         {
-            var arguments = this.RewriteExpressionList(original.Arguments);
-            return new FunctionCallExpression(original.Type, original.Name, arguments);
+            var arguments = original.Arguments.Rewrite(this);
+            return original.Update(original.Type, original.IsPredicate, original.Name, arguments);
         }
 
-        protected override Expression RewriteMethodCall(MethodCallExpression original)
+        protected override Expression VisitMethodCall(MethodCallExpression original)
         {
-            var instance = this.RewriteN(original.Object);
-            var arguments = this.RewriteExpressionList(original.Arguments);
+            var instance = this.Visit(original.Object);
+            var arguments = original.Arguments.Rewrite(this);
             return Expression.Call(instance, original.Method, arguments);
         }
     }

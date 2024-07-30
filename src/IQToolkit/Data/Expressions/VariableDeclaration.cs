@@ -49,5 +49,18 @@ namespace IQToolkit.Data.Expressions
                 return this;
             }
         }
+
+        internal VariableDeclaration Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitVariableDeclaration(this);
+            return this.VisitChildren(visitor);
+        }
+
+        internal VariableDeclaration VisitChildren(ExpressionVisitor visitor)
+        {
+            var expression = visitor.Visit(this.Expression);
+            return this.Update(this.Name, this.QueryType, expression);
+        }
     }
 }

@@ -116,7 +116,10 @@ namespace IQToolkit.Data
         /// <param name="deferLoad">If true the member's elements will be defer loaded if possible.</param>
         public EntityPolicy IncludeWith(LambdaExpression fnMember, bool deferLoad)
         {
-            var rootMember = RootMemberFinder.Find(fnMember, fnMember.Parameters[0]);
+            var rootMember = fnMember.Body.FindFirstDownOrDefault<MemberExpression>(
+                mx => mx.Expression == fnMember.Parameters[0]
+                );
+
             if (rootMember == null)
                 throw new InvalidOperationException("Subquery does not originate with a member access");
 
@@ -181,7 +184,9 @@ namespace IQToolkit.Data
         /// </summary>
         public EntityPolicy AssociateWith(LambdaExpression memberQuery)
         {
-            var rootMember = RootMemberFinder.Find(memberQuery, memberQuery.Parameters[0]);
+            var rootMember = memberQuery.Body.FindFirstDownOrDefault<MemberExpression>(
+                mx => mx.Expression == memberQuery.Parameters[0]
+                );
 
             if (rootMember == null)
                 throw new InvalidOperationException("Subquery does not originate with a member access");
@@ -236,54 +241,6 @@ namespace IQToolkit.Data
             else
             {
                 return ReadOnlyList<LambdaExpression>.Empty;
-            }
-        }
-
-        /// <summary>
-        /// Finds the member that is first accessed from the lambda parameter.
-        /// </summary>
-        class RootMemberFinder : ExpressionRewriter
-        {
-            private readonly ParameterExpression parameter;
-            private MemberExpression? found;
-
-            private RootMemberFinder(ParameterExpression parameter)
-            {
-                this.parameter = parameter;
-            }
-
-            public static MemberExpression? Find(Expression query, ParameterExpression parameter)
-            {
-                var finder = new RootMemberFinder(parameter);
-                finder.Rewrite(query);
-                return finder.found;
-            }
-
-            protected override Expression RewriteMethodCall(MethodCallExpression m)
-            {
-                if (m.Object != null)
-                {
-                    this.Rewrite(m.Object);
-                }
-                else if (m.Arguments.Count > 0)
-                {
-                    this.Rewrite(m.Arguments[0]);
-                }
-
-                return m;
-            }
-
-            protected override Expression RewriteMemberAccess(MemberExpression m)
-            {
-                if (m.Expression == this.parameter)
-                {
-                    this.found = m;
-                    return m;
-                }
-                else
-                {
-                    return base.RewriteMemberAccess(m);
-                }
             }
         }
 

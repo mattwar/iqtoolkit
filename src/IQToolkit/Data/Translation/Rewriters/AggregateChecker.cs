@@ -2,15 +2,17 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Translation
 {
     using Expressions;
+    using Utils;
 
     /// <summary>
     /// Determines if a <see cref="SelectExpression"/> contains any <see cref="AggregateExpression"/>.
     /// </summary>
-    class AggregateChecker : DbExpressionRewriter
+    class AggregateChecker : DbExpressionVisitor
     {
         private bool _hasAggregate = false;
 
@@ -21,38 +23,38 @@ namespace IQToolkit.Data.Translation
         internal static bool HasAggregates(SelectExpression expression)
         {
             AggregateChecker checker = new AggregateChecker();
-            checker.Rewrite(expression);
+            checker.Visit(expression);
             return checker._hasAggregate;
         }
 
-        protected override Expression RewriteAggregate(AggregateExpression aggregate)
+        protected internal override Expression VisitAggregate(AggregateExpression aggregate)
         {
             _hasAggregate = true;
             return aggregate;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             // only consider aggregates in these locations
-            this.RewriteN(select.Where);
-            this.VisitOrderExpressions(select.OrderBy);
-            this.RewriteColumnDeclarations(select.Columns);
+            this.Visit(select.Where);
+            select.OrderBy.Rewrite(o => o.Accept(this));
+            select.Columns.Rewrite(d => d.Accept(this));
             return select;
         }
 
-        protected override Expression RewriteScalarSubquery(ScalarSubqueryExpression scalar)
+        protected internal override Expression VisitScalarSubquery(ScalarSubqueryExpression scalar)
         {
             // don't count aggregates in subqueries
             return scalar;
         }
 
-        protected override Expression RewriteExistsSubquery(ExistsSubqueryExpression exists)
+        protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
         {
             // don't count aggregates in subqueries
             return exists;
         }
 
-        protected override Expression RewriteInSubquery(InSubqueryExpression @in)
+        protected internal override Expression VisitInSubquery(InSubqueryExpression @in)
         {
             // don't count aggregates in subqueries
             return @in;

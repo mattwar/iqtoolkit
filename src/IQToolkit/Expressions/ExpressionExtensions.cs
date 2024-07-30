@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Expressions
 {
+    using System;
     using Utils;
 
     /// <summary>
@@ -14,6 +15,274 @@ namespace IQToolkit.Expressions
     /// </summary>
     public static class ExpressionExtensions
     {
+        /// <summary>
+        /// Walks the entire expression tree top-down and bottom-up.
+        /// </summary>
+        /// <param name="root">The expression at the top of the sub-tree.</param>
+        /// <param name="fnBefore">The optional callback called for each expression when first encountered walking down.</param>
+        /// <param name="fnAfter">The optional callback called for each expression when next enountered walking back up.</param>
+        /// <param name="fnDescend">The optional callback used to determine if the walking should descend in the children.</param>
+        public static void Walk(
+            this Expression root,
+            Action<Expression>? fnBefore = null,
+            Action<Expression>? fnAfter = null,
+            Func<Expression, bool>? fnDescend = null)
+        {
+            var walker = new Walker(fnBefore, fnAfter, fnDescend);
+            walker.Visit(root);
+        }
+
+        private class Walker : ExpressionVisitor
+        {
+            private readonly Action<Expression>? _fnBefore;
+            private readonly Action<Expression>? _fnAfter;
+            private readonly Func<Expression, bool>? _fnDescend;
+
+            public Walker(
+                Action<Expression>? fnBefore,
+                Action<Expression>? fnAfter,
+                Func<Expression, bool>? fnDescend)
+            {
+                _fnBefore = fnBefore;
+                _fnAfter = fnAfter;
+                _fnDescend = fnDescend;
+            }
+
+            public override Expression Visit(Expression exp)
+            {
+                if (exp == null)
+                    return null!;
+
+                _fnBefore?.Invoke(exp);
+
+                if (_fnDescend == null || _fnDescend(exp))
+                {
+                    base.Visit(exp);
+                }
+
+                _fnAfter?.Invoke(exp);
+
+                return exp;
+            }
+        }
+
+        /// <summary>
+        /// Returns all the matching expressions in the subtree under this expression.
+        /// </summary>
+        public static IReadOnlyList<TExpression> FindAll<TExpression>(
+            this Expression root,
+            Func<TExpression, bool>? fnMatch = null,
+            Func<Expression, bool>? fnDescend = null)
+            where TExpression : Expression
+        {
+            List<TExpression>? list = null;
+
+            root.Walk(
+                expression =>
+                {
+                    if (expression is TExpression tex
+                        && (fnMatch == null || fnMatch(tex)))
+                    {
+                        if (list == null)
+                            list = new List<TExpression>();
+                        list.Add(tex);
+                    }
+                },
+                fnDescend: fnDescend);
+
+            return list.ToReadOnly();
+        }
+
+        /// <summary>
+        /// Returns all the matching expressions in the subtree under this expression.
+        /// </summary>
+        public static IReadOnlyList<Expression> FindAll(
+            this Expression root,
+            Func<Expression, bool>? fnMatch = null,
+            Func<Expression, bool>? fnDescend = null)
+        {
+            return FindAll<Expression>(root, fnMatch, fnDescend);
+        }
+
+        /// <summary>
+        /// Returns the first matching expression in the subtree under this expression 
+        /// on the walk down
+        /// or null if no expression matches.
+        /// </summary>
+        public static TExpression? FindFirstDownOrDefault<TExpression>(
+            this Expression root,
+            Func<TExpression, bool>? fnMatch = null,
+            Func<Expression, bool>? fnDescend = null)
+            where TExpression : Expression
+        {
+            TExpression? found = null;
+
+            root.Walk(
+                fnBefore: expression =>
+                {
+                    if (found == null
+                        && expression is TExpression tex
+                        && (fnMatch == null || fnMatch(tex)))
+                    {
+                        found = tex;
+                    }
+                },
+
+                fnDescend: e => found == null && (fnDescend == null || fnDescend(e))
+                );
+
+            return found;
+        }
+
+        /// <summary>
+        /// Returns the first matching expression in the subtree under this expression 
+        /// on the walk down
+        /// or null if no expression matches.
+        /// </summary>
+        public static Expression? FindFirstDownOrDefault(
+            this Expression root,
+            Func<Expression, bool>? fnMatch = null,
+            Func<Expression, bool>? fnDescend = null)
+        {
+            return FindFirstDownOrDefault<Expression>(root, fnMatch, fnDescend);
+        }
+
+        /// <summary>
+        /// Returns the first matching expression in the subtree under this expression 
+        /// on the walk back up
+        /// or null if no expression matches.
+        /// </summary>
+        public static TExpression? FindFirstUpOrDefault<TExpression>(
+            this Expression root,
+            Func<TExpression, bool>? fnMatch = null,
+            Func<Expression, bool>? fnDescend = null)
+            where TExpression : Expression
+        {
+            TExpression? found = null;
+
+            root.Walk(
+                fnAfter: expression =>
+                {
+                    if (found == null
+                        && expression is TExpression tex
+                        && (fnMatch == null || fnMatch(tex)))
+                    {
+                        found = tex;
+                    }
+                },
+
+                fnDescend: e => found == null && (fnDescend == null || fnDescend(e))
+                );
+
+            return found;
+        }
+
+        /// <summary>
+        /// Returns the deepest matching expression in the subtree under this expression 
+        /// on the walk back up
+        /// or null if no expression matches.
+        /// </summary>
+        public static Expression? FindFirstUpOrDefault(
+            this Expression root,
+            Func<Expression, bool>? fnMatch = null,
+            Func<Expression, bool>? fnDescend = null)
+        {
+            return FindFirstUpOrDefault<Expression>(root, fnMatch, fnDescend);
+        }
+
+        /// <summary>
+        /// Replace any number of expressions in the subtree under this expression,
+        /// returning the new subtree with the expression replaced.
+        /// </summary>
+        public static TExpression Replace<TExpression>(
+            this TExpression root,
+            Func<Expression, Expression> fnReplacer,
+            Func<Expression, bool>? fnDescend = null)
+            where TExpression : Expression
+        {
+            var replacer = new Replacer(fnReplacer, fnDescend);
+            return (TExpression)replacer.Visit(root);
+        }
+
+        /// <summary>
+        /// Replaces one expression for another in the subtree under this expression,
+        /// returning the new subtree with the expression replaced.
+        /// </summary>
+        public static TExpression Replace<TExpression>(
+            this TExpression root,
+            Expression searchFor,
+            Expression replaceWith)
+            where TExpression : Expression
+        {
+            return Replace(root,
+                exp => exp == searchFor ? replaceWith : exp
+                );
+        }
+
+        /// <summary>
+        /// Replace all corresponding expressions in the subtree under this expression,
+        /// returning the new subtree with the expressions replaced.
+        /// </summary>
+        public static TExpression ReplaceAll<TExpression>(
+            this TExpression root,
+            IReadOnlyList<Expression> searchFor,
+            IReadOnlyList<Expression> replaceWith)
+            where TExpression : Expression
+        {
+            var map = new Dictionary<Expression, Expression>(
+                Enumerable.Zip(searchFor, replaceWith, (s, r) => KeyValuePair.Create(s, r))
+            );
+
+            return Replace(root, exp =>
+            {
+                if (map.TryGetValue(exp, out var replacement))
+                    return replacement;
+                return exp;
+            });
+        }
+
+        private class Replacer : ExpressionVisitor
+        {
+            private readonly Func<Expression, Expression> _fnReplacer;
+            private readonly Func<Expression, bool>? _fnDescend;
+
+            public Replacer(
+                Func<Expression, Expression> fnReplacer,
+                Func<Expression, bool>? fnDescend)
+            {
+                _fnReplacer = fnReplacer;
+                _fnDescend = fnDescend;
+            }
+
+            public override Expression Visit(Expression exp)
+            {
+                if (exp == null)
+                    return null!;
+
+                var replaced = _fnReplacer(exp);
+                if (replaced != exp)
+                {
+                    // this expression needs to be replaced, don't bother with the sub-tree.
+                    return replaced;
+                }
+                else if (_fnDescend == null || _fnDescend(exp))
+                {
+                    // look down the sub-tree
+                    return base.Visit(exp);
+                }
+                else
+                {
+                    return exp;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Presents the expression in a pseudo syntax useful for debugging.
+        /// </summary>
+        public static string ToDebugText(this Expression expression) =>
+            ExpressionDebugFormatter.Singleton.Format(expression);
+
         public static Expression Equal(this Expression left, Expression right)
         {
             ConvertExpressions(ref left, ref right);
@@ -140,5 +409,11 @@ namespace IQToolkit.Expressions
                 ? array.Aggregate((x1, x2) => Expression.MakeBinary(binarySeparator, x1, x2))
                 : null;
         }
+
+        /// <summary>
+        /// Rewrites the expression list using the <see cref="ExpressionVisitor"/>.
+        /// </summary>
+        public static IReadOnlyList<Expression> Rewrite(this IReadOnlyList<Expression> list, ExpressionVisitor visitor) =>
+            list.Rewrite(visitor.Visit);
     }
 }

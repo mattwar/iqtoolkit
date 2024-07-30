@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Attempt to rewrite cross joins as inner joins
     /// </summary>
-    public class CrossJoinToInnerJoinRewriter : DbExpressionRewriter
+    public class CrossJoinToInnerJoinRewriter : DbExpressionVisitor
     {
         public CrossJoinToInnerJoinRewriter()
         {
@@ -22,14 +22,14 @@ namespace IQToolkit.Data.Translation
 
         private Expression? _currentWhere;
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             var saveWhere = _currentWhere;
             try
             {
                 _currentWhere = select.Where;
 
-                var result = (SelectExpression)base.RewriteSelect(select);
+                var result = (SelectExpression)base.VisitSelect(select);
                 if (_currentWhere != result.Where)
                 {
                     return result.WithWhere(_currentWhere);
@@ -43,9 +43,9 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteJoin(JoinExpression join)
+        protected internal override Expression VisitJoin(JoinExpression join)
         {
-            join = (JoinExpression)base.RewriteJoin(join);
+            join = (JoinExpression)base.VisitJoin(join);
             if (join.JoinType == JoinType.CrossJoin && _currentWhere != null)
             {
                 // try to figure out which parts of the current where expression can be used for a join condition

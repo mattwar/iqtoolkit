@@ -67,7 +67,7 @@ namespace IQToolkit.Data.TSql
 
         public override Expression GetGeneratedIdExpression(MemberInfo member)
         {
-            return new FunctionCallExpression(TypeHelper.GetMemberType(member), "SCOPE_IDENTITY()", null);
+            return new DbFunctionCallExpression(TypeHelper.GetMemberType(member), "SCOPE_IDENTITY()", null);
         }
     }
 }

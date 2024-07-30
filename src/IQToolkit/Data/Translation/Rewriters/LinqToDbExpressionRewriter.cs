@@ -19,7 +19,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Converts LINQ query operators to into custom DbExpression's
     /// </summary>
-    public class LinqToDbExpressionRewriter : DbExpressionRewriter
+    public class LinqToDbExpressionRewriter : DbExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
         private readonly QueryLanguage _language;
@@ -65,9 +65,12 @@ namespace IQToolkit.Data.Translation
             return ColumnProjector.ProjectColumns(_language, expression, null, newAlias, existingAliases);
         }
 
-        public override Expression Rewrite(Expression exp)
+        public override Expression Visit(Expression exp)
         {
-            Expression result = base.Rewrite(exp);
+            if (exp == null)
+                return null!;
+
+            var result = base.Visit(exp);
 
             // bindings that expect projections should have called VisitSequence, the rest will probably get annoyed if
             // the projection does not have the expected type.
@@ -77,14 +80,14 @@ namespace IQToolkit.Data.Translation
                 if (_aggregateSubqueries.Count > 0)
                 {
                     var itemsToRemove = _aggregateSubqueries.Where(asub =>
-                        projection.FindFirstOrDefault<TaggedExpression>(ags =>
+                        projection.FindFirstDownOrDefault<TaggedExpression>(ags =>
                             ags.Id == asub.SubqueryId) != null)
                         .ToReadOnly();
 
                     if (itemsToRemove.Count > 0)
                     {
                         // attempt to move aggregates into the source projection
-                        projection = (ClientProjectionExpression)new AggregateRewriter(_language, _aggregateSubqueries).Rewrite(projection);
+                        projection = (ClientProjectionExpression)new AggregateRewriter(_language, _aggregateSubqueries).Visit(projection);
                         _aggregateSubqueries = _aggregateSubqueries.RemoveAll(x => itemsToRemove.Contains(x));
                     }
                 }
@@ -109,7 +112,7 @@ namespace IQToolkit.Data.Translation
             method.DeclaringType == typeof(Queryable) 
             || method.DeclaringType == typeof(Enumerable);
 
-        protected override Expression RewriteMethodCall(MethodCallExpression m)
+        protected override Expression VisitMethodCall(MethodCallExpression m)
         {
             if (IsLinqOperator(m.Method))
             {
@@ -302,23 +305,23 @@ namespace IQToolkit.Data.Translation
                     );
             }
 
-            return base.RewriteMethodCall(m);
+            return base.VisitMethodCall(m);
         }
 
-        protected override Expression RewriteUnary(UnaryExpression u)
+        protected override Expression VisitUnary(UnaryExpression u)
         {
             if ((u.NodeType == ExpressionType.Convert || u.NodeType == ExpressionType.ConvertChecked)
                 && u == _root)
             {
                 _root = u.Operand;
             }
-            return base.RewriteUnary(u);
+            return base.VisitUnary(u);
         }
 
         private ClientProjectionExpression RewriteSequence(Expression source)
         {
             // sure to call base.Visit in order to skip my override
-            var sequence = this.ConvertToSequence(base.Rewrite(source));
+            var sequence = this.ConvertToSequence(base.Visit(source));
             return sequence;
         }
 
@@ -366,7 +369,7 @@ namespace IQToolkit.Data.Translation
             var projection = this.RewriteSequence(source);
             
             _map[predicate.Parameters[0]] = projection.Projector;
-            var where = this.Rewrite(predicate.Body);
+            var where = this.Visit(predicate.Body);
 
             var alias = this.GetNextAlias();
             var pc = this.ProjectColumns(projection.Projector, alias, projection.Select.Alias);
@@ -394,7 +397,7 @@ namespace IQToolkit.Data.Translation
             var sourceProjection = this.RewriteSequence(source);
 
             _map[selector.Parameters[0]] = sourceProjection.Projector;
-            var selectorBody = this.Rewrite(selector.Body);
+            var selectorBody = this.Visit(selector.Body);
 
             var alias = this.GetNextAlias();
             var pc = this.ProjectColumns(selectorBody, alias, sourceProjection.Select.Alias);
@@ -442,7 +445,7 @@ namespace IQToolkit.Data.Translation
             {
                 _map[resultSelector.Parameters[0]] = projection.Projector;
                 _map[resultSelector.Parameters[1]] = collectionProjection.Projector;
-                Expression result = this.Rewrite(resultSelector.Body);
+                Expression result = this.Visit(resultSelector.Body);
                 pc = this.ProjectColumns(result, alias, projection.Select.Alias, collectionProjection.Select.Alias);
             }
             return new ClientProjectionExpression(
@@ -456,12 +459,12 @@ namespace IQToolkit.Data.Translation
             var outerProjection = this.RewriteSequence(outerSource);
             var innerProjection = this.RewriteSequence(innerSource);
             _map[outerKey.Parameters[0]] = outerProjection.Projector;
-            var outerKeyExpr = this.Rewrite(outerKey.Body);
+            var outerKeyExpr = this.Visit(outerKey.Body);
             _map[innerKey.Parameters[0]] = innerProjection.Projector;
-            var innerKeyExpr = this.Rewrite(innerKey.Body);
+            var innerKeyExpr = this.Visit(innerKey.Body);
             _map[resultSelector.Parameters[0]] = outerProjection.Projector;
             _map[resultSelector.Parameters[1]] = innerProjection.Projector;
-            var resultExpr = this.Rewrite(resultSelector.Body);
+            var resultExpr = this.Visit(resultSelector.Body);
             var join = new JoinExpression(JoinType.InnerJoin, outerProjection.Select, innerProjection.Select, outerKeyExpr.Equal(innerKeyExpr));
             var alias = this.GetNextAlias();
             var pc = this.ProjectColumns(resultExpr, alias, outerProjection.Select.Alias, innerProjection.Select.Alias);
@@ -500,11 +503,11 @@ namespace IQToolkit.Data.Translation
             _map[outerKey.Parameters[0]] = outerProjection.Projector;
             var predicateLambda = Expression.Lambda(innerKey.Body.Equal(outerKey.Body), innerKey.Parameters[0]);
             var callToWhere = Expression.Call(typeof(Enumerable), "Where", new Type[] { args[1] }, innerSource, predicateLambda);
-            Expression group = this.Rewrite(callToWhere);
+            Expression group = this.Visit(callToWhere);
 
             _map[resultSelector.Parameters[0]] = outerProjection.Projector;
             _map[resultSelector.Parameters[1]] = group;
-            Expression resultExpr = this.Rewrite(resultSelector.Body);
+            Expression resultExpr = this.Visit(resultSelector.Body);
 
             var alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(resultExpr, alias, outerProjection.Select.Alias);
@@ -524,7 +527,7 @@ namespace IQToolkit.Data.Translation
 
             _map[orderSelector.Parameters[0]] = projection.Projector;
             var orderings = new List<OrderExpression>();
-            orderings.Add(new OrderExpression(orderType, this.Rewrite(orderSelector.Body)));
+            orderings.Add(new OrderExpression(orderType, this.Visit(orderSelector.Body)));
 
             if (myThenBys != null)
             {
@@ -533,7 +536,7 @@ namespace IQToolkit.Data.Translation
                     var tb = myThenBys[i];
                     var lambda = (LambdaExpression)tb.Expression;
                     _map[lambda.Parameters[0]] = projection.Projector;
-                    orderings.Add(new OrderExpression(tb.OrderType, this.Rewrite(lambda.Body)));
+                    orderings.Add(new OrderExpression(tb.OrderType, this.Visit(lambda.Body)));
                 }
             }
 
@@ -554,7 +557,7 @@ namespace IQToolkit.Data.Translation
 
             _thenBys.Add(new OrderExpression(orderType, orderSelector));
 
-            return this.Rewrite(source);
+            return this.Visit(source);
         }
 
         protected virtual Expression BindGroupBy(Expression source, LambdaExpression keySelector, LambdaExpression? elementSelector, LambdaExpression? resultSelector)
@@ -562,13 +565,13 @@ namespace IQToolkit.Data.Translation
             var projection = this.RewriteSequence(source);
 
             _map[keySelector.Parameters[0]] = projection.Projector;
-            var keyExpr = this.Rewrite(keySelector.Body);
+            var keyExpr = this.Visit(keySelector.Body);
 
             var elemExpr = projection.Projector;
             if (elementSelector != null)
             {
                 _map[elementSelector.Parameters[0]] = projection.Projector;
-                elemExpr = this.Rewrite(elementSelector.Body);
+                elemExpr = this.Visit(elementSelector.Body);
             }
 
             // Use ProjectColumns to get group-by expressions from key expression
@@ -581,7 +584,7 @@ namespace IQToolkit.Data.Translation
 
             // recompute key columns for group expressions relative to subquery (need these for doing the correlation predicate)
             _map[keySelector.Parameters[0]] = subqueryBasis.Projector;
-            var subqueryKey = this.Rewrite(keySelector.Body);
+            var subqueryKey = this.Visit(keySelector.Body);
 
             // use same projection trick to get group-by expressions based on subquery
             var subqueryKeyPC = this.ProjectColumns(subqueryKey, subqueryBasis.Select.Alias, subqueryBasis.Select.Alias);
@@ -593,7 +596,7 @@ namespace IQToolkit.Data.Translation
             if (elementSelector != null)
             {
                 _map[elementSelector.Parameters[0]] = subqueryBasis.Projector;
-                subqueryElemExpr = this.Rewrite(elementSelector.Body);
+                subqueryElemExpr = this.Visit(elementSelector.Body);
             }
 
             // build subquery that projects the desired element
@@ -619,7 +622,7 @@ namespace IQToolkit.Data.Translation
                 // compute result expression based on key & element-subquery
                 _map[resultSelector.Parameters[0]] = keyProjection.Projector;
                 _map[resultSelector.Parameters[1]] = elementSubquery;
-                resultExpr = this.Rewrite(resultSelector.Body);
+                resultExpr = this.Visit(resultSelector.Body);
                 _currentGroupElement = saveGroupElement;
             }
             else
@@ -764,7 +767,7 @@ namespace IQToolkit.Data.Translation
             if (argument != null)
             {
                 _map[argument.Parameters[0]] = projection.Projector;
-                argExpr = this.Rewrite(argument.Body);
+                argExpr = this.Visit(argument.Body);
             }
             else if (!hasPredicateArg || useAlternateArg)
             {
@@ -796,7 +799,7 @@ namespace IQToolkit.Data.Translation
                 if (argument != null)
                 {
                     _map[argument.Parameters[0]] = groupInfo.Element;
-                    argExpr = this.Rewrite(argument.Body);
+                    argExpr = this.Visit(argument.Body);
                 }
                 else if (!hasPredicateArg || useAlternateArg)
                 {
@@ -842,7 +845,7 @@ namespace IQToolkit.Data.Translation
         private Expression BindTake(Expression source, Expression take)
         {
             ClientProjectionExpression projection = this.RewriteSequence(source);
-            take = this.Rewrite(take);
+            take = this.Visit(take);
             SelectExpression select = projection.Select;
             var alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(projection.Projector, alias, projection.Select.Alias);
@@ -856,7 +859,7 @@ namespace IQToolkit.Data.Translation
         private Expression BindSkip(Expression source, Expression skip)
         {
             ClientProjectionExpression projection = this.RewriteSequence(source);
-            skip = this.Rewrite(skip);
+            skip = this.Visit(skip);
             SelectExpression select = projection.Select;
             var alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(projection.Projector, alias, projection.Select.Alias);
@@ -895,7 +898,7 @@ namespace IQToolkit.Data.Translation
             if (predicate != null)
             {
                 _map[predicate.Parameters[0]] = projection.Projector;
-                where = this.Rewrite(predicate.Body);
+                where = this.Visit(predicate.Body);
             }
 
             var isFirst = kind.StartsWith("First");
@@ -952,7 +955,7 @@ namespace IQToolkit.Data.Translation
                     }
                 }
 
-                return this.Rewrite(where!);
+                return this.Visit(where!);
             }
             else
             {
@@ -1013,7 +1016,7 @@ namespace IQToolkit.Data.Translation
                     values.Add(Expression.Constant(Convert.ChangeType(value, match.Type), match.Type));
                 }
 
-                match = this.Rewrite(match);
+                match = this.Visit(match);
 
                 return new InValuesExpression(match, values);
             }
@@ -1023,12 +1026,12 @@ namespace IQToolkit.Data.Translation
                 var predicate = Expression.Lambda(p.Equal(match), p);
                 var exp = Expression.Call(typeof(Queryable), "Any", new Type[] { p.Type }, source, predicate);
                 _root = exp;
-                return this.Rewrite(exp);
+                return this.Visit(exp);
             }
             else
             {
                 ClientProjectionExpression projection = this.RewriteSequence(source);
-                match = this.Rewrite(match);
+                match = this.Visit(match);
                 Expression result = new InSubqueryExpression(match, projection.Select);
 
                 if (isRoot)
@@ -1057,36 +1060,36 @@ namespace IQToolkit.Data.Translation
         private Expression BindInsert(IEntityTable upd, Expression instance, LambdaExpression? selector)
         {
             MappingEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
-            return this.Rewrite(_mapper.GetInsertExpression(entity, instance, selector));
+            return this.Visit(_mapper.GetInsertExpression(entity, instance, selector));
         }
 
         private Expression BindUpdate(IEntityTable upd, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
         {
             MappingEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
-            return this.Rewrite(_mapper.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null));
+            return this.Visit(_mapper.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null));
         }
 
         private Expression BindInsertOrUpdate(IEntityTable upd, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
         {
             MappingEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
-            return this.Rewrite(_mapper.GetInsertOrUpdateExpression(entity, instance, updateCheck, resultSelector));
+            return this.Visit(_mapper.GetInsertOrUpdateExpression(entity, instance, updateCheck, resultSelector));
         }
 
         private Expression BindDelete(IEntityTable upd, Expression? instance, LambdaExpression? deleteCheck)
         {
             MappingEntity entity = _mapper.Mapping.GetEntity(upd);
-            return this.Rewrite(_mapper.GetDeleteExpression(entity, instance, deleteCheck));
+            return this.Visit(_mapper.GetDeleteExpression(entity, instance, deleteCheck));
         }
 
         private Expression BindBatch(IEntityTable upd, Expression instances, LambdaExpression operation, Expression batchSize, Expression stream)
         {
             var save = _batchUpd;
             _batchUpd = upd;
-            var op = (LambdaExpression)this.Rewrite(operation);
+            var op = (LambdaExpression)this.Visit(operation);
             _batchUpd = save;
-            var items = this.Rewrite(instances);
-            var size = this.Rewrite(batchSize);
-            var str = this.Rewrite(stream);
+            var items = this.Visit(instances);
+            var size = this.Visit(batchSize);
+            var str = this.Visit(stream);
             return new BatchExpression(items, op, size, str);
         }
 
@@ -1096,7 +1099,7 @@ namespace IQToolkit.Data.Translation
             return elementType != null && typeof(IQueryable<>).MakeGenericType(elementType).IsAssignableFrom(expression.Type);
         }
 
-        protected override Expression RewriteConstant(ConstantExpression c)
+        protected override Expression VisitConstant(ConstantExpression c)
         {
             if (this.IsQuery(c))
             {
@@ -1119,14 +1122,14 @@ namespace IQToolkit.Data.Translation
                     else
                     {
                         var pev = PartialEvaluator.Eval(query.Expression, _mapper.Mapping.CanBeEvaluatedLocally);
-                        return this.Rewrite(pev);
+                        return this.Visit(pev);
                     }
                 }
             }
             return c;
         }
 
-        protected override Expression RewriteParameter(ParameterExpression p)
+        protected override Expression VisitParameter(ParameterExpression p)
         {
             Expression e;
             if (_map.TryGetValue(p, out e))
@@ -1136,7 +1139,7 @@ namespace IQToolkit.Data.Translation
             return p;
         }
 
-        protected override Expression RewriteInvocation(InvocationExpression iv)
+        protected override Expression VisitInvocation(InvocationExpression iv)
         {
             if (iv.Expression is LambdaExpression lambda)
             {
@@ -1144,12 +1147,12 @@ namespace IQToolkit.Data.Translation
                 {
                     _map[lambda.Parameters[i]] = iv.Arguments[i];
                 }
-                return this.Rewrite(lambda.Body);
+                return this.Visit(lambda.Body);
             }
-            return base.RewriteInvocation(iv);
+            return base.VisitInvocation(iv);
         }
 
-        protected override Expression RewriteMemberAccess(MemberExpression m)
+        protected override Expression VisitMember(MemberExpression m)
         {
             if (m.Expression.NodeType == ExpressionType.Parameter
                 && !_map.ContainsKey((ParameterExpression)m.Expression)
@@ -1158,7 +1161,7 @@ namespace IQToolkit.Data.Translation
                 return this.RewriteSequence(_mapper.GetQueryExpression(_mapper.Mapping.GetEntity(m.Member)));
             }
 
-            var source = this.Rewrite(m.Expression);
+            var source = this.Visit(m.Expression);
 
             if (_language.IsAggregate(m.Member) && IsRemoteQuery(source))
             {
@@ -1194,7 +1197,7 @@ namespace IQToolkit.Data.Translation
         /// <summary>
         /// Moves aggregate subquery expressions into the same <see cref="SelectExpression"/> that has the group-by clause
         /// </summary>
-        private class AggregateRewriter : DbExpressionRewriter
+        private class AggregateRewriter : DbExpressionVisitor
         {
             private readonly QueryLanguage _language;
             private readonly ILookup<TableAlias, AggregateSubqueryInfo> _aliasToAggregateInfoMap;
@@ -1209,9 +1212,9 @@ namespace IQToolkit.Data.Translation
                 _aliasToAggregateInfoMap = aggregateSubqueries.ToLookup(a => a.Alias);
             }
 
-            protected override Expression RewriteSelect(SelectExpression select)
+            protected internal override Expression VisitSelect(SelectExpression select)
             {
-                select = (SelectExpression)base.RewriteSelect(select);
+                select = (SelectExpression)base.VisitSelect(select);
 
                 if (_aliasToAggregateInfoMap.Contains(select.Alias))
                 {
@@ -1257,7 +1260,7 @@ namespace IQToolkit.Data.Translation
                 : from is JoinExpression join ? IsFromAlias(join.Left, alias) || IsFromAlias(join.Right, alias)
                 : false;
 
-            protected override Expression RewriteTagged(TaggedExpression original)
+            protected internal override Expression VisitTagged(TaggedExpression original)
             {
                 // its this a scalar subquery that should be mapped?
                 if (_subqueryIdToColumnMap.TryGetValue(original.Id, out var column))
@@ -1265,14 +1268,14 @@ namespace IQToolkit.Data.Translation
                     return column;
                 }
 
-                return base.RewriteTagged(original);
+                return base.VisitTagged(original);
             }
 
-            protected override Expression RewriteClientProjection(ClientProjectionExpression original)
+            protected internal override Expression VisitClientProjection(ClientProjectionExpression original)
             {
                 var oldMap = _subqueryIdToColumnMap;
                 _subqueryIdToColumnMap = ImmutableDictionary<int, ColumnExpression>.Empty;
-                var result = base.RewriteClientProjection(original);
+                var result = base.VisitClientProjection(original);
                 _subqueryIdToColumnMap = oldMap;
                 return result;
             }

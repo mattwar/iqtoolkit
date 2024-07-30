@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Removes joins expressions that are identical to joins that already exist
     /// </summary>
-    public class RedundantJoinRemover : DbExpressionRewriter
+    public class RedundantJoinRemover : DbExpressionVisitor
     {
         private readonly Dictionary<TableAlias, TableAlias> _map;
 
@@ -23,9 +23,9 @@ namespace IQToolkit.Data.Translation
             _map = new Dictionary<TableAlias, TableAlias>();
         }
 
-        protected override Expression RewriteJoin(JoinExpression join)
+        protected internal override Expression VisitJoin(JoinExpression join)
         {
-            var result = base.RewriteJoin(join);
+            var result = base.VisitJoin(join);
             if (result is JoinExpression rjoin)
             {
                 if (rjoin.Right is AliasedExpression right
@@ -66,7 +66,7 @@ namespace IQToolkit.Data.Translation
             return result;
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
             TableAlias mapped;
             if (_map.TryGetValue(column.Alias, out mapped))

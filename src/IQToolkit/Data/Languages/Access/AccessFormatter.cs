@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Access
 {

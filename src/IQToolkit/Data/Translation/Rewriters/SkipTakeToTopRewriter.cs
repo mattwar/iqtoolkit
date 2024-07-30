@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Rewrites queries with skip and take to use nested queries with inverted ordering technique
     /// </summary>
-    public class SkipTakeToTopRewriter : DbExpressionRewriter
+    public class SkipTakeToTopRewriter : DbExpressionVisitor
     {
         private readonly QueryLanguage _language;
 
@@ -22,13 +22,13 @@ namespace IQToolkit.Data.Translation
             _language = language;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             // select * from table order by x skip s take t 
             // =>
             // select * from (select top s * from (select top s + t from table order by x) order by -x) order by x
 
-            select = (SelectExpression)base.RewriteSelect(select);
+            select = (SelectExpression)base.VisitSelect(select);
 
             if (select.Skip != null 
                 && select.Take != null 

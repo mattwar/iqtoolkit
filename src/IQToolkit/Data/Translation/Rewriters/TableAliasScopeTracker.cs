@@ -5,12 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Translation
 {
     using Expressions;
+    using Utils;
 
-    public abstract class TableAliasScopeTracker : DbExpressionRewriter
+    public abstract class TableAliasScopeTracker : DbExpressionVisitor
     {
         private ImmutableHashSet<TableAlias> _aliasesInScope;
 
@@ -59,41 +61,41 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression original)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression original)
         {
-            var select = (SelectExpression)this.Rewrite(original.Select);
+            var select = (SelectExpression)this.Visit(original.Select);
 
             return this.Scope(original.Select, () =>
             {
-                var projector = this.Rewrite(original.Projector);
+                var projector = this.Visit(original.Projector);
                 return original.Update(select, projector!, original.Aggregator);
             });
         }
 
-        protected override Expression RewriteClientJoin(ClientJoinExpression original)
+        protected internal override Expression VisitClientJoin(ClientJoinExpression original)
         {
-            var outerKey = this.RewriteExpressionList(original.OuterKey);
+            var outerKey = original.OuterKey.Rewrite(this);
             
             return this.Scope(original.Projection.Select, () =>
             {
-                var projection = (ClientProjectionExpression)this.RewriteClientProjection(original.Projection);
-                var innerKey = this.RewriteExpressionList(original.InnerKey);
+                var projection = (ClientProjectionExpression)this.VisitClientProjection(original.Projection);
+                var innerKey = original.InnerKey.Rewrite(this);
                 return original.Update(projection!, outerKey, innerKey!);
             });
         }
 
-        protected override Expression RewriteSelect(SelectExpression original)
+        protected internal override Expression VisitSelect(SelectExpression original)
         {
-            var from = this.RewriteN(original.From);
+            var from = this.Visit(original.From!);
 
             return this.Scope(original.From, () =>
             {
-                var where = this.RewriteN(original.Where);
-                var orderBy = this.VisitOrderExpressions(original.OrderBy);
-                var groupBy = this.RewriteExpressionList(original.GroupBy);
-                var skip = this.RewriteN(original.Skip);
-                var take = this.RewriteN(original.Take);
-                var columns = this.RewriteColumnDeclarations(original.Columns);
+                var where = this.Visit(original.Where);
+                var orderBy = original.OrderBy.Rewrite(o => o.Accept(this));
+                var groupBy = original.GroupBy.Rewrite(this);
+                var skip = this.Visit(original.Skip);
+                var take = this.Visit(original.Take);
+                var columns = original.Columns.Rewrite(d => d.Accept(this));
 
                 return original.Update(
                     original.Alias,
@@ -110,26 +112,25 @@ namespace IQToolkit.Data.Translation
             });
         }
 
-        protected override Expression RewriteJoin(JoinExpression original)
+        protected internal override Expression VisitJoin(JoinExpression original)
         {
             switch (original.JoinType)
             {
                 case JoinType.OuterApply:
                 case JoinType.CrossApply:
-                    var left = this.Rewrite(original.Left);
+                    var left = this.Visit(original.Left);
                     return this.Scope(original.Left, () =>
                     {
-                        var right = this.Rewrite(original.Right);
+                        var right = this.Visit(original.Right);
                         return this.Scope(original.Right, () =>
                         {
-                            var cond = this.RewriteN(original.Condition);
-
+                            var cond = this.Visit(original.Condition);
                             return original.Update(original.JoinType, left, right, cond);
                         });
                     });
 
                 default:
-                    return base.RewriteJoin(original);
+                    return base.VisitJoin(original);
             }
         }
     }

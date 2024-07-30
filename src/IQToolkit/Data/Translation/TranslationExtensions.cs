@@ -27,7 +27,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression ConvertEntityComparisons(this Expression expression, QueryMapping mapping)
         {
-            var rewritten = new EntityComparisonRewriter(mapping).Rewrite(expression);
+            var rewritten = new EntityComparisonRewriter(mapping).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -38,7 +38,7 @@ namespace IQToolkit.Data.Translation
         public static Expression ConvertCrossApplyToInnerJoin(this Expression expression, QueryLanguage language)
         {
             // simplify before attempting to convert cross applies.
-            var rewritten = new CrossApplyToLeftJoinRewriter(language).Rewrite(expression);
+            var rewritten = new CrossApplyToLeftJoinRewriter(language).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -48,7 +48,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression ConvertCrossJoinToInnerJoin(this Expression expression)
         {
-            var rewritten = new CrossJoinIsolator().Rewrite(expression);
+            var rewritten = new CrossJoinIsolator().Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             return (rewritten != expression)
@@ -61,7 +61,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression ConvertNestedProjectionsToClientJoins(this Expression expression, QueryPolicy policy, QueryLanguage language)
         {
-            var rewritten = new ClientProjectionToClientJoinRewriter(policy, language).Rewrite(expression);
+            var rewritten = new ClientProjectionToClientJoinRewriter(policy, language).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             return rewritten != expression
@@ -79,7 +79,7 @@ namespace IQToolkit.Data.Translation
             bool isQueryFragment = false)
         {
             var rewriter = new LinqToDbExpressionRewriter(language, mapper, expression);
-            var rewritten = rewriter.Rewrite(expression);
+            var rewritten = rewriter.Visit(expression);
             Debug.Assert(isQueryFragment || rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -89,7 +89,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression ConvertRelationshipAccesses(this Expression expression, QueryMappingRewriter mapper)
         {
-            var rewritten = new RelationshipBinder(mapper).Rewrite(expression);
+            var rewritten = new RelationshipBinder(mapper).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             return rewritten != expression
@@ -103,7 +103,7 @@ namespace IQToolkit.Data.Translation
         public static Expression ConvertSingletonProjections(
             this Expression expression, QueryLanguage language, QueryMapping mapping)
         {
-            var rewritten = new SingletonProjectionRewriter(language).Rewrite(expression);
+            var rewritten = new SingletonProjectionRewriter(language).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             if (rewritten != expression)
@@ -123,7 +123,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression ConvertSkipTakeToTop(this Expression expression, QueryLanguage language)
         {
-            var rewritten = new SkipTakeToTopRewriter(language).Rewrite(expression);
+            var rewritten = new SkipTakeToTopRewriter(language).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -151,7 +151,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression IsolateCrossJoins(this Expression expression)
         {
-            var rewritten = new CrossJoinIsolator().Rewrite(expression);
+            var rewritten = new CrossJoinIsolator().Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -161,7 +161,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression MoveOrderByToOuterSelect(this Expression expression, QueryLanguage language)
         {
-            var rewritten = new MoveOrderByToOuterMostSelectRewriter(language).Rewrite(expression);
+            var rewritten = new MoveOrderByToOuterMostSelectRewriter(language).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -172,7 +172,7 @@ namespace IQToolkit.Data.Translation
         public static TExpression RemapTableAliases<TExpression>(this TExpression expression, TableAlias newAlias, IEnumerable<TableAlias> oldAliases)
             where TExpression : Expression
         {
-            return (TExpression)new TableAliasRemapper(oldAliases, newAlias).Rewrite(expression);
+            return (TExpression)new TableAliasRemapper(oldAliases, newAlias).Visit(expression);
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace IQToolkit.Data.Translation
         public static TExpression RemapTableAliases<TExpression>(this TExpression expression, TableAlias newAlias, params TableAlias[] oldAliases)
             where TExpression : Expression
         {
-            return (TExpression)new TableAliasRemapper(oldAliases, newAlias).Rewrite(expression);
+            return (TExpression)new TableAliasRemapper(oldAliases, newAlias).Visit(expression);
         }
 
         /// <summary>
@@ -189,7 +189,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression RemoveRedundantColumns(this Expression expression)
         {
-            var rewritten = new RedundantColumnRemover().Rewrite(expression);
+            var rewritten = new RedundantColumnRemover().Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -199,7 +199,7 @@ namespace IQToolkit.Data.Translation
         /// </summary>
         public static Expression RemoveRedundantJoins(this Expression expression)
         {
-            var rewritten = new RedundantJoinRemover().Rewrite(expression);
+            var rewritten = new RedundantJoinRemover().Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }

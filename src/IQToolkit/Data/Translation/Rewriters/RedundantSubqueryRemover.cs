@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Removes select expressions that don't add any additional semantic value
     /// </summary>
-    public class RedundantSubqueryRemover : DbExpressionRewriter
+    public class RedundantSubqueryRemover : DbExpressionVisitor
     {
         public RedundantSubqueryRemover() 
         {
@@ -21,12 +21,12 @@ namespace IQToolkit.Data.Translation
 
         public static Expression RemoveRedudantSuqueries(Expression expression)
         {
-            return new RedundantSubqueryRemover().Rewrite(expression);
+            return new RedundantSubqueryRemover().Visit(expression);
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
-            var modified = (SelectExpression)base.RewriteSelect(select);
+            var modified = (SelectExpression)base.VisitSelect(select);
 
             if (modified.From is SelectExpression modifiedSelect
                 && IsRedudantSubquery(modifiedSelect))
@@ -38,9 +38,9 @@ namespace IQToolkit.Data.Translation
             return modified;
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression original)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression original)
         {
-            var modified = (ClientProjectionExpression)base.RewriteClientProjection(original);
+            var modified = (ClientProjectionExpression)base.VisitClientProjection(original);
             
             if (modified.Select.From is SelectExpression fromSelect
                 && IsRedudantSubquery(fromSelect)) 

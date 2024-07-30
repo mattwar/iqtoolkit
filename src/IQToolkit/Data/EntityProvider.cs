@@ -438,7 +438,7 @@ namespace IQToolkit.Data
                     return found;
             }
 
-            return TypedSubtreeFinder.Find(expression, type);
+            return expression.FindFirstUpOrDefault(expr => type.IsAssignableFrom(expr.Type));
         }
     }
 }

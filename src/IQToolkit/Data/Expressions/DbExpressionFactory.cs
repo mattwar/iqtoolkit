@@ -34,14 +34,14 @@ namespace IQToolkit.Data.Expressions
         public static DbLiteralExpression Literal(Type type, string literalText) =>
             new DbLiteralExpression(type, literalText);
 
-        public static FunctionCallExpression FunctionCall(Type type, string name, params Expression[] arguments) =>
-            new FunctionCallExpression(type, false, name, arguments);
+        public static DbFunctionCallExpression FunctionCall(Type type, string name, params Expression[] arguments) =>
+            new DbFunctionCallExpression(type, false, name, arguments);
 
-        public static FunctionCallExpression FunctionCall(Type type, string name, IReadOnlyList<Expression> arguments) =>
-            new FunctionCallExpression(type, false, name, arguments);
+        public static DbFunctionCallExpression FunctionCall(Type type, string name, IReadOnlyList<Expression> arguments) =>
+            new DbFunctionCallExpression(type, false, name, arguments);
 
-        public static FunctionCallExpression FunctionCall(Type type, string name, Expression instance, IReadOnlyList<Expression> arguments) =>
-            new FunctionCallExpression(type, false, name, new[] { instance }.Concat(arguments));
+        public static DbFunctionCallExpression FunctionCall(Type type, string name, Expression instance, IReadOnlyList<Expression> arguments) =>
+            new DbFunctionCallExpression(type, false, name, new[] { instance }.Concat(arguments));
 
         public static readonly DbLiteralExpression EmptyStringLiteral =
             new DbLiteralExpression(typeof(string), "''");

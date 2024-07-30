@@ -6,11 +6,12 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Translation
 {
     using Expressions;
-    using System.Xml.Linq;
+    using Utils;
 
     /// <summary>
     /// Removes column declarations in SelectExpression's that are not referenced
@@ -24,7 +25,7 @@ namespace IQToolkit.Data.Translation
             return removed;
         }
 
-        private class Remover : DbExpressionRewriter
+        private class Remover : DbExpressionVisitor
         {
             private readonly ImmutableDictionary<SelectExpression, ImmutableHashSet<string>> _selectColumnsReferenced;
 
@@ -37,14 +38,14 @@ namespace IQToolkit.Data.Translation
             public static Expression RemoveUnused(Expression expression, ImmutableDictionary<SelectExpression, ImmutableHashSet<string>> selectColumnsReferenced)
             {
                 var remover = new Remover(selectColumnsReferenced);
-                return remover.Rewrite(expression);
+                return remover.Visit(expression);
             }
 
-            protected override Expression RewriteSelect(SelectExpression original)
+            protected internal override Expression VisitSelect(SelectExpression original)
             {
-                var modified = (SelectExpression)base.RewriteSelect(original);
+                var modified = (SelectExpression)base.VisitSelect(original);
 
-                var newColumns = this.RewriteList(original.Columns, col =>
+                var newColumns = original.Columns.Rewrite(col =>
                 {
                     if (_selectColumnsReferenced.TryGetValue(original, out var names))
                     {
@@ -78,7 +79,7 @@ namespace IQToolkit.Data.Translation
                 Expression expression, IEnumerable<TableAlias>? aliasesInScope = null)
             {
                 var marker = new Referencer(aliasesInScope);
-                marker.Rewrite(expression);
+                marker.Visit(expression);
                 return marker._selectColumnsUsed;
             }
 
@@ -136,29 +137,29 @@ namespace IQToolkit.Data.Translation
                 return result;
             }
 
-            protected override Expression RewriteColumn(ColumnExpression original)
+            protected internal override Expression VisitColumn(ColumnExpression original)
             {
                 MarkColumn(original.Alias, original.Name);
                 return original;
             }
 
-            protected override Expression RewriteScalarSubquery(ScalarSubqueryExpression original)
+            protected internal override Expression VisitScalarSubquery(ScalarSubqueryExpression original)
             {
                 // scalar subquery reference its select column
                 System.Diagnostics.Debug.Assert(original.Select.Columns.Count == 1);
                 MarkColumn(original.Select, original.Select.Columns[0].Name);
-                return base.RewriteScalarSubquery(original);
+                return base.VisitScalarSubquery(original);
             }
 
-            protected override Expression RewriteInSubquery(InSubqueryExpression original)
+            protected internal override Expression VisitInSubquery(InSubqueryExpression original)
             {
                 // in subquery references its select column
                 System.Diagnostics.Debug.Assert(original.Select.Columns.Count == 1);
                 MarkColumn(original.Select, original.Select.Columns[0].Name);
-                return base.RewriteInSubquery(original);
+                return base.VisitInSubquery(original);
             }
 
-            protected override Expression RewriteSelect(SelectExpression original)
+            protected internal override Expression VisitSelect(SelectExpression original)
             {
                 if (original.IsDistinct)
                 {
@@ -172,12 +173,12 @@ namespace IQToolkit.Data.Translation
                     MarkAllColumns(original.From);
                 }
 
-                return base.RewriteSelect(original);
+                return base.VisitSelect(original);
             }
 
             protected static bool HasCountAllAggregate(Expression expression)
             {
-                return expression.FindFirstOrDefault<AggregateExpression>(
+                return expression.FindFirstDownOrDefault<AggregateExpression>(
                     a => a.AggregateName == "Count" && a.Argument == null
                     ) != null;
             }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace IQToolkit.Data.Expressions
 {
+    using System.Linq.Expressions;
     using Utils;
 
     /// <summary>
@@ -33,6 +34,19 @@ namespace IQToolkit.Data.Expressions
             {
                 return this;
             }
+        }
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitRowNumber(this);
+            return base.Accept(visitor);
+        }
+
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            var orderby = this.OrderBy.Rewrite(o => o.Accept(visitor));
+            return this.Update(orderby);
         }
     }
 }

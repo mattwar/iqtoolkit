@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Removes specific nested select expressions by replacing them with their from clause.
     /// </summary>
-    public class SubqueryRemover : DbExpressionRewriter
+    public class SubqueryRemover : DbExpressionVisitor
     {
         private readonly HashSet<SelectExpression> _selectsToRemove;
         private readonly Dictionary<TableAlias, Dictionary<string, Expression>> _map;
@@ -32,7 +32,7 @@ namespace IQToolkit.Data.Translation
 
         public static SelectExpression Remove(SelectExpression outerSelect, IEnumerable<SelectExpression> selectsToRemove)
         {
-            return (SelectExpression)new SubqueryRemover(selectsToRemove).Rewrite(outerSelect);
+            return (SelectExpression)new SubqueryRemover(selectsToRemove).Visit(outerSelect);
         }
 
         public static ClientProjectionExpression Remove(ClientProjectionExpression projection, params SelectExpression[] selectsToRemove)
@@ -42,41 +42,31 @@ namespace IQToolkit.Data.Translation
 
         public static ClientProjectionExpression Remove(ClientProjectionExpression projection, IEnumerable<SelectExpression> selectsToRemove)
         {
-            return (ClientProjectionExpression)new SubqueryRemover(selectsToRemove).Rewrite(projection);
+            return (ClientProjectionExpression)new SubqueryRemover(selectsToRemove).Visit(projection);
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             if (_selectsToRemove.Contains(select) 
                 && select.From != null)
             {
                 // replace the remove select with its FROM clauses
-                return this.Rewrite(select.From);
+                return this.Visit(select.From);
             }
             else
             {
-                return base.RewriteSelect(select);
+                return base.VisitSelect(select);
             }
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
             if (_map.TryGetValue(column.Alias, out var nameMap))
             {
                 if (nameMap.TryGetValue(column.Name, out var expr))
                 {
-                    return this.Rewrite(expr);
+                    return this.Visit(expr);
                 }
-                else
-                {
-
-                }
-
-                //throw new Exception("Reference to undefined column");
-            }
-            else
-            {
-
             }
 
             return column;

@@ -28,5 +28,10 @@ namespace IQToolkit.Data.Expressions
             (ExpressionType)(int)this.DbNodeType;
 
         public virtual bool IsPredicate => false;
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            return this.VisitChildren(visitor);
+        }
     }
 }

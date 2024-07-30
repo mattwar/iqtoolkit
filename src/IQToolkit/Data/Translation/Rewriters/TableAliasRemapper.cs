@@ -12,7 +12,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Rewrite all references to one or more table aliases to a new single alias
     /// </summary>
-    public class TableAliasRemapper : DbExpressionRewriter
+    public class TableAliasRemapper : DbExpressionVisitor
     {
         private readonly HashSet<TableAlias> _oldAliases;
         private readonly TableAlias _newAlias;
@@ -25,7 +25,7 @@ namespace IQToolkit.Data.Translation
 
         public static Expression Map(Expression expression, TableAlias newAlias, IEnumerable<TableAlias> oldAliases)
         {
-            return new TableAliasRemapper(oldAliases, newAlias).Rewrite(expression);
+            return new TableAliasRemapper(oldAliases, newAlias).Visit(expression);
         }
 
         public static Expression Map(Expression expression, TableAlias newAlias, params TableAlias[] oldAliases)
@@ -33,7 +33,7 @@ namespace IQToolkit.Data.Translation
             return Map(expression, newAlias, (IEnumerable<TableAlias>)oldAliases);
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
             if (_oldAliases.Contains(column.Alias))
             {

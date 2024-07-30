@@ -14,7 +14,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Isolates cross joins from other types of joins by pushing down into nested subqueries.
     /// </summary>
-    public class CrossJoinIsolator : DbExpressionRewriter
+    public class CrossJoinIsolator : DbExpressionVisitor
     {
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
         private ILookup<TableAlias, ColumnExpression>? _currentColumns;
@@ -25,14 +25,14 @@ namespace IQToolkit.Data.Translation
             _map = new Dictionary<ColumnExpression, ColumnExpression>();
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             var saveColumns = _currentColumns;
             _currentColumns = ReferencedColumnGatherer.Gather(select).ToLookup(c => c.Alias);               
             var saveLastJoin = _lastJoin;
             _lastJoin = null;
 
-            var result = base.RewriteSelect(select);
+            var result = base.VisitSelect(select);
                 
             _currentColumns = saveColumns;
             _lastJoin = saveLastJoin;
@@ -40,11 +40,11 @@ namespace IQToolkit.Data.Translation
             return result;
         }
 
-        protected override Expression RewriteJoin(JoinExpression join)
+        protected internal override Expression VisitJoin(JoinExpression join)
         {
             var saveLastJoin = _lastJoin;
             _lastJoin = join.JoinType;
-            join = (JoinExpression)base.RewriteJoin(join);
+            join = (JoinExpression)base.VisitJoin(join);
             _lastJoin = saveLastJoin;
 
             if (_lastJoin != null 
@@ -81,7 +81,7 @@ namespace IQToolkit.Data.Translation
             return new SelectExpression(newAlias, decls, expression, null);
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
             return _map.TryGetValue(column, out var mapped)
                 ? mapped

@@ -163,8 +163,8 @@ namespace IQToolkit.Data.Expressions
                     return this.CompareEntity(entityA, (EntityExpression)b, s);
                 case ExistsSubqueryExpression existsA:
                     return this.CompareExistsSubquery(existsA, (ExistsSubqueryExpression)b, s);
-                case FunctionCallExpression functionA:
-                    return this.CompareFunction(functionA, (FunctionCallExpression)b, s);
+                case DbFunctionCallExpression functionA:
+                    return this.CompareFunction(functionA, (DbFunctionCallExpression)b, s);
                 case IfCommand ifcomA:
                     return this.CompareIfCommand(ifcomA, (IfCommand)b, s);
                 case InsertCommand inscomA:
@@ -368,8 +368,8 @@ namespace IQToolkit.Data.Expressions
         }
 
         protected virtual bool CompareFunction(
-            FunctionCallExpression x,
-            FunctionCallExpression y,
+            DbFunctionCallExpression x,
+            DbFunctionCallExpression y,
             DbScope s)
         {
             return x.Name == y.Name

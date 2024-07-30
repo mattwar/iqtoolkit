@@ -2,22 +2,19 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Translation
 {
     using Expressions;
+    using Utils;
 
     /// <summary>
     /// Translates accesses to relationship members into projections or joins
     /// </summary>
-    public class RelationshipBinder : DbExpressionRewriter
+    public class RelationshipBinder : DbExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
         private readonly QueryMapping _mapping;
@@ -31,20 +28,20 @@ namespace IQToolkit.Data.Translation
             _language = mappingRewriter.Translator.LanguageRewriter.Language;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             // look for association references in SelectExpression clauses
             var saveCurrentFrom = _currentFrom;
-            _currentFrom = this.RewriteN(select.From);
+            _currentFrom = this.Visit(select.From!);
 
             try
             {
-                var where = this.RewriteN(select.Where);
-                var orderBy = this.VisitOrderExpressions(select.OrderBy);
-                var groupBy = this.RewriteExpressionList(select.GroupBy);
-                var skip = this.RewriteN(select.Skip);
-                var take = this.RewriteN(select.Take);
-                var columns = this.RewriteColumnDeclarations(select.Columns);
+                var where = this.Visit(select.Where);
+                var orderBy = select.OrderBy.Rewrite(o => o.Accept(this));
+                var groupBy = select.GroupBy.Rewrite(this);
+                var skip = this.Visit(select.Skip);
+                var take = this.Visit(select.Take);
+                var columns = select.Columns.Rewrite(d => d.Accept(this));
 
                 return select.Update(select.Alias, _currentFrom, where, orderBy, groupBy, skip, take, select.IsDistinct, select.IsReverse, columns);
             }
@@ -54,9 +51,9 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression proj)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
         {
-            var select = (SelectExpression)this.Rewrite(proj.Select);
+            var select = (SelectExpression)this.Visit(proj.Select);
 
             // look for association references in projector
             var saveCurrentFrom = _currentFrom;
@@ -64,7 +61,7 @@ namespace IQToolkit.Data.Translation
 
             try
             {
-                var projector = this.Rewrite(proj.Projector);
+                var projector = this.Visit(proj.Projector);
 
                 if (_currentFrom != select)
                 {
@@ -105,14 +102,14 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteMemberAccess(MemberExpression memberAccess)
+        protected override Expression VisitMember(MemberExpression memberAccess)
         {
-            var source = this.Rewrite(memberAccess.Expression);
+            var source = this.Visit(memberAccess.Expression);
 
             if (FindEntityExpression(memberAccess.Expression) is { } entity 
                 && _mapping.IsRelationship(entity.Entity, memberAccess.Member))
             {
-                var projection = (ClientProjectionExpression)this.Rewrite(
+                var projection = (ClientProjectionExpression)this.Visit(
                     _mapper.GetMemberExpression(source, entity.Entity, memberAccess.Member)
                     );
 
@@ -139,7 +136,7 @@ namespace IQToolkit.Data.Translation
                 if (resolvedAccess is ClientProjectionExpression)
                 {
                     // rewrite nested projections too
-                    return this.Rewrite(resolvedAccess);
+                    return this.Visit(resolvedAccess);
                 }
 
                 return resolvedAccess;

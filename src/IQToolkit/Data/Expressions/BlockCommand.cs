@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
@@ -42,6 +43,19 @@ namespace IQToolkit.Data.Expressions
             {
                 return this;
             }
+        }
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitBlockCommand(this);
+            return base.Accept(visitor);
+        }
+
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            var commands = this.Commands.Rewrite(visitor);
+            return this.Update(commands);
         }
     }
 }

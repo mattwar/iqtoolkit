@@ -6,17 +6,19 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Translation
 {
     using Expressions;
+    using Utils;
 
     /// <summary>
     /// Checks for invalid column references in a query expression,
     /// such as reference to table alias not in scope or columns not selected.
     /// Also checks for duplicate table alias declarations.
     /// </summary>
-    public class ValidReferenceChecker : DbExpressionRewriter
+    public class ValidReferenceChecker : DbExpressionVisitor
     {
         private ImmutableDictionary<TableAlias, AliasedExpression> _aliasesInScope;
         private ImmutableList<ColumnExpression> _invalidReferences;
@@ -37,7 +39,7 @@ namespace IQToolkit.Data.Translation
             SelectExpression? outerSelect)
         {
             var rewriter = new ValidReferenceChecker(outerSelect);
-            rewriter.Rewrite(query);
+            rewriter.Visit(query);
             return rewriter._invalidReferences.Count == 0
                 && rewriter._invalidDeclarations.Count == 0;
         }
@@ -73,46 +75,46 @@ namespace IQToolkit.Data.Translation
             _invalidReferences = _invalidReferences.Add(column);
         }
 
-        public override Expression Rewrite(Expression exp)
+        public override Expression Visit(Expression exp)
         {
             // scope changes don't propogate outward
             var oldAliases = _aliasesInScope;
-            var result = base.Rewrite(exp);
+            var result = base.Visit(exp);
             _aliasesInScope = oldAliases;
             return result;
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression original)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression original)
         {
-            this.Rewrite(original.Select);
+            this.Visit(original.Select);
 
             // put select's alias in scope for projection & aggregate
             this.AddToScope(original.Select);
 
-            this.Rewrite(original.Projector);
-            this.RewriteN(original.Aggregator);
+            this.Visit(original.Projector);
+            this.Visit(original.Aggregator!);
 
             return original;
         }
 
-        protected override Expression RewriteSelect(SelectExpression original)
+        protected internal override Expression VisitSelect(SelectExpression original)
         {
-            var from = this.RewriteN(original.From);
+            var from = this.Visit(original.From!);
 
             // add from aliases to scope
             this.AddFromAliases(original.From);
 
-            var where = this.RewriteN(original.Where);
-            var orderBy = this.VisitOrderExpressions(original.OrderBy);
-            var groupBy = this.RewriteExpressionList(original.GroupBy);
-            var skip = this.RewriteN(original.Skip);
-            var take = this.RewriteN(original.Take);
-            var columns = this.RewriteColumnDeclarations(original.Columns);
+            var where = this.Visit(original.Where!);
+            var orderBy = original.OrderBy.Rewrite(o => o.Accept(this));
+            var groupBy = original.GroupBy.Rewrite(this);
+            var skip = this.Visit(original.Skip!);
+            var take = this.Visit(original.Take!);
+            var columns = original.Columns.Rewrite(d => d.Accept(this));
 
             return original;
         }
 
-        protected override Expression RewriteJoin(JoinExpression original)
+        protected internal override Expression VisitJoin(JoinExpression original)
         {
             switch (original.JoinType)
             {
@@ -120,25 +122,25 @@ namespace IQToolkit.Data.Translation
                 case JoinType.CrossApply:
                 case JoinType.OuterApply:
                     {
-                        var left = this.Rewrite(original.Left);
+                        var left = this.Visit(original.Left);
 
                         // right can see aliases from left
                         this.AddFromAliases(original.Left);
-                        var right = this.Rewrite(original.Right);
+                        var right = this.Visit(original.Right);
 
                         return original;
                     }
 
                 default:
                     {
-                        var left = this.Rewrite(original.Left);
-                        var right = this.Rewrite(original.Right);
+                        var left = this.Visit(original.Left);
+                        var right = this.Visit(original.Right);
 
                         // condition can see aliases from left and right
                         if (original.Condition != null)
                         {
                             this.AddFromAliases(original);
-                            var cond = this.Rewrite(original.Condition);
+                            var cond = this.Visit(original.Condition);
                         }
 
                         return original;
@@ -146,21 +148,22 @@ namespace IQToolkit.Data.Translation
             }
         }
 
-        protected override Expression RewriteClientJoin(ClientJoinExpression original)
+        protected internal override Expression VisitClientJoin(ClientJoinExpression original)
         {
             // outer key can see existing aliases in scope only.
-            var outerKey = this.RewriteExpressionList(original.OuterKey);
+            var outerKey = original.OuterKey.Rewrite(this);
 
-            var projection = this.Rewrite(original.Projection);
+            var projection = this.Visit(original.Projection);
 
             // inner key can see projection select's alias
             this.AddToScope(original.Projection.Select);
-            var innerKey = this.RewriteExpressionList(original.InnerKey);
+
+            var innerKey = original.InnerKey.Rewrite(this);
 
             return original;
         }
 
-        protected override Expression RewriteColumn(ColumnExpression original)
+        protected internal override Expression VisitColumn(ColumnExpression original)
         {
             // check to see if column refers to alias in scope
             if (!_aliasesInScope.TryGetValue(original.Alias, out var aliased))

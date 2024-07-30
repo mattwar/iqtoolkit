@@ -14,9 +14,9 @@ namespace IQToolkit.Data.Translation
     using Expressions;
 
     /// <summary>
-    /// Rewrites take and skip expressions into uses of TSQL row_number function
+    /// Rewrites skip expressions into uses of TSQL row_number function
     /// </summary>
-    public class SkipToRowNumberRewriter : DbExpressionRewriter
+    public class SkipToRowNumberRewriter : DbExpressionVisitor
     {
         private readonly QueryLanguage _language;
 
@@ -27,12 +27,12 @@ namespace IQToolkit.Data.Translation
 
         public static Expression Rewrite(QueryLanguage language, Expression expression)
         {
-            return new SkipToRowNumberRewriter(language).Rewrite(expression);
+            return new SkipToRowNumberRewriter(language).Visit(expression);
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
-            select = (SelectExpression)base.RewriteSelect(select);
+            select = (SelectExpression)base.VisitSelect(select);
             if (select.Skip != null)
             {
                 var newSelect = select.WithSkip(null).WithTake(null);

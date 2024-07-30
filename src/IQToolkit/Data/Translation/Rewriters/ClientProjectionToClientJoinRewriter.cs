@@ -15,7 +15,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// rewrites nested client projections into client-side joins
     /// </summary>
-    public class ClientProjectionToClientJoinRewriter : DbExpressionRewriter
+    public class ClientProjectionToClientJoinRewriter : DbExpressionVisitor
     {
         private readonly QueryPolicy _policy;
         private readonly QueryLanguage _language;
@@ -33,29 +33,32 @@ namespace IQToolkit.Data.Translation
         private readonly Dictionary<Expression, MemberInfo> _matchingMembers =
             new Dictionary<Expression, MemberInfo>();
 
-        public override Expression Rewrite(Expression exp)
+        public override Expression Visit(Expression exp)
         {
+            if (exp == null)
+                return null!;
+
             if (_matchingMembers.TryGetValue(exp, out var mm))
             {
                 var prevMM = _currentMember;
                 _currentMember = mm;
-                var result = base.Rewrite(exp);
+                var result = base.Visit(exp);
                 _currentMember = prevMM;
                 return result;
             }
             else
             {
-                return base.Rewrite(exp);
+                return base.Visit(exp);
             }
         }
 
-        protected override MemberAssignment RewriteMemberAssignment(MemberAssignment assignment)
+        protected override MemberAssignment VisitMemberAssignment(MemberAssignment assignment)
         {
             _matchingMembers[assignment.Expression] = assignment.Member;
-            return base.RewriteMemberAssignment(assignment);
+            return base.VisitMemberAssignment(assignment);
         }
 
-        protected override Expression RewriteNew(NewExpression original)
+        protected override Expression VisitNew(NewExpression original)
         {
             if (original.Members?.Count > 0 
                 && original.Members.Count == original.Arguments.Count)
@@ -66,10 +69,10 @@ namespace IQToolkit.Data.Translation
                 }
             }
 
-            return base.RewriteNew(original);
+            return base.VisitNew(original);
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression proj)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
         {
             var previousSelect = _currentSelect;
             _currentSelect = proj.Select;
@@ -99,7 +102,7 @@ namespace IQToolkit.Data.Translation
 
                         // apply client-join treatment recursively
                         _currentSelect = joinedSelect;
-                        newProjector = this.Rewrite(pc.Projector);
+                        newProjector = this.Visit(pc.Projector);
 
                         // compute keys (this only works if join condition was a single column comparison)
                         var outerKeys = new List<Expression>();
@@ -121,7 +124,7 @@ namespace IQToolkit.Data.Translation
                     {
                         bool previousJoin = _canJoinOnClient;
                         _canJoinOnClient = false;
-                        var result = base.RewriteClientProjection(proj);
+                        var result = base.VisitClientProjection(proj);
                         _canJoinOnClient = previousJoin;
                         return result;
                     }
@@ -131,7 +134,7 @@ namespace IQToolkit.Data.Translation
                     _isTopLevel = false;
                 }
 
-                return base.RewriteClientProjection(proj);
+                return base.VisitClientProjection(proj);
             }
             finally 
             {
@@ -207,55 +210,55 @@ namespace IQToolkit.Data.Translation
             return expression as ColumnExpression;
         }
 
-        protected override Expression RewriteScalarSubquery(ScalarSubqueryExpression scalar)
+        protected internal override Expression VisitScalarSubquery(ScalarSubqueryExpression scalar)
         {
             return scalar;
         }
 
-        protected override Expression RewriteExistsSubquery(ExistsSubqueryExpression exists)
+        protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
         {
             return exists;
         }
 
-        protected override Expression RewriteInSubquery(InSubqueryExpression @in)
+        protected internal override Expression VisitInSubquery(InSubqueryExpression @in)
         {
             return @in;
         }
 
-        protected override Expression RewriteInsertCommand(InsertCommand insert)
+        protected internal override Expression VisitInsertCommand(InsertCommand insert)
         {
             _isTopLevel = true;
-            return base.RewriteInsertCommand(insert);
+            return base.VisitInsertCommand(insert);
         }
 
-        protected override Expression RewriteUpdateCommand(UpdateCommand update)
+        protected internal override Expression VisitUpdateCommand(UpdateCommand update)
         {
             _isTopLevel = true;
-            return base.RewriteUpdateCommand(update);
+            return base.VisitUpdateCommand(update);
         }
 
-        protected override Expression RewriteDeleteCommand(DeleteCommand delete)
+        protected internal override Expression VisitDeleteCommand(DeleteCommand delete)
         {
             _isTopLevel = true;
-            return base.RewriteDeleteCommand(delete);
+            return base.VisitDeleteCommand(delete);
         }
 
-        protected override Expression RewriteIfCommand(IfCommand ifx)
+        protected internal override Expression VisitIfCommand(IfCommand ifx)
         {
             _isTopLevel = true;
-            return base.RewriteIfCommand(ifx);
+            return base.VisitIfCommand(ifx);
         }
 
-        protected override Expression RewriteDeclarationCommand(DeclarationCommand decl)
+        protected internal override Expression VisitDeclarationCommand(DeclarationCommand decl)
         {
             _isTopLevel = true;
-            return base.RewriteDeclarationCommand(decl);
+            return base.VisitDeclarationCommand(decl);
         }
 
-        protected override Expression RewriteBlockCommand(BlockCommand block)
+        protected internal override Expression VisitBlockCommand(BlockCommand block)
         {
             _isTopLevel = true;
-            return base.RewriteBlockCommand(block);
+            return base.VisitBlockCommand(block);
         }
     }
 }

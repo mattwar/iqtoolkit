@@ -38,5 +38,19 @@ namespace IQToolkit.Data.Expressions
                 return this;
             }
         }
+
+        internal ColumnAssignment Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitColumnAssignment(this);
+            return this.VisitChildren(visitor);
+        }
+
+        internal ColumnAssignment VisitChildren(ExpressionVisitor visitor)
+        {
+            var column = (ColumnExpression)visitor.Visit(this.Column);
+            var expression = visitor.Visit(this.Expression);
+            return this.Update(column, expression);
+        }
     }
 }

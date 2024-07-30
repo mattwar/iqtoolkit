@@ -13,7 +13,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Adds relationship to query results depending on policy
     /// </summary>
-    public class RelationshipIncluder : DbExpressionRewriter
+    public class RelationshipIncluder : DbExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
         private readonly QueryPolicy _policy;
@@ -28,16 +28,16 @@ namespace IQToolkit.Data.Translation
 
         public static Expression Include(Expression expression, QueryPolicy policy, QueryMappingRewriter mappingRewriter)
         {
-            return new RelationshipIncluder(policy, mappingRewriter).Rewrite(expression);
+            return new RelationshipIncluder(policy, mappingRewriter).Visit(expression);
         }
 
-        protected override Expression RewriteClientProjection(ClientProjectionExpression proj)
+        protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
         {
-            var projector = this.Rewrite(proj.Projector);
+            var projector = this.Visit(proj.Projector);
             return proj.Update(proj.Select, projector, proj.Aggregator);
         }
 
-        protected override Expression RewriteEntity(EntityExpression entity)
+        protected internal override Expression VisitEntity(EntityExpression entity)
         {
             var oldScope = _includeScope;
             try
@@ -62,7 +62,7 @@ namespace IQToolkit.Data.Translation
                         });
                 }
 
-                return base.RewriteEntity(entity);
+                return base.VisitEntity(entity);
             }
             finally
             {

@@ -32,5 +32,18 @@ namespace IQToolkit.Data.Expressions
                 return this;
             }
         }
+
+        internal OrderExpression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitOrder(this);
+            return this.VisitChildren(visitor);
+        }
+
+        internal OrderExpression VisitChildren(ExpressionVisitor visitor)
+        {
+            var expression = visitor.Visit(this.Expression);
+            return this.Update(this.OrderType, expression);
+        }
     }
 }

@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Translation
     /// <summary>
     /// Removes duplicate column declarations that refer to the same underlying column
     /// </summary>
-    public class RedundantColumnRemover : DbExpressionRewriter
+    public class RedundantColumnRemover : DbExpressionVisitor
     {
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
 
@@ -26,19 +26,19 @@ namespace IQToolkit.Data.Translation
             _map = new Dictionary<ColumnExpression, ColumnExpression>();
         }
 
-        protected override Expression RewriteColumn(ColumnExpression column)
+        protected internal override Expression VisitColumn(ColumnExpression column)
         {
-            ColumnExpression mapped;
-            if (_map.TryGetValue(column, out mapped))
+            if (_map.TryGetValue(column, out var mapped))
             {
                 return mapped;
             }
+
             return column;
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
-            select = (SelectExpression) base.RewriteSelect(select);
+            select = (SelectExpression) base.VisitSelect(select);
 
             // look for redundant column declarations
             var cols = select.Columns.OrderBy(c => c.Name).ToList();

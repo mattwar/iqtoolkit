@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using IQToolkit.Expressions;
 
 namespace IQToolkit.Data.Expressions
 {
@@ -322,6 +323,37 @@ namespace IQToolkit.Data.Expressions
                 this.IsDistinct,
                 this.IsReverse,
                 this.Columns
+                );
+        }
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            if (visitor is DbExpressionVisitor dbVisitor)
+                return dbVisitor.VisitSelect(this);
+            return base.Accept(visitor);
+        }
+
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            var from = visitor.Visit(this.From);
+            var where = visitor.Visit(this.Where);
+            var orderBy = this.OrderBy.Rewrite(v => v.Accept(visitor));
+            var groupBy = this.GroupBy.Rewrite(visitor);
+            var skip = visitor.Visit(this.Skip);
+            var take = visitor.Visit(this.Take);
+            var columns = this.Columns.Rewrite(cd => cd.Accept(visitor));
+
+            return this.Update(
+                this.Alias,
+                from,
+                where,
+                orderBy,
+                groupBy,
+                skip,
+                take,
+                this.IsDistinct,
+                this.IsReverse,
+                columns
                 );
         }
     }

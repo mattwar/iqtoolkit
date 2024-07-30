@@ -13,18 +13,18 @@ namespace IQToolkit.Data.Expressions
     /// <summary>
     /// Returns a list of <see cref="SelectExpression"/> accessible from the source expression
     /// </summary>
-    public class SelectGatherer : DbExpressionRewriter
+    public class SelectGatherer : DbExpressionVisitor
     {
         List<SelectExpression> selects = new List<SelectExpression>();
 
         public static ReadOnlyCollection<SelectExpression> Gather(Expression expression)
         {
             var gatherer = new SelectGatherer();
-            gatherer.Rewrite(expression);
+            gatherer.Visit(expression);
             return gatherer.selects.AsReadOnly();
         }
 
-        protected override Expression RewriteSelect(SelectExpression select)
+        protected internal override Expression VisitSelect(SelectExpression select)
         {
             this.selects.Add(select);
             return select; // don't visit sub-queries

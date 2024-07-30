@@ -122,7 +122,7 @@ namespace IQToolkit.Data.Expressions
                         break;
                     case DbBinaryExpression dbb:
                         goto default;
-                    case FunctionCallExpression fx:
+                    case DbFunctionCallExpression fx:
                         this.WriteFunction(fx);
                         break;
                     case DbLiteralExpression dbl:
@@ -199,7 +199,7 @@ namespace IQToolkit.Data.Expressions
                 switch (ex)
                 {
                     case VariableExpression _:
-                    case FunctionCallExpression _:
+                    case DbFunctionCallExpression _:
                     case ColumnExpression _:
                     case TableExpression _:
                     case JoinExpression _:
@@ -472,7 +472,7 @@ namespace IQToolkit.Data.Expressions
                 });
             }
 
-            protected virtual void WriteFunction(FunctionCallExpression function)
+            protected virtual void WriteFunction(DbFunctionCallExpression function)
             {
                 this.Write(function.Name);
                 if (function.Arguments.Count > 0)

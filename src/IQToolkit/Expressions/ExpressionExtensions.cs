@@ -277,12 +277,6 @@ namespace IQToolkit.Expressions
             }
         }
 
-        /// <summary>
-        /// Presents the expression in a pseudo syntax useful for debugging.
-        /// </summary>
-        public static string ToDebugText(this Expression expression) =>
-            ExpressionDebugFormatter.Singleton.Format(expression);
-
         public static Expression Equal(this Expression left, Expression right)
         {
             ConvertExpressions(ref left, ref right);

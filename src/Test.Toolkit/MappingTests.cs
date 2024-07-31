@@ -1,8 +1,8 @@
 namespace Test.Toolkit
 {
     using IQToolkit;
-    using IQToolkit.Data;
-    using IQToolkit.Data.Mapping;
+    using IQToolkit.Entities;
+    using IQToolkit.Entities.Mapping;
 
 
     [TestClass]

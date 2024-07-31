@@ -1,7 +1,7 @@
 ﻿using IQToolkit;
-using IQToolkit.Data;
-using IQToolkit.Data.Access;
-using IQToolkit.Data.Mapping;
+using IQToolkit.Access;
+using IQToolkit.Entities;
+using IQToolkit.Entities.Mapping;
 
 namespace Test.Access
 {

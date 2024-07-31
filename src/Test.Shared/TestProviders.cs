@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using IQToolkit.Data;
+using IQToolkit.Entities;
 
 namespace Test
 {

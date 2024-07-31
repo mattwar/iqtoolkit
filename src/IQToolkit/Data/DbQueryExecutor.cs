@@ -7,7 +7,8 @@ using System.IO;
 
 namespace IQToolkit.Data
 {
-    using Mapping;
+    using Entities;
+    using Entities.Mapping;
     using AnsiSql;
     using Utils;
      

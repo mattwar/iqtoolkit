@@ -7,6 +7,8 @@ using System.IO;
 
 namespace IQToolkit.Data
 {
+    using Entities;
+
     /// <summary>
     /// An <see cref="EntityProvider"/> using an <see cref="IDbConnection"/>.
     /// </summary>

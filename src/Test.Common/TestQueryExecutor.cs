@@ -5,9 +5,10 @@ using System.Data;
 using System.IO;
 
 using IQToolkit;
+using IQToolkit.AnsiSql;
 using IQToolkit.Data;
-using IQToolkit.Data.Mapping;
-using IQToolkit.Data.AnsiSql;
+using IQToolkit.Entities;
+using IQToolkit.Entities.Mapping;
 using IQToolkit.Utils;
 
 namespace Test

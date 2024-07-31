@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Data.Odbc;
 
-namespace IQToolkit.Data.Odbc
+namespace IQToolkit.Odbc
 {
-    using Factories;
+    using Entities;
+    using Entities.Factories;
 
     internal class OdbcProviderFactory : EntityProviderFactory
     {

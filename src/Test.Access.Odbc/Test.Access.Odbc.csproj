@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IQToolkit.Data.Odbc\IQToolkit.Data.Odbc.csproj" />
+    <ProjectReference Include="..\IQToolkit.Data.Odbc\IQToolkit.Odbc.csproj" />
     <ProjectReference Include="..\IQToolkit\IQToolkit.csproj" />
     <ProjectReference Include="..\Test.Common\Test.Common.csproj" />
   </ItemGroup>

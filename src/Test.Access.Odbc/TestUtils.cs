@@ -1,8 +1,8 @@
 ﻿using System.Data.Odbc;
-using IQToolkit.Data;
-using IQToolkit.Data.Access;
-using IQToolkit.Data.Mapping;
-using IQToolkit.Data.Odbc;
+using IQToolkit.Access;
+using IQToolkit.Entities;
+using IQToolkit.Entities.Mapping;
+using IQToolkit.Odbc;
 
 namespace Test.Access
 {

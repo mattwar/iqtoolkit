@@ -2,7 +2,7 @@
 using System.Data;
 using System.Data.OleDb;
 
-namespace IQToolkit.Data.OleDb
+namespace IQToolkit.OleDb
 {
     using AnsiSql;
 

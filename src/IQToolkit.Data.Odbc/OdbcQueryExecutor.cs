@@ -7,9 +7,11 @@ using System.Data.Common;
 using System.Data.Odbc;
 using System.IO;
 
-namespace IQToolkit.Data.Odbc
+namespace IQToolkit.Odbc
 {
     using AnsiSql;
+    using Data;
+    using Entities;
     using Utils;
 
     public class OdbcQueryExecutor : DbQueryExecutor

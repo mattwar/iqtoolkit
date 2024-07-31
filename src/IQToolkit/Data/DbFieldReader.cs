@@ -6,6 +6,7 @@ using System.Data;
 
 namespace IQToolkit.Data
 {
+    using Entities;
     using Utils;
 
     /// <summary>

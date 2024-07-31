@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using IQToolkit;
-using IQToolkit.Data;
+using IQToolkit.Entities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Reflection;
 

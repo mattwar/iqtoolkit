@@ -6,8 +6,10 @@ using System.Data;
 using System.Data.OleDb;
 using System.IO;
 
-namespace IQToolkit.Data.OleDb
+namespace IQToolkit.OleDb
 {
+    using Data;
+    using Entities;
     using Utils;
 
     public class OleDbQueryExecutor : DbQueryExecutor

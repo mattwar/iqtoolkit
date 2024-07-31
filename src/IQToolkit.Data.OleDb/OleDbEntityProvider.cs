@@ -5,8 +5,11 @@ using System;
 using System.Data.OleDb;
 using System.IO;
 
-namespace IQToolkit.Data.OleDb
+namespace IQToolkit.OleDb
 {
+    using Data;
+    using Entities;
+
     /// <summary>
     /// A base <see cref="DbEntityProvider"/> for OLEDB database providers
     /// </summary>

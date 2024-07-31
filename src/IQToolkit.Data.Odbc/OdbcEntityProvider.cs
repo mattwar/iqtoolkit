@@ -6,8 +6,11 @@ using System.Data;
 using System.Data.Odbc;
 using System.IO;
 
-namespace IQToolkit.Data.Odbc
+namespace IQToolkit.Odbc
 {
+    using Data;
+    using Entities;
+
     /// <summary>
     /// A base <see cref="DbEntityProvider"/> for OLEDB database providers
     /// </summary>

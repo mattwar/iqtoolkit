@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Text;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using IQToolkit.Data;
-using IQToolkit.Data.Mapping;
-using System.Linq;
+using IQToolkit.Entities;
+using IQToolkit.Entities.Mapping;
 using IQToolkit;
-using System.Collections;
 
 namespace Test
 {
+#if !SHAREDLIB  // so this library does not show up as a test library
     [TestClass]
+#endif
     public partial class NorthwindExecutionTests
     {
         private static object _dbLock = new object();

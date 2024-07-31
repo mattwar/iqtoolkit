@@ -8,9 +8,9 @@ using System.Linq;
 #nullable disable
 namespace Test
 {
-    using IQToolkit.Data;
-    using IQToolkit.Data.Mapping;
-    using IQToolkit.Data.Sessions;
+    using IQToolkit.Entities;
+    using IQToolkit.Entities.Mapping;
+    using IQToolkit.Entities.Sessions;
 
     public class Customer
     {

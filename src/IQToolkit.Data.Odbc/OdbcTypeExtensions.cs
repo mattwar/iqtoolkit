@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data.Odbc;
 
-namespace IQToolkit.Data.Odbc
+namespace IQToolkit.Odbc
 {
     using AnsiSql;
 

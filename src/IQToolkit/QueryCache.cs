@@ -6,7 +6,7 @@ using IQToolkit.Expressions;
 
 namespace IQToolkit
 {
-    using Data;
+    using Entities;
     using Utils;
 
     /// <summary>

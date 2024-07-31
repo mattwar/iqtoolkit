@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Data;
 using System.Data.Odbc;
-using IQToolkit.Data;
-using IQToolkit.Data.Access;
-using IQToolkit.Data.Odbc;
+using IQToolkit.Access;
+using IQToolkit.Entities;
+using IQToolkit.Odbc;
 
 
 namespace Test

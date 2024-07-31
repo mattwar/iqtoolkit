@@ -11,7 +11,7 @@ using System.Reflection;
 namespace IQToolkit.Entities
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using Utils;
 
     /// <summary>

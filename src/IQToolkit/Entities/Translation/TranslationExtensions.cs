@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using System.Collections;
     using System.Collections.Generic;
 

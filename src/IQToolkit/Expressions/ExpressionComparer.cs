@@ -22,6 +22,10 @@ namespace IQToolkit.Expressions
                 ?? ((a, b) => object.Equals(a, b));
         }
 
+        /// <summary>
+        /// Creates a new <see cref="ExpressionComparer"/> using the specified function
+        /// to compare values in <see cref="ConstantExpression"/> nodes.
+        /// </summary>
         public ExpressionComparer WithValueComparer(Func<object?, object?, bool>? fnCompare) =>
             Create(fnCompare);
 

@@ -13,7 +13,7 @@ using System.Text;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Attempts to rewrite cross-apply and outer-apply joins as inner and left-outer joins

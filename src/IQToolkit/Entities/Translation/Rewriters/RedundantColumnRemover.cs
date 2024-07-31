@@ -13,7 +13,7 @@ using System.Text;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Removes duplicate column declarations that refer to the same underlying column

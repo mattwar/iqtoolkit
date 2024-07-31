@@ -8,7 +8,7 @@ using System.Reflection;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using Mapping;
 
     /// <summary>

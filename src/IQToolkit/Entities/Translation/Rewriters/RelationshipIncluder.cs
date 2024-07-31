@@ -9,7 +9,7 @@ using System.Reflection;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Adds relationship to query results depending on policy

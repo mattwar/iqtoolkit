@@ -8,7 +8,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using Translation;
 
     public class EntityPolicyRewritter : QueryPolicyRewriter

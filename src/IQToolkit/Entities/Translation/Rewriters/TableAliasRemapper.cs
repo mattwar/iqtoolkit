@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Rewrite all references to one or more table aliases to a new single alias

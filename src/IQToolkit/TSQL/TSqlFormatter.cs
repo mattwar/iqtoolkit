@@ -10,7 +10,7 @@ namespace IQToolkit.TSql
 {
     using Entities;
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Microsoft Transact SQL (TSQL) <see cref="QueryFormatter"/>

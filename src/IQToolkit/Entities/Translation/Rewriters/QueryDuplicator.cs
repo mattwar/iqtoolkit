@@ -12,7 +12,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Deep clone's the expression, creating new parameter and table aliases when they are declared.

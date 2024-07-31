@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Isolates cross joins from other types of joins by pushing down into nested subqueries.

@@ -12,7 +12,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Rewrites comparisions of entities into comparisons of the primary key values.

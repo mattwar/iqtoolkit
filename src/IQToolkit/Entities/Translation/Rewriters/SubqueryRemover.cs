@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Removes specific nested select expressions by replacing them with their from clause.

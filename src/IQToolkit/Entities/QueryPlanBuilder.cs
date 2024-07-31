@@ -12,7 +12,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Entities
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using Mapping;
     using Translation;
     using Utils;

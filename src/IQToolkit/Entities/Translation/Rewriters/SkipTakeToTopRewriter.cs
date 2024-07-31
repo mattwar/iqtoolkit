@@ -9,7 +9,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Rewrites queries with skip and take to use nested queries with inverted ordering technique

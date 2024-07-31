@@ -8,7 +8,7 @@ namespace IQToolkit.Access
 {
     using Entities;
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using IQToolkit.Entities.Translation;
     using Utils;
 

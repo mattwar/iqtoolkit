@@ -131,7 +131,7 @@ csx
 AppPackages/
 
 # Others
-sql/
+# sql/
 *.Cache
 ClientBin/
 [Ss]tyle[Cc]op.*
@@ -153,7 +153,7 @@ UpgradeLog*.XML
 UpgradeLog*.htm
 
 # SQL Server files
-App_Data/*.mdf
+# App_Data/*.mdf
 App_Data/*.ldf
 
 

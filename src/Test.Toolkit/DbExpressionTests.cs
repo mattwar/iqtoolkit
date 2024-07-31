@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using IQToolkit;
 using IQToolkit.Expressions;
-using IQToolkit.SqlExpressions;
+using IQToolkit.Expressions.Sql;
 
 namespace Test.Toolkit
 {

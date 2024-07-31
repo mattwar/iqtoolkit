@@ -12,7 +12,7 @@ using IQToolkit.Expressions;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
 
     /// <summary>
     /// Rewrites skip expressions into uses of TSQL row_number function

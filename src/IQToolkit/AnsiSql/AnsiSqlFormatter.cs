@@ -12,7 +12,7 @@ namespace IQToolkit.AnsiSql
 {
     using Entities;
     using Expressions;
-    using SqlExpressions;
+    using Expressions.Sql;
     using Utils;
 
     /// <summary>

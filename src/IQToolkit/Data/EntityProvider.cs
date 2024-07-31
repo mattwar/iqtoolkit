@@ -11,7 +11,6 @@ using IQToolkit.Expressions;
 
 namespace IQToolkit.Data
 {
-    using Expressions;
     using Execution;
     using Factories;
     using Mapping;
@@ -29,9 +28,9 @@ namespace IQToolkit.Data
         public QueryLanguage Language { get; }
 
         /// <summary>
-        /// The <see cref="QueryMapping"/> used by the provider.
+        /// The <see cref="EntityMapping"/> used by the provider.
         /// </summary>
-        public QueryMapping Mapping { get; }
+        public EntityMapping Mapping { get; }
 
         /// <summary>
         /// The <see cref="QueryPolicy"/> used by the provider.
@@ -58,13 +57,13 @@ namespace IQToolkit.Data
         public EntityProvider(
             QueryExecutor executor,
             QueryLanguage? language,
-            QueryMapping? mapping,
+            EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log = null,
             QueryCache? cache = null)
         {
             this.Language = language ?? AnsiSql.AnsiSqlLanguage.Singleton;
-            this.Mapping = mapping ?? new AttributeMapping();
+            this.Mapping = mapping ?? new AttributeEntityMapping();
             this.Policy = policy ?? QueryPolicy.Default;
             this.Executor = executor;
             this.Log = log;
@@ -114,13 +113,13 @@ namespace IQToolkit.Data
         /// <summary>
         /// Creates a new <see cref="EntityProvider"/> with the <see cref="Mapping"/> property assigned.
         /// </summary>
-        public EntityProvider WithMapping(QueryMapping mapping) =>
+        public EntityProvider WithMapping(EntityMapping mapping) =>
             With(mapping: mapping);
 
-        IEntityProvider IEntityProvider.WithMapping(QueryMapping mapping) =>
+        IEntityProvider IEntityProvider.WithMapping(EntityMapping mapping) =>
             this.WithMapping(mapping);
 
-        QueryMapping IEntityProvider.Mapping => this.Mapping;
+        EntityMapping IEntityProvider.Mapping => this.Mapping;
 
         /// <summary>
         /// Creates a new <see cref="EntityProvider"/> with the <see cref="Policy"/> property assigned.
@@ -148,7 +147,7 @@ namespace IQToolkit.Data
         protected virtual EntityProvider Construct(
             QueryExecutor executor,
             QueryLanguage language,
-            QueryMapping? mapping,
+            EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache)
@@ -158,7 +157,7 @@ namespace IQToolkit.Data
 
         protected virtual EntityProvider With(
             QueryLanguage? language = null,
-            QueryMapping? mapping = null,
+            EntityMapping? mapping = null,
             QueryPolicy? policy = null,
             QueryExecutor? executor = null,
             Optional<TextWriter?> log = default,
@@ -300,11 +299,11 @@ namespace IQToolkit.Data
             if (this.Mapping is ICreateMappingRewriter cmt)
                 return cmt.CreateMappingTranslator(translator);
 
-            if (this.Mapping is AdvancedMapping advMapping)
+            if (this.Mapping is AdvancedEntityMapping advMapping)
             {
                 return new AdvancedMappingRewriter(advMapping, translator);
             }
-            else if (this.Mapping is BasicMapping basicMapping)
+            else if (this.Mapping is BasicEntityMapping basicMapping)
             {
                 return new BasicMappingRewriter(basicMapping, translator);
             }

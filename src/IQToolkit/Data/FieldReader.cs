@@ -12,7 +12,7 @@ namespace IQToolkit.Data
     using Utils;
 
     /// <summary>
-    /// An abstraction for reading field value.
+    /// An abstraction for reading field values from a result row.
     /// </summary>
     public abstract class FieldReader
     {
@@ -842,5 +842,3 @@ namespace IQToolkit.Data
         }
     }
 }
-
-

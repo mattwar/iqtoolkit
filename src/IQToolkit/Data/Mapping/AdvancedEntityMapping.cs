@@ -10,11 +10,11 @@ namespace IQToolkit.Data.Mapping
     using Utils;
 
     /// <summary>
-    /// A <see cref="QueryMapping"/> that allows 
+    /// A <see cref="EntityMapping"/> that allows 
     /// 1) mapping a single entity onto rows in multiple tables,
     /// 2) mapping a single table (or set of tables) into multiple entities (nested).
     /// </summary>
-    public abstract class AdvancedMapping : BasicMapping
+    public abstract class AdvancedEntityMapping : BasicEntityMapping
     {
         /// <summary>
         /// True if the member references a nested entity.
@@ -82,7 +82,7 @@ namespace IQToolkit.Data.Mapping
         /// </summary>
         public abstract IReadOnlyList<MemberInfo> GetExtensionRelatedMembers(MappingTable table);
 
-        protected AdvancedMapping()
+        protected AdvancedEntityMapping()
         {
         }
 

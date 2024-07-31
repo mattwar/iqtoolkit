@@ -17,9 +17,9 @@ namespace Test.Access
         {
             var connectionString = AccessConnection.GetOdbcConnectionString("Northwind.mdb");
             var connection = new OdbcConnection(connectionString);
-            return new OdbcQueryProvider(connection)
+            return new OdbcEntityProvider(connection)
                 .WithLanguage(AccessLanguage.Singleton)
-                .WithMapping(new AttributeMapping(typeof(NorthwindWithAttributes)));
+                .WithMapping(new AttributeEntityMapping(typeof(NorthwindWithAttributes)));
         }
     }
 }

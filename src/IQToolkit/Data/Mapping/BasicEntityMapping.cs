@@ -14,11 +14,11 @@ namespace IQToolkit.Data.Mapping
     using Utils;
 
     /// <summary>
-    /// A base class for <see cref="QueryMapping"/> that support basic table, column and association mappings.
+    /// A base class for <see cref="EntityMapping"/> that support basic table, column and association mappings.
     /// </summary>
-    public abstract class BasicMapping : QueryMapping
+    public abstract class BasicEntityMapping : EntityMapping
     {
-        protected BasicMapping()
+        protected BasicEntityMapping()
         {
         }
 

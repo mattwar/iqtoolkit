@@ -195,21 +195,21 @@ namespace IQToolkit.Data.Mapping
     }
 
     /// <summary>
-    /// An <see cref="AdvancedMapping"/> that is defined by <see cref="MappingAttribute"/>'s
+    /// An <see cref="AdvancedEntityMapping"/> that is defined by <see cref="MappingAttribute"/>'s
     /// on either the entity types or on the query/table properties of a context class.
     /// </summary>
-    public class AttributeMapping : AdvancedMapping
+    public class AttributeEntityMapping : AdvancedEntityMapping
     {
         private readonly Type? _contextType;
         private ImmutableDictionary<string, MappingEntity> _nameToEntityMap;
 
         /// <summary>
-        /// Constructs a new instance of a <see cref="AttributeMapping"/> where mapping attributes are
+        /// Constructs a new instance of a <see cref="AttributeEntityMapping"/> where mapping attributes are
         /// discovered on a context class (instead of from the entity types).
         /// </summary>
         /// <param name="contextType">The type of the context class that encodes the mapping attributes.
         /// If not spefied, the mapping attributes are assumed to be defined on the individual entity types.</param>
-        public AttributeMapping(Type? contextType = null)
+        public AttributeEntityMapping(Type? contextType = null)
         {
             _contextType = contextType;
             _nameToEntityMap = ImmutableDictionary<string, MappingEntity>.Empty;

@@ -20,7 +20,7 @@ namespace Test
 
         protected void TestProvider(
             Action<EntityProvider> fnTest,
-            QueryMapping mapping)
+            EntityMapping mapping)
         {
             // force serialization of integration tests
             lock (_dbLock)
@@ -37,12 +37,12 @@ namespace Test
             }
         }
 
-        private static readonly QueryMapping _defaultNorthwindMapping =
-            new AttributeMapping(typeof(NorthwindWithAttributes));
+        private static readonly EntityMapping _defaultNorthwindMapping =
+            new AttributeEntityMapping(typeof(NorthwindWithAttributes));
 
         protected void TestNorthwind(
             Action<Northwind> fnTest,
-            QueryMapping? mapping = null)
+            EntityMapping? mapping = null)
         {
             TestProvider(
                 provider => fnTest(new Northwind(provider)),
@@ -3615,7 +3615,7 @@ namespace Test
             // entity created via constructor
             TestNorthwind(db =>
             {
-                var mapping = new AttributeMapping(typeof(NorthwindX));
+                var mapping = new AttributeEntityMapping(typeof(NorthwindX));
                 var policy = EntityPolicy.Default
                     .IncludeWith<CustomerX>(c => c.Orders);
 

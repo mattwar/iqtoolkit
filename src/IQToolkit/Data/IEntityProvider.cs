@@ -32,7 +32,7 @@ namespace IQToolkit.Data
         /// <summary>
         /// The current mapping used by the provider.
         /// </summary>
-        public QueryMapping Mapping { get; }
+        public EntityMapping Mapping { get; }
 
         /// <summary>
         /// The current policy used by the provider.
@@ -47,10 +47,7 @@ namespace IQToolkit.Data
         /// <summary>
         /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Mapping"/> property assigned.
         /// </summary>
-        public IEntityProvider WithMapping(QueryMapping mapping);
-
-
-
+        public IEntityProvider WithMapping(EntityMapping mapping);
 
         /// <summary>
         /// True if the expression can be evaluated locally (client-side)

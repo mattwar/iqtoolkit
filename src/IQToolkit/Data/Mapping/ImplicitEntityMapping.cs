@@ -15,9 +15,9 @@ namespace IQToolkit.Data.Mapping
     /// <summary>
     /// A simple query mapping that attempts to infer mapping from naming conventions
     /// </summary>
-    public class ImplicitMapping : BasicMapping
+    public class ImplicitEntityMapping : BasicEntityMapping
     {
-        public ImplicitMapping()
+        public ImplicitEntityMapping()
         {
         }
 

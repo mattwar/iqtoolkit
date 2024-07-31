@@ -16,9 +16,9 @@ namespace Test
             return new OdbcConnection(connectionString);
         }
 
-        public static EntityProvider CreateProvider(IDbConnection connection, QueryMapping mapping)
+        public static EntityProvider CreateProvider(IDbConnection connection, EntityMapping mapping)
         {
-            return new OdbcQueryProvider((OdbcConnection)connection)
+            return new OdbcEntityProvider((OdbcConnection)connection)
                 .WithLanguage(AccessLanguage.Singleton)
                 .WithMapping(mapping);
         }

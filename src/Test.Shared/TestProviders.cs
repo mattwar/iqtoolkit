@@ -11,7 +11,7 @@ namespace Test
             throw new NotImplementedException();
         }
 
-        public static EntityProvider CreateProvider(IDbConnection connection, QueryMapping mapping)
+        public static EntityProvider CreateProvider(IDbConnection connection, EntityMapping mapping)
         {
             throw new NotImplementedException();
         }

@@ -12,9 +12,9 @@ namespace IQToolkit.Data.Mapping
     using Utils;
 
     /// <summary>
-    /// A <see cref="QueryMapping"/> stored in XML elements.
+    /// A <see cref="EntityMapping"/> stored in XML elements.
     /// </summary>
-    public class XmlMapping : AttributeMapping
+    public class XmlEntityMapping : AttributeEntityMapping
     {
         private readonly IReadOnlyList<Assembly> _assemblies;
         private readonly Dictionary<string, XElement> _entities;
@@ -25,11 +25,11 @@ namespace IQToolkit.Data.Mapping
         private static readonly XName NestedEntityMemberName = XName.Get(nameof(MemberAttribute.Member));
 
         /// <summary>
-        /// Constructs a new instance of <see cref="XmlMapping"/>
+        /// Constructs a new instance of <see cref="XmlEntityMapping"/>
         /// </summary>
         /// <param name="root">The root node of the xml mapping tree that contains the entity elements.</param>
         /// <param name="assemblies">A list of zero or more assemblies that will be used to find types mentioned in the mapping.</param>
-        public XmlMapping(XElement root, IEnumerable<Assembly> assemblies)
+        public XmlEntityMapping(XElement root, IEnumerable<Assembly> assemblies)
             : base(contextType: null)
         {
             _assemblies = assemblies.ToReadOnly();
@@ -63,21 +63,21 @@ namespace IQToolkit.Data.Mapping
         }
 
         /// <summary>
-        /// Creates a <see cref="XmlMapping"/> from xml text.
+        /// Creates a <see cref="XmlEntityMapping"/> from xml text.
         /// </summary>
         /// <param name="xml">The text of the xml mapping.</param>
         /// <param name="assemblies">A list of zero or more assemblies that will be used to find types mentioned in the mapping.</param>
-        public static XmlMapping FromXml(string xml, IEnumerable<Assembly> assemblies)
+        public static XmlEntityMapping FromXml(string xml, IEnumerable<Assembly> assemblies)
         {
-            return new XmlMapping(XElement.Parse(xml), assemblies.ToReadOnly());
+            return new XmlEntityMapping(XElement.Parse(xml), assemblies.ToReadOnly());
         }
 
         /// <summary>
-        /// Creates a <see cref="XmlMapping"/> from xml text.
+        /// Creates a <see cref="XmlEntityMapping"/> from xml text.
         /// </summary>
         /// <param name="xml">The text of the xml mapping.</param>
         /// <param name="assemblies">A list of zero or more assemblies that will be used to find types mentioned in the mapping.</param>
-        public static XmlMapping FromXml(string xml, params Assembly[] assemblies)
+        public static XmlEntityMapping FromXml(string xml, params Assembly[] assemblies)
         {
             return FromXml(xml, (IEnumerable<Assembly>)assemblies);
         }

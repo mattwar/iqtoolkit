@@ -12,7 +12,7 @@ namespace IQToolkit.Data
     using Utils;
      
     /// <summary>
-    /// A <see cref="QueryExecutor"/> that executes commands with a <see cref="DbConnection"/>
+    /// A <see cref="QueryExecutor"/> that executes commands using a <see cref="IDbConnection"/>
     /// </summary>
     public class DbQueryExecutor : QueryExecutor
     {

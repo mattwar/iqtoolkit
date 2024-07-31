@@ -17,7 +17,7 @@ namespace IQToolkit.Data.Translation
     public class RelationshipBinder : DbExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
-        private readonly QueryMapping _mapping;
+        private readonly EntityMapping _mapping;
         private readonly QueryLanguage _language;
         private Expression? _currentFrom;
 

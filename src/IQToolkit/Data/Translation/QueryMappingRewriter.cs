@@ -23,7 +23,7 @@ namespace IQToolkit.Data.Translation
         /// <summary>
         /// The mapping to apply.
         /// </summary>
-        public abstract QueryMapping Mapping { get; }
+        public abstract EntityMapping Mapping { get; }
 
         /// <summary>
         /// Get a query expression that selects all entities from a table

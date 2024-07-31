@@ -25,7 +25,7 @@ namespace IQToolkit.Data.Translation
         /// <summary>
         /// Converts comparisions of entities into comparisons of the primary key values.
         /// </summary>
-        public static Expression ConvertEntityComparisons(this Expression expression, QueryMapping mapping)
+        public static Expression ConvertEntityComparisons(this Expression expression, EntityMapping mapping)
         {
             var rewritten = new EntityComparisonRewriter(mapping).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
@@ -101,7 +101,7 @@ namespace IQToolkit.Data.Translation
         /// Converts nested singleton projection into server-side joins
         /// </summary>
         public static Expression ConvertSingletonProjections(
-            this Expression expression, QueryLanguage language, QueryMapping mapping)
+            this Expression expression, QueryLanguage language, EntityMapping mapping)
         {
             var rewritten = new SingletonProjectionRewriter(language).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");

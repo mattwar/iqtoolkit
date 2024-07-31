@@ -15,13 +15,13 @@ namespace IQToolkit.Data.Translation
     using Utils;
 
     /// <summary>
-    /// A <see cref="QueryMappingRewriter"/> that can apply an <see cref="AdvancedMapping"/> to a query.
+    /// A <see cref="QueryMappingRewriter"/> that can apply an <see cref="AdvancedEntityMapping"/> to a query.
     /// </summary>
     public class AdvancedMappingRewriter : BasicMappingRewriter
     {
-        private readonly AdvancedMapping _mapping;
+        private readonly AdvancedEntityMapping _mapping;
 
-        public AdvancedMappingRewriter(AdvancedMapping mapping, QueryTranslator translator)
+        public AdvancedMappingRewriter(AdvancedEntityMapping mapping, QueryTranslator translator)
             : base(mapping, translator)
         {
             _mapping = mapping;

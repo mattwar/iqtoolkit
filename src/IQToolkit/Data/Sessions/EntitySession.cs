@@ -164,13 +164,13 @@ namespace IQToolkit.Data.Sessions
             public EntityProvider Provider => _provider;
             public QueryExecutor Executor => _provider.Executor;
 
-            QueryMapping IEntityProvider.Mapping =>
+            EntityMapping IEntityProvider.Mapping =>
                 _provider.Mapping;
 
             QueryPolicy IEntityProvider.Policy =>
                 _provider.Policy;
 
-            IEntityProvider IEntityProvider.WithMapping(QueryMapping mapping) =>
+            IEntityProvider IEntityProvider.WithMapping(EntityMapping mapping) =>
                 new SessionProvider(_session, _provider.WithMapping(mapping));
 
             IEntityProvider IEntityProvider.WithPolicy(QueryPolicy policy) =>
@@ -545,7 +545,7 @@ namespace IQToolkit.Data.Sessions
                 this.AssignAction(instance, action);
             }
 
-            private QueryMapping Mapping
+            private EntityMapping Mapping
             {
                 get { return ((EntitySession)this.Session)._provider.Mapping; }
             }

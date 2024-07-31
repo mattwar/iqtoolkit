@@ -11,20 +11,20 @@ namespace Test.Toolkit
         [TestMethod]
         public void TestAttributesOnEntity()
         {
-            var mapping = new AttributeMapping(typeof(AttributeContextTypes.AttributesOnEntity));
+            var mapping = new AttributeEntityMapping(typeof(AttributeContextTypes.AttributesOnEntity));
             var entityMapping = mapping.GetEntity(typeof(AttributeContextTypes.AttributesOnEntity.Entity));
         }
 
         [TestMethod]
         public void TestAttributesOnContext()
         {
-            var mapping = new AttributeMapping(typeof(AttributeContextTypes.AttributesOnContext));
+            var mapping = new AttributeEntityMapping(typeof(AttributeContextTypes.AttributesOnContext));
             var entityMapping = mapping.GetEntity(typeof(AttributeContextTypes.AttributesOnContext.Entity));
         }
 
-        private void TestAttributeMapping(Type contextType, Action<AttributeMapping> fnCheck)
+        private void TestAttributeMapping(Type contextType, Action<AttributeEntityMapping> fnCheck)
         {
-            var mapping = new AttributeMapping(contextType);
+            var mapping = new AttributeEntityMapping(contextType);
             fnCheck(mapping);
         }
 

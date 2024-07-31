@@ -18,9 +18,9 @@ namespace IQToolkit.Data.Translation
     /// </summary>
     public class EntityComparisonRewriter : DbExpressionVisitor
     {
-        private readonly QueryMapping _mapping;
+        private readonly EntityMapping _mapping;
 
-        public EntityComparisonRewriter(QueryMapping mapping)
+        public EntityComparisonRewriter(EntityMapping mapping)
         {
             _mapping = mapping;
         }

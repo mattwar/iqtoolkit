@@ -13,9 +13,9 @@ namespace IQToolkit.Data
     using Utils;
 
     /// <summary>
-    /// Defines mapping information and rules for the query provider.
+    /// Defines mapping information and rules for the entity provider.
     /// </summary>
-    public abstract class QueryMapping
+    public abstract class EntityMapping
     {
         /// <summary>
         /// Determines the entity Id based on the type of the entity alone.

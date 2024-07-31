@@ -18,7 +18,7 @@ namespace IQToolkit.Data.Translation
         public QueryPolicyRewriter PolicyRewriter { get; }
 
         public QueryLanguage Language => this.LanguageRewriter.Language;
-        public QueryMapping Mapping => this.MappingRewriter.Mapping;
+        public EntityMapping Mapping => this.MappingRewriter.Mapping;
         public QueryPolicy Policy => this.PolicyRewriter.Policy;
 
         /// <summary>

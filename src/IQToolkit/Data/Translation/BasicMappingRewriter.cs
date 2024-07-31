@@ -15,16 +15,16 @@ namespace IQToolkit.Data.Translation
     using Utils;
 
     /// <summary>
-    /// A <see cref="QueryMappingRewriter"/> that can apply a <see cref="BasicMapping"/> to a query expression.
+    /// A <see cref="QueryMappingRewriter"/> that can apply a <see cref="BasicEntityMapping"/> to a query expression.
     /// </summary>
     public class BasicMappingRewriter : QueryMappingRewriter
     {
-        private readonly BasicMapping _mapping;
-        public override QueryMapping Mapping => _mapping;
+        private readonly BasicEntityMapping _mapping;
+        public override EntityMapping Mapping => _mapping;
 
         public override QueryTranslator Translator { get; }
 
-        public BasicMappingRewriter(BasicMapping mapping, QueryTranslator translator)
+        public BasicMappingRewriter(BasicEntityMapping mapping, QueryTranslator translator)
         {
             _mapping = mapping;
             this.Translator = translator;

@@ -22,7 +22,7 @@ namespace IQToolkit.Data.Odbc
             if (connectionString.Contains("Driver=", StringComparison.OrdinalIgnoreCase))
             {
                 var connection = new OdbcConnection(connectionString);
-                provider = new OdbcQueryProvider(connection);
+                provider = new OdbcEntityProvider(connection);
                 return true;
             }
 

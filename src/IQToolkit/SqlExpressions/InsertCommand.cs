@@ -30,9 +30,6 @@ namespace IQToolkit.SqlExpressions
             this.Assignments = assignments.ToReadOnly();
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.InsertCommand;
-
         public InsertCommand Update(TableExpression table, IEnumerable<ColumnAssignment> assignments)
         {
             if (table != this.Table 
@@ -48,7 +45,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitInsertCommand(this);
             return base.Accept(visitor);
         }

@@ -13,7 +13,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Determines if a <see cref="SelectExpression"/> contains any <see cref="AggregateExpression"/>.
     /// </summary>
-    class AggregateChecker : DbExpressionVisitor
+    class AggregateChecker : SqlExpressionVisitor
     {
         private bool _hasAggregate = false;
 

@@ -30,9 +30,6 @@ namespace IQToolkit.SqlExpressions
             this.Source = source;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Declaration;
-
         public DeclarationCommand Update(
             IEnumerable<VariableDeclaration> variables, 
             SelectExpression? source)
@@ -50,7 +47,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitDeclarationCommand(this);
             return base.Accept(visitor);
         }

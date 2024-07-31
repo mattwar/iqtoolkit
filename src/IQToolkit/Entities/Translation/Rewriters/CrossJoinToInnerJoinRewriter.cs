@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Attempt to rewrite cross joins as inner joins
     /// </summary>
-    public class CrossJoinToInnerJoinRewriter : DbExpressionVisitor
+    public class CrossJoinToInnerJoinRewriter : SqlExpressionVisitor
     {
         public CrossJoinToInnerJoinRewriter()
         {

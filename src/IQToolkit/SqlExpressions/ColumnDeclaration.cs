@@ -52,7 +52,7 @@ namespace IQToolkit.SqlExpressions
 
         internal ColumnDeclaration Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitColumnDeclaration(this);
             return this.VisitChildren(visitor);
         }

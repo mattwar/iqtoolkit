@@ -18,7 +18,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Removes duplicate column declarations that refer to the same underlying column
     /// </summary>
-    public class RedundantColumnRemover : DbExpressionVisitor
+    public class RedundantColumnRemover : SqlExpressionVisitor
     {
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
 

@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Translates accesses to relationship members into projections or joins
     /// </summary>
-    public class RelationshipBinder : DbExpressionVisitor
+    public class RelationshipBinder : SqlExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
         private readonly EntityMapping _mapping;

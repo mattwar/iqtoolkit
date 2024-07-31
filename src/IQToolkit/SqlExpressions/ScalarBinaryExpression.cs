@@ -9,7 +9,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A database query language binary operator expression.
     /// </summary>
-    public sealed class DbBinaryExpression : DbOperation
+    public sealed class ScalarBinaryExpression : ScalarOperation
     {
         /// <summary>
         /// The left operand.
@@ -26,7 +26,7 @@ namespace IQToolkit.SqlExpressions
         /// </summary>
         public Expression Right { get; }
 
-        public DbBinaryExpression(
+        public ScalarBinaryExpression(
             Type type, 
             bool isPredicate,
             Expression left, 
@@ -39,10 +39,7 @@ namespace IQToolkit.SqlExpressions
             this.Right = right;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.DbBinary;
-
-        public DbBinaryExpression Update(
+        public ScalarBinaryExpression Update(
             Type type, 
             bool isPredicate,
             Expression left, 
@@ -55,7 +52,7 @@ namespace IQToolkit.SqlExpressions
                 || @operator != this.Operator
                 || right != this.Right)
             {
-                return new DbBinaryExpression(type, isPredicate, left, @operator, right);
+                return new ScalarBinaryExpression(type, isPredicate, left, @operator, right);
             }
             else
             {
@@ -65,8 +62,8 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
-                return dbVisitor.VisitDbBinary(this);
+            if (visitor is SqlExpressionVisitor dbVisitor)
+                return dbVisitor.VisitScalarBinary(this);
             return base.Accept(visitor);
         }
 

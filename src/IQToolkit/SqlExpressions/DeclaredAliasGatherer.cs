@@ -12,7 +12,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     ///  returns the set of all aliases produced by a query source
     /// </summary>
-    public class DeclaredAliasGatherer : DbExpressionVisitor
+    public class DeclaredAliasGatherer : SqlExpressionVisitor
     {
         private readonly HashSet<TableAlias> _aliases;
 

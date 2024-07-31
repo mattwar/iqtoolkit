@@ -10,7 +10,7 @@ namespace IQToolkit.SqlExpressions
     /// Includes both the normal projected expression and a test to determine 
     /// if the outer join value exists (typically a test for null on a non-nullable column).
     /// </summary>
-    public sealed class OuterJoinedExpression : DbExpression
+    public sealed class OuterJoinedExpression : SqlExpression
     {
         /// <summary>
         /// The test expression that determines if the outer joined part exists.
@@ -29,9 +29,6 @@ namespace IQToolkit.SqlExpressions
             this.Expression = expression;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.OuterJoined;
-
         public OuterJoinedExpression Update(
             Expression test, Expression expression)
         {
@@ -48,7 +45,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitOuterJoined(this);
             return base.Accept(visitor);
         }

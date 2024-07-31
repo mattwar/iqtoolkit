@@ -9,7 +9,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Returns the set of all columns referenced by the given expression
     /// </summary>
-    public class ReferencedColumnGatherer : DbExpressionVisitor
+    public class ReferencedColumnGatherer : SqlExpressionVisitor
     {
         private readonly HashSet<ColumnExpression> _columns = new HashSet<ColumnExpression>();
         private bool _first = true;

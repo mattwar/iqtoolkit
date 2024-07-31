@@ -72,7 +72,7 @@ namespace IQToolkit.Entities
         /// </summary>
         public virtual Expression GetRowsAffectedExpression(Expression command)
         {
-            return new DbFunctionCallExpression(typeof(int), "@@ROWCOUNT", null);
+            return new ScalarFunctionCallExpression(typeof(int), "@@ROWCOUNT", null);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace IQToolkit.Entities
         /// </summary>
         public virtual bool IsRowsAffectedExpressions(Expression expression)
         {
-            return expression is DbFunctionCallExpression fex && fex.Name == "@@ROWCOUNT";
+            return expression is ScalarFunctionCallExpression fex && fex.Name == "@@ROWCOUNT";
         }
 
         /// <summary>

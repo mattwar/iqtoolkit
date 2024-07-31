@@ -9,7 +9,7 @@ namespace IQToolkit.SqlExpressions
     /// A SQL IS NULL operator.
     /// Allows tests against value types like int and float.
     /// </summary>
-    public sealed class IsNullExpression : DbExpression
+    public sealed class IsNullExpression : SqlExpression
     {
         public Expression Expression { get; }
 
@@ -18,9 +18,6 @@ namespace IQToolkit.SqlExpressions
         {
             this.Expression = expression;
         }
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.IsNull;
 
         public override bool IsPredicate => base.IsPredicate;
 
@@ -38,7 +35,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitIsNull(this);
             return base.Accept(visitor);
         }

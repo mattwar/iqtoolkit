@@ -8,7 +8,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A SQL JOIN operation.
     /// </summary>
-    public sealed class JoinExpression : DbExpression
+    public sealed class JoinExpression : SqlExpression
     {
         /// <summary>
         /// The type of the join.
@@ -39,9 +39,6 @@ namespace IQToolkit.SqlExpressions
             this.Condition = condition;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Join;
-
         public JoinExpression Update(
             JoinType joinType,
             Expression left,
@@ -63,7 +60,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitJoin(this);
             return base.Accept(visitor);
         }

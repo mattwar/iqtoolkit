@@ -13,12 +13,12 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A call to a database query language function.
     /// </summary>
-    public sealed class DbFunctionCallExpression : DbOperation
+    public sealed class ScalarFunctionCallExpression : ScalarOperation
     {
         public string Name { get; }
         public IReadOnlyList<Expression> Arguments { get; }
 
-        public DbFunctionCallExpression(
+        public ScalarFunctionCallExpression(
             Type type, 
             bool isPredicate,
             string name, 
@@ -29,7 +29,7 @@ namespace IQToolkit.SqlExpressions
             this.Arguments = arguments.ToReadOnly();
         }
 
-        public DbFunctionCallExpression(
+        public ScalarFunctionCallExpression(
             Type type,
             string name,
             IEnumerable<Expression>? arguments = null)
@@ -37,11 +37,7 @@ namespace IQToolkit.SqlExpressions
         {
         }
 
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Function;
-
-        public DbFunctionCallExpression Update(
+        public ScalarFunctionCallExpression Update(
             Type type, 
             bool isPredicate,
             string name, 
@@ -52,7 +48,7 @@ namespace IQToolkit.SqlExpressions
                 || name != this.Name 
                 || arguments != this.Arguments)
             {
-                return new DbFunctionCallExpression(type, isPredicate, name, arguments);
+                return new ScalarFunctionCallExpression(type, isPredicate, name, arguments);
             }
             else
             {
@@ -62,8 +58,8 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
-                return dbVisitor.VisitDbFunctionCall(this);
+            if (visitor is SqlExpressionVisitor dbVisitor)
+                return dbVisitor.VisitScalarFunctionCall(this);
             return base.Accept(visitor);
         }
 

@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// rewrites nested client projections into client-side joins
     /// </summary>
-    public class ClientProjectionToClientJoinRewriter : DbExpressionVisitor
+    public class ClientProjectionToClientJoinRewriter : SqlExpressionVisitor
     {
         private readonly QueryPolicy _policy;
         private readonly QueryLanguage _language;

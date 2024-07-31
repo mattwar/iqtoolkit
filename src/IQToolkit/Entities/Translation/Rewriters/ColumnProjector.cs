@@ -63,7 +63,7 @@ namespace IQToolkit.Entities.Translation
     ///   1) a list of column declarations for sub-expressions that must be evaluated on the server
     ///   2) a expression that describes how to combine/project the columns back together into the correct result
     /// </summary>
-    public class ColumnProjector : DbExpressionVisitor
+    public class ColumnProjector : SqlExpressionVisitor
     {
         private readonly QueryLanguage _language;
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
@@ -225,7 +225,7 @@ namespace IQToolkit.Entities.Translation
         /// Nominator is a class that determining the set of 
         /// candidate expressions that are possible columns of a select expression
         /// </summary>
-        private class Nominator : DbExpressionVisitor
+        private class Nominator : SqlExpressionVisitor
         {
             private readonly QueryLanguage _language;
             private readonly HashSet<Expression> _candidates;

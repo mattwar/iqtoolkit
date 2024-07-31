@@ -1,32 +1,26 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using IQToolkit.Expressions;
 using System;
 using System.Linq.Expressions;
 
 namespace IQToolkit.SqlExpressions
 {
     /// <summary>
-    /// The base type of all database query expression nodes.
+    /// The base type of all SQL expression nodes.
     /// </summary>
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name}: {this.DbNodeType}")]
-    public abstract class DbExpression : Expression 
+    public abstract class SqlExpression : Expression 
     {
         protected string DebugText =>
-            $"{DbExpressionDebugFormatter.Singleton.Format(this)}";
+            $"{SqlExpressionDebugFormatter.Singleton.Format(this)}";
 
         public override Type Type { get; }
 
-        protected DbExpression(Type type)
+        protected SqlExpression(Type type)
         {
             this.Type = type;
         }
-
-        public abstract DbExpressionType DbNodeType { get; }
-
-        public override ExpressionType NodeType =>
-            (ExpressionType)(int)this.DbNodeType;
 
         public virtual bool IsPredicate => false;
 
@@ -34,5 +28,8 @@ namespace IQToolkit.SqlExpressions
         {
             return this.VisitChildren(visitor);
         }
+
+        public static ExpressionType SqlNodeType = ((ExpressionType)1000);
+        public override ExpressionType NodeType => SqlNodeType;
     }
 }

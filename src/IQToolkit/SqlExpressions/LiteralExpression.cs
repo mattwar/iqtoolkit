@@ -9,25 +9,22 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Represents the raw text of a literal in the syntax of the database language.
     /// </summary>
-    public sealed class DbLiteralExpression : DbExpression
+    public sealed class LiteralExpression : SqlExpression
     {
         public string LiteralText { get; }
 
-        public DbLiteralExpression(Type type, string literalText)
+        public LiteralExpression(Type type, string literalText)
             : base(type)
         {
             this.LiteralText = literalText;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.DbLiteral;
-
-        public DbLiteralExpression Update(Type type, string literalText)
+        public LiteralExpression Update(Type type, string literalText)
         {
             if (type != this.Type
                 || literalText != this.LiteralText)
             {
-                return new DbLiteralExpression(type, literalText);
+                return new LiteralExpression(type, literalText);
             }
             else
             {
@@ -37,8 +34,8 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
-                return dbVisitor.VisitDbLiteral(this);
+            if (visitor is SqlExpressionVisitor dbVisitor)
+                return dbVisitor.VisitLiteral(this);
             return base.Accept(visitor);
         }
 

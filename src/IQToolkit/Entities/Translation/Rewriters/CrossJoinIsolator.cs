@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Isolates cross joins from other types of joins by pushing down into nested subqueries.
     /// </summary>
-    public class CrossJoinIsolator : DbExpressionVisitor
+    public class CrossJoinIsolator : SqlExpressionVisitor
     {
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
         private ILookup<TableAlias, ColumnExpression>? _currentColumns;

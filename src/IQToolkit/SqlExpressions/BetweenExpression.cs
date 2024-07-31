@@ -8,7 +8,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// The between expression: expr between (lower, upper)
     /// </summary>
-    public sealed class BetweenExpression : DbExpression
+    public sealed class BetweenExpression : SqlExpression
     {
         /// <summary>
         /// The expression to test.
@@ -36,9 +36,6 @@ namespace IQToolkit.SqlExpressions
             this.Upper = upper;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Between;
-
         public override bool IsPredicate => true;
 
         public BetweenExpression Update(
@@ -60,7 +57,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitBetween(this);
             return base.Accept(visitor);
         }

@@ -41,7 +41,7 @@ namespace IQToolkit.SqlExpressions
 
         internal ColumnAssignment Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitColumnAssignment(this);
             return this.VisitChildren(visitor);
         }

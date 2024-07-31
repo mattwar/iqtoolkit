@@ -10,7 +10,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A reference to a variable declared in a <see cref="DeclarationCommand"/>.
     /// </summary>
-    public sealed class VariableExpression : DbExpression
+    public sealed class VariableExpression : SqlExpression
     {
         /// <summary>
         /// The name of the variable.
@@ -29,9 +29,6 @@ namespace IQToolkit.SqlExpressions
             this.QueryType = queryType;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Variable;
-
         public VariableExpression Update(string name, Type type, QueryType queryType)
         {
             if (name != this.Name
@@ -48,7 +45,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitVariable(this);
             return base.Accept(visitor);
         }

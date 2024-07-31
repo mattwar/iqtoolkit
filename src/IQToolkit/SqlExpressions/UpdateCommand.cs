@@ -39,9 +39,6 @@ namespace IQToolkit.SqlExpressions
             this.Assignments = assignments.ToReadOnly();
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.UpdateCommand;
-
         public UpdateCommand Update(
             TableExpression table, 
             Expression where, 
@@ -61,7 +58,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitUpdateCommand(this);
             return base.Accept(visitor);
         }

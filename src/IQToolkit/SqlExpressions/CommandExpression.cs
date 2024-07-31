@@ -8,7 +8,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// The base type of all command expressions.
     /// </summary>
-    public abstract class CommandExpression : DbExpression
+    public abstract class CommandExpression : SqlExpression
     {
         protected CommandExpression(Type type)
             : base(type)

@@ -6,11 +6,13 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.SqlExpressions
 {
+    using Expressions;
+
     /// <summary>
     /// An extended expression visitor.
-    /// Includes <see cref="DbExpression"/> nodes.
+    /// Includes <see cref="SqlExpression"/> nodes.
     /// </summary>
-    public abstract class DbVoidExpressionVisitor : IQToolkit.Expressions.VoidExpressionVisitor
+    public abstract class SqlVoidExpressionVisitor : VoidExpressionVisitor
     {
         public override void Visit(Expression? exp)
         {
@@ -52,16 +54,16 @@ namespace IQToolkit.SqlExpressions
                 case DeleteCommand dc:
                     this.VisitDeleteCommand(dc);
                     break;
-                case DbBinaryExpression db:
+                case ScalarBinaryExpression db:
                     this.VisitDbBinary(db);
                     break;
-                case DbFunctionCallExpression fx:
+                case ScalarFunctionCallExpression fx:
                     this.VisitDbFunctionCall(fx);
                     break;
-                case DbLiteralExpression dl:
+                case LiteralExpression dl:
                     this.VisitDbLiteral(dl);
                     break;
-                case DbPrefixUnaryExpression du:
+                case ScalarPrefixUnaryExpression du:
                     this.VisitDbPrefixUnary(du);
                     break;
                 case EntityExpression ex:
@@ -123,10 +125,10 @@ namespace IQToolkit.SqlExpressions
         protected virtual void VisitClientParameter(ClientParameterExpression expr) { this.VisitUnhandled(expr); }
         protected virtual void VisitClientProjection(ClientProjectionExpression expr) { this.VisitUnhandled(expr); }
         protected virtual void VisitColumn(ColumnExpression expr) { this.VisitUnhandled(expr); }
-        protected virtual void VisitDbBinary(DbBinaryExpression expr) { this.VisitUnhandled(expr); }
-        protected virtual void VisitDbFunctionCall(DbFunctionCallExpression expr) { this.VisitUnhandled(expr); }
-        protected virtual void VisitDbLiteral(DbLiteralExpression expr) { this.VisitUnhandled(expr); }
-        protected virtual void VisitDbPrefixUnary(DbPrefixUnaryExpression expr) { this.VisitUnhandled(expr); }
+        protected virtual void VisitDbBinary(ScalarBinaryExpression expr) { this.VisitUnhandled(expr); }
+        protected virtual void VisitDbFunctionCall(ScalarFunctionCallExpression expr) { this.VisitUnhandled(expr); }
+        protected virtual void VisitDbLiteral(LiteralExpression expr) { this.VisitUnhandled(expr); }
+        protected virtual void VisitDbPrefixUnary(ScalarPrefixUnaryExpression expr) { this.VisitUnhandled(expr); }
         protected virtual void VisitDeclarationCommand(DeclarationCommand expr) { this.VisitUnhandled(expr); }
         protected virtual void VisitDeleteCommand(DeleteCommand expr) { this.VisitUnhandled(expr); }
         protected virtual void VisitEntity(EntityExpression expr) { this.VisitUnhandled(expr); }

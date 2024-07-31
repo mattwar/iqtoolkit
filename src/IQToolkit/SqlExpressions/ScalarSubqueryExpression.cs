@@ -16,9 +16,6 @@ namespace IQToolkit.SqlExpressions
         {
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.ScalarSubquery;
-
         public ScalarSubqueryExpression Update(Type type, SelectExpression select)
         {
             if (type != this.Type
@@ -34,7 +31,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitScalarSubquery(this);
             return base.Accept(visitor);
         }

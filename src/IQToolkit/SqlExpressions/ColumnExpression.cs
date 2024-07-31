@@ -9,7 +9,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A reference to a column in a query
     /// </summary>
-    public sealed class ColumnExpression : DbExpression, IEquatable<ColumnExpression>
+    public sealed class ColumnExpression : SqlExpression, IEquatable<ColumnExpression>
     {
         /// <summary>
         /// The alias of the table that the column belongs to.
@@ -33,9 +33,6 @@ namespace IQToolkit.SqlExpressions
             this.Name = name;
             this.QueryType = queryType;
         }
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Column;
 
         public override string ToString() =>
             this.Alias.ToString() + ".Column(" + this.Name + ")";
@@ -71,7 +68,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitColumn(this);
             return base.Accept(visitor);
         }

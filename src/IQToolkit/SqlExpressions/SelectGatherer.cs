@@ -13,7 +13,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Returns a list of <see cref="SelectExpression"/> accessible from the source expression
     /// </summary>
-    public class SelectGatherer : DbExpressionVisitor
+    public class SelectGatherer : SqlExpressionVisitor
     {
         List<SelectExpression> selects = new List<SelectExpression>();
 

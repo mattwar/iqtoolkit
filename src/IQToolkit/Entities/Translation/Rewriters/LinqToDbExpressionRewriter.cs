@@ -19,7 +19,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Converts LINQ query operators to into custom DbExpression's
     /// </summary>
-    public class LinqToDbExpressionRewriter : DbExpressionVisitor
+    public class LinqToDbExpressionRewriter : SqlExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
         private readonly QueryLanguage _language;
@@ -327,29 +327,27 @@ namespace IQToolkit.Entities.Translation
 
         private ClientProjectionExpression ConvertToSequence(Expression expr)
         {
-            switch (expr.NodeType)
+            switch (expr)
             {
-                case (ExpressionType)DbExpressionType.ClientProjection:
-                    return (ClientProjectionExpression)expr;
-                case ExpressionType.New:
-                    NewExpression nex = (NewExpression)expr;
-                    if (expr.Type.GetTypeInfo().IsGenericType && expr.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+                case ClientProjectionExpression project:
+                    return project;
+                case NewExpression nex:
+                    if (expr.Type.IsGenericType && expr.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
                     {
                         return (ClientProjectionExpression)nex.Arguments[1];
                     }
                     goto default;
-                case ExpressionType.MemberAccess:
-                    var bound = this.BindRelationshipProperty((MemberExpression)expr);
+                case MemberExpression mx:
+                    var bound = this.BindRelationshipProperty(mx);
                     if (bound.NodeType != ExpressionType.MemberAccess)
                         return this.ConvertToSequence(bound);
                     goto default;
                 default:
-                    var n = this.GetNewExpression(expr);
-                    if (n != null)
+                    if (this.GetNewExpression(expr) is { } n)
                     {
-                        expr = n;
-                        goto case ExpressionType.New;
+                        return ConvertToSequence(n);
                     }
+
                     throw new Exception(string.Format("The expression of type '{0}' is not a sequence", expr.Type));
             }
         }
@@ -1175,7 +1173,7 @@ namespace IQToolkit.Entities.Translation
 
         private bool IsRemoteQuery(Expression expression)
         {
-            if (expression.NodeType.IsDbExpression())
+            if (expression is SqlExpression)
                 return true;
 
             switch (expression.NodeType)
@@ -1197,7 +1195,7 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Moves aggregate subquery expressions into the same <see cref="SelectExpression"/> that has the group-by clause
         /// </summary>
-        private class AggregateRewriter : DbExpressionVisitor
+        private class AggregateRewriter : SqlExpressionVisitor
         {
             private readonly QueryLanguage _language;
             private readonly ILookup<TableAlias, AggregateSubqueryInfo> _aliasToAggregateInfoMap;

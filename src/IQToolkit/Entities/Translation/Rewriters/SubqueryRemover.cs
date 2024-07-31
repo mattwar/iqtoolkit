@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Removes specific nested select expressions by replacing them with their from clause.
     /// </summary>
-    public class SubqueryRemover : DbExpressionVisitor
+    public class SubqueryRemover : SqlExpressionVisitor
     {
         private readonly HashSet<SelectExpression> _selectsToRemove;
         private readonly Dictionary<TableAlias, Dictionary<string, Expression>> _map;

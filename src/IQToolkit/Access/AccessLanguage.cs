@@ -47,7 +47,7 @@ namespace IQToolkit.Access
 
         public override Expression GetGeneratedIdExpression(MemberInfo member)
         {
-            return new DbFunctionCallExpression(TypeHelper.GetMemberType(member), false, "@@IDENTITY", null);
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), false, "@@IDENTITY", null);
         }
     }
 }

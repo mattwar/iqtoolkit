@@ -7,9 +7,9 @@ using System.Linq.Expressions;
 namespace IQToolkit.SqlExpressions
 {
     /// <summary>
-    /// An aggregate expression used in projection
+    /// An aggregate expression used in select column.
     /// </summary>
-    public sealed class AggregateExpression : DbExpression
+    public sealed class AggregateExpression : SqlExpression
     {
         public string AggregateName { get; }
         public Expression? Argument { get; }
@@ -22,9 +22,6 @@ namespace IQToolkit.SqlExpressions
             this.Argument = argument;
             this.IsDistinct = isDistinct;
         }
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Aggregate;
 
         public AggregateExpression Update(
             Type type,
@@ -47,7 +44,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 dbVisitor.VisitAggregate(this);
             return base.Accept(visitor);
         }

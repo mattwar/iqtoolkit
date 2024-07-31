@@ -7,9 +7,9 @@ using System.Linq.Expressions;
 namespace IQToolkit.SqlExpressions
 {
     /// <summary>
-    /// An extended <see cref="ExpressionVisitor"/> for <see cref="DbExpression"/> nodes.
+    /// An extended <see cref="ExpressionVisitor"/> for <see cref="SqlExpression"/> nodes.
     /// </summary>
-    public abstract class DbExpressionVisitor : ExpressionVisitor
+    public abstract class SqlExpressionVisitor : ExpressionVisitor
     {
         protected internal virtual Expression VisitAggregate(AggregateExpression original)
         {
@@ -61,26 +61,6 @@ namespace IQToolkit.SqlExpressions
             return original.VisitChildren(this);
         }
 
-        protected internal virtual Expression VisitDbBinary(DbBinaryExpression original)
-        {
-            return this.VisitExtension(original);
-        }
-
-        protected internal virtual Expression VisitDbFunctionCall(DbFunctionCallExpression original)
-        {
-            return this.VisitExtension(original);
-        }
-
-        protected internal virtual Expression VisitDbLiteral(DbLiteralExpression original)
-        {
-            return this.VisitExtension(original);
-        }
-
-        protected internal virtual Expression VisitDbPrefixUnary(DbPrefixUnaryExpression original)
-        {
-            return this.VisitExtension(original);
-        }
-
         protected internal virtual Expression VisitDeclarationCommand(DeclarationCommand original)
         {
             return this.VisitExtension(original);
@@ -126,6 +106,11 @@ namespace IQToolkit.SqlExpressions
             return this.VisitExtension(original);
         }
 
+        protected internal virtual Expression VisitLiteral(LiteralExpression original)
+        {
+            return this.VisitExtension(original);
+        }
+
         protected internal virtual Expression VisitJoin(JoinExpression original)
         {
             return this.VisitExtension(original);
@@ -142,6 +127,21 @@ namespace IQToolkit.SqlExpressions
         }
 
         protected internal virtual Expression VisitRowNumber(RowNumberExpression original)
+        {
+            return this.VisitExtension(original);
+        }
+
+        protected internal virtual Expression VisitScalarBinary(ScalarBinaryExpression original)
+        {
+            return this.VisitExtension(original);
+        }
+
+        protected internal virtual Expression VisitScalarFunctionCall(ScalarFunctionCallExpression original)
+        {
+            return this.VisitExtension(original);
+        }
+
+        protected internal virtual Expression VisitScalarPrefixUnary(ScalarPrefixUnaryExpression original)
         {
             return this.VisitExtension(original);
         }

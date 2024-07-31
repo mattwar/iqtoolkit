@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Removes joins expressions that are identical to joins that already exist
     /// </summary>
-    public class RedundantJoinRemover : DbExpressionVisitor
+    public class RedundantJoinRemover : SqlExpressionVisitor
     {
         private readonly Dictionary<TableAlias, TableAlias> _map;
 
@@ -47,13 +47,13 @@ namespace IQToolkit.Entities.Translation
             if (join.JoinType == compareTo.JoinType)
             {
                 if (join.Right.NodeType == compareTo.Right.NodeType
-                    && DbExpressionComparer.Default.Equals(join.Right, compareTo.Right))
+                    && SqlExpressionComparer.Default.Equals(join.Right, compareTo.Right))
                 {
                     if (join.Condition == compareTo.Condition)
                         return join.Right;
                     var scope = ImmutableDictionary<TableAlias, TableAlias>.Empty
                         .Add(((AliasedExpression)join.Right).Alias, ((AliasedExpression)compareTo.Right).Alias);
-                    if (DbExpressionComparer.Default.Equals(join.Condition, compareTo.Condition, scope))
+                    if (SqlExpressionComparer.Default.Equals(join.Condition, compareTo.Condition, scope))
                         return join.Right;
                 }
             }

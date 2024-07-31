@@ -17,9 +17,6 @@ namespace IQToolkit.SqlExpressions
         {
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.ExistsSubquery;
-
         public override bool IsPredicate => true;
 
         public ExistsSubqueryExpression Update(
@@ -37,7 +34,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitExistsSubquery(this);
             return base.Accept(visitor);
         }

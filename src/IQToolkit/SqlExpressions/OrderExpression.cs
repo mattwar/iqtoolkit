@@ -35,7 +35,7 @@ namespace IQToolkit.SqlExpressions
 
         internal OrderExpression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitOrder(this);
             return this.VisitChildren(visitor);
         }

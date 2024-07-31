@@ -13,7 +13,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Rewrite all references to one or more table aliases to a new single alias
     /// </summary>
-    public class TableAliasRemapper : DbExpressionVisitor
+    public class TableAliasRemapper : SqlExpressionVisitor
     {
         private readonly HashSet<TableAlias> _oldAliases;
         private readonly TableAlias _newAlias;

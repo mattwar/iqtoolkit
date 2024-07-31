@@ -14,7 +14,7 @@ namespace IQToolkit.Entities.Translation
     /// Merges select expressions with their immediate nested select (from)
     /// if their parts of mergeable.
     /// </summary>
-    public class SubqueryMerger : DbExpressionVisitor
+    public class SubqueryMerger : SqlExpressionVisitor
     {
         private SubqueryMerger()
         {
@@ -200,7 +200,7 @@ namespace IQToolkit.Entities.Translation
                 if (select.OrderBy[i].OrderType != fromSelect.OrderBy[i].OrderType)
                     return false;
 
-                if (!DbExpressionComparer.Default.Equals(select.OrderBy[i].Expression, fromSelect.OrderBy[i].Expression, map))
+                if (!SqlExpressionComparer.Default.Equals(select.OrderBy[i].Expression, fromSelect.OrderBy[i].Expression, map))
                     return false;
             }
 

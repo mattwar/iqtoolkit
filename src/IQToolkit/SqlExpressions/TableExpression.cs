@@ -28,9 +28,6 @@ namespace IQToolkit.SqlExpressions
             this.Name = name;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Table;
-
         public override string ToString()
         {
             return "T(" + this.Name + ")";
@@ -55,7 +52,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitTable(this);
             return base.Accept(visitor);
         }

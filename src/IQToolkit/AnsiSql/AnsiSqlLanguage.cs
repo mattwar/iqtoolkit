@@ -50,7 +50,7 @@ namespace IQToolkit.AnsiSql
 
         public override Expression GetGeneratedIdExpression(MemberInfo member)
         {
-            return new DbFunctionCallExpression(TypeHelper.GetMemberType(member), "@@IDENTITY");
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), "@@IDENTITY");
         }
     }
 }

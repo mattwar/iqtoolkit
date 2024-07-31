@@ -13,18 +13,18 @@ namespace IQToolkit.SqlExpressions
 
     /// <summary>
     /// Determines if two expressions are equivalent. 
-    /// Supports <see cref="DbExpression"/> nodes.
+    /// Supports <see cref="SqlExpression"/> nodes.
     /// </summary>
-    public class DbExpressionComparer : ExpressionComparer
+    public class SqlExpressionComparer : ExpressionComparer
     {
-        protected DbExpressionComparer(
+        protected SqlExpressionComparer(
             Func<object?, object?, bool>? fnCompare)
             : base(fnCompare)
         {
         }
 
-        public static readonly new DbExpressionComparer Default =
-            new DbExpressionComparer(null);
+        public static readonly new SqlExpressionComparer Default =
+            new SqlExpressionComparer(null);
 
         public override bool Equals(Expression? x, Expression? y)
         {
@@ -163,8 +163,8 @@ namespace IQToolkit.SqlExpressions
                     return this.CompareEntity(entityA, (EntityExpression)b, s);
                 case ExistsSubqueryExpression existsA:
                     return this.CompareExistsSubquery(existsA, (ExistsSubqueryExpression)b, s);
-                case DbFunctionCallExpression functionA:
-                    return this.CompareFunction(functionA, (DbFunctionCallExpression)b, s);
+                case ScalarFunctionCallExpression functionA:
+                    return this.CompareFunction(functionA, (ScalarFunctionCallExpression)b, s);
                 case IfCommand ifcomA:
                     return this.CompareIfCommand(ifcomA, (IfCommand)b, s);
                 case InsertCommand inscomA:
@@ -368,8 +368,8 @@ namespace IQToolkit.SqlExpressions
         }
 
         protected virtual bool CompareFunction(
-            DbFunctionCallExpression x,
-            DbFunctionCallExpression y,
+            ScalarFunctionCallExpression x,
+            ScalarFunctionCallExpression y,
             DbScope s)
         {
             return x.Name == y.Name

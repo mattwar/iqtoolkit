@@ -12,7 +12,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A SQL IN expression for a list of values.
     /// </summary>
-    public sealed class InValuesExpression : DbExpression
+    public sealed class InValuesExpression : SqlExpression
     {
         /// <summary>
         /// The expression on the left of the in operator
@@ -30,9 +30,6 @@ namespace IQToolkit.SqlExpressions
             this.Expression = expression;
             this.Values = values.ToReadOnly();
         }
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.InValues;
 
         public override bool IsPredicate => true;
 
@@ -53,7 +50,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitInValues(this);
             return base.Accept(visitor);
         }

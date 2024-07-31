@@ -18,7 +18,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Attempts to rewrite cross-apply and outer-apply joins as inner and left-outer joins
     /// </summary>
-    public class CrossApplyToLeftJoinRewriter : DbExpressionVisitor
+    public class CrossApplyToLeftJoinRewriter : SqlExpressionVisitor
     {
         private readonly QueryLanguage _language;
 
@@ -78,7 +78,7 @@ namespace IQToolkit.Entities.Translation
 
         private bool CanBeColumn(Expression expr)
         {
-            return expr != null && expr.NodeType == (ExpressionType)DbExpressionType.Column;
+            return expr is ColumnExpression;
         }
     }
 }

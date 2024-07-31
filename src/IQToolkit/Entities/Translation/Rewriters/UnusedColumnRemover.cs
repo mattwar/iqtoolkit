@@ -26,7 +26,7 @@ namespace IQToolkit.Entities.Translation
             return removed;
         }
 
-        private class Remover : DbExpressionVisitor
+        private class Remover : SqlExpressionVisitor
         {
             private readonly ImmutableDictionary<SelectExpression, ImmutableHashSet<string>> _selectColumnsReferenced;
 

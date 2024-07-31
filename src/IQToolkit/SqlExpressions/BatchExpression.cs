@@ -11,7 +11,7 @@ namespace IQToolkit.SqlExpressions
     /// A batch of multiple commands/operations.
     /// Corresponds to the <see cref="Updatable.Batch{U, T, S}(IUpdatable{U}, IEnumerable{T}, Expression{Func{IUpdatable{U}, T, S}}, int, bool)"/> method.
     /// </summary>
-    public sealed class BatchExpression : DbExpression
+    public sealed class BatchExpression : SqlExpression
     {
         /// <summary>
         /// The collection of input items/instances.
@@ -46,9 +46,6 @@ namespace IQToolkit.SqlExpressions
             this.Stream = stream;
         }
 
-        public override DbExpressionType DbNodeType => 
-            DbExpressionType.Batch;
-
         public BatchExpression Update(
             Expression input, 
             LambdaExpression operation, 
@@ -70,7 +67,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitBatch(this);
             return base.Accept(visitor);
         }

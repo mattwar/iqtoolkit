@@ -14,7 +14,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Converts all external input expressions into client parameters.
     /// </summary>
-    public class ClientParameterRewriter : DbExpressionVisitor
+    public class ClientParameterRewriter : SqlExpressionVisitor
     {
         public static Expression Rewrite(QueryLanguage language, Expression expression)
         {
@@ -65,19 +65,15 @@ namespace IQToolkit.Entities.Translation
             var left = this.Visit(b.Left);
             var right = this.Visit(b.Right);
 
-            if (left.NodeType == (ExpressionType)DbExpressionType.ClientParameter
-                    && right.NodeType == (ExpressionType)DbExpressionType.Column)
+            if (left is ClientParameterExpression leftCP
+                && right is ColumnExpression rightCE)
             {
-                var nv = (ClientParameterExpression)left;
-                var c = (ColumnExpression)right;
-                left = new ClientParameterExpression(nv.Name, c.QueryType, nv.Value);
+                left = new ClientParameterExpression(leftCP.Name, rightCE.QueryType, leftCP.Value);
             }
-            else if (right.NodeType == (ExpressionType)DbExpressionType.ClientParameter
-                && left.NodeType == (ExpressionType)DbExpressionType.Column)
+            else if (right is ClientParameterExpression rightCP
+                && left is ColumnExpression leftCE)
             {
-                var nv = (ClientParameterExpression)right;
-                var c = (ColumnExpression)left;
-                right = new ClientParameterExpression(nv.Name, c.QueryType, nv.Value);
+                right = new ClientParameterExpression(rightCP.Name, leftCE.QueryType, rightCP.Value);
             }
 
             return b.Update(left, b.Conversion, right);
@@ -223,7 +219,7 @@ namespace IQToolkit.Entities.Translation
             public bool Equals(HashedExpression other)
             {
                 return _hashCode == other._hashCode 
-                    && DbExpressionComparer.Default.Equals(_expression, other._expression);
+                    && SqlExpressionComparer.Default.Equals(_expression, other._expression);
             }
 
             public override int GetHashCode()
@@ -231,7 +227,7 @@ namespace IQToolkit.Entities.Translation
                 return _hashCode;
             }
 
-            class Hasher : DbExpressionVisitor
+            class Hasher : SqlExpressionVisitor
             {
                 int hc;
 

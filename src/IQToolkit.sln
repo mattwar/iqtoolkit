@@ -13,9 +13,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{AA7B9AF7-A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Access.Odbc", "Test.Access.Odbc\Test.Access.Odbc.csproj", "{A5DCA922-1C8B-4BAC-A772-358DAD6E1A83}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQToolkit.Odbc", "IQToolkit.Data.Odbc\IQToolkit.Odbc.csproj", "{C2AB6AE4-AD8E-47A6-BA59-7F91A4C809B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQToolkit.Odbc", "IQToolkit.Odbc\IQToolkit.Odbc.csproj", "{C2AB6AE4-AD8E-47A6-BA59-7F91A4C809B0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQToolkit.OleDb", "IQToolkit.Data.OleDb\IQToolkit.OleDb.csproj", "{A499FAB7-638D-48E9-944D-F177E3DE3DEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQToolkit.OleDb", "IQToolkit.OleDb\IQToolkit.OleDb.csproj", "{A499FAB7-638D-48E9-944D-F177E3DE3DEB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Shared", "Test.Shared\Test.Shared.csproj", "{D407613E-337F-4525-A90E-09E3EB07AEAF}"
 EndProject

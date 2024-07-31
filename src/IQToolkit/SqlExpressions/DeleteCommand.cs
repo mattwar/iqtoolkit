@@ -27,9 +27,6 @@ namespace IQToolkit.SqlExpressions
             this.Where = where;
         }
 
-        public override DbExpressionType DbNodeType => 
-            DbExpressionType.DeleteCommand;
-
         public DeleteCommand Update(TableExpression table, Expression? where)
         {
             if (table != this.Table 
@@ -45,7 +42,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitDeleteCommand(this);
             return base.Accept(visitor);
         }

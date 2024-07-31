@@ -13,7 +13,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Rewrites nested singleton projections into server-side joins.
     /// </summary>
-    public class SingletonProjectionRewriter : DbExpressionVisitor
+    public class SingletonProjectionRewriter : SqlExpressionVisitor
     {
         private readonly QueryLanguage _language;
 
@@ -129,7 +129,7 @@ namespace IQToolkit.Entities.Translation
 
         private static bool IsPredicate(Expression ex)
         {
-            if (ex is DbExpression dbx)
+            if (ex is SqlExpression dbx)
             {
                 return dbx.IsPredicate;
             }

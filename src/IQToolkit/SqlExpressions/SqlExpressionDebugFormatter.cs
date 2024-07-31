@@ -16,14 +16,14 @@ namespace IQToolkit.SqlExpressions
     /// Formats an expressions tree into pseudo language syntax.
     /// Useful debug visualization purposes.
     /// </summary>
-    public class DbExpressionDebugFormatter : ExpressionFormatter
+    public class SqlExpressionDebugFormatter : ExpressionFormatter
     {
-        public DbExpressionDebugFormatter()
+        public SqlExpressionDebugFormatter()
         {
         }
 
         public static readonly ExpressionFormatter Singleton =
-            new DbExpressionDebugFormatter();
+            new SqlExpressionDebugFormatter();
 
         public override void Format(Expression expression, TextWriter writer, string indentation = "  ")
         {
@@ -119,14 +119,14 @@ namespace IQToolkit.SqlExpressions
                     case ColumnExpression cx:
                         this.WriteColumn(cx);
                         break;
-                    case DbBinaryExpression dbb:
+                    case ScalarBinaryExpression dbb:
                         goto default;
-                    case DbFunctionCallExpression fx:
+                    case ScalarFunctionCallExpression fx:
                         this.WriteFunction(fx);
                         break;
-                    case DbLiteralExpression dbl:
+                    case LiteralExpression dbl:
                         goto default;
-                    case DbPrefixUnaryExpression dbp:
+                    case ScalarPrefixUnaryExpression dbp:
                         break;
                     case DeclarationCommand decc:
                         this.WriteDeclarationCommand(decc);
@@ -179,7 +179,7 @@ namespace IQToolkit.SqlExpressions
                         this.WriteVariable(vx);
                         break;
                     default:
-                        if (exp is DbExpression)
+                        if (exp is SqlExpression)
                         {
                             this.Write($"Unhandled({exp.GetType().Name})");
                         }
@@ -198,7 +198,7 @@ namespace IQToolkit.SqlExpressions
                 switch (ex)
                 {
                     case VariableExpression _:
-                    case DbFunctionCallExpression _:
+                    case ScalarFunctionCallExpression _:
                     case ColumnExpression _:
                     case TableExpression _:
                     case JoinExpression _:
@@ -471,7 +471,7 @@ namespace IQToolkit.SqlExpressions
                 });
             }
 
-            protected virtual void WriteFunction(DbFunctionCallExpression function)
+            protected virtual void WriteFunction(ScalarFunctionCallExpression function)
             {
                 this.Write(function.Name);
                 if (function.Arguments.Count > 0)

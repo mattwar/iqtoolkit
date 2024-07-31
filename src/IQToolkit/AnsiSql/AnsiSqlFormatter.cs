@@ -46,7 +46,7 @@ namespace IQToolkit.AnsiSql
         /// <summary>
         /// The visitor that does all the text generation.
         /// </summary>
-        public class SqlFormatterVisitor : DbVoidExpressionVisitor
+        public class SqlFormatterVisitor : SqlVoidExpressionVisitor
         {
             private readonly FormattingOptions _options;
             private readonly QueryLanguage? _language;
@@ -843,28 +843,35 @@ namespace IQToolkit.AnsiSql
 
             protected virtual bool IsPredicate(Expression expr)
             {
-                switch (expr.NodeType)
+                switch (expr)
                 {
-                    case ExpressionType.And:
-                    case ExpressionType.AndAlso:
-                    case ExpressionType.Or:
-                    case ExpressionType.OrElse:
-                        return IsBoolean(((BinaryExpression)expr).Type);
-                    case ExpressionType.Not:
-                        return IsBoolean(((UnaryExpression)expr).Type);
-                    case ExpressionType.Equal:
-                    case ExpressionType.NotEqual:
-                    case ExpressionType.LessThan:
-                    case ExpressionType.LessThanOrEqual:
-                    case ExpressionType.GreaterThan:
-                    case ExpressionType.GreaterThanOrEqual:
-                    case (ExpressionType)DbExpressionType.IsNull:
-                    case (ExpressionType)DbExpressionType.Between:
-                    case (ExpressionType)DbExpressionType.ExistsSubquery:
-                    case (ExpressionType)DbExpressionType.InSubquery:
+                    case BinaryExpression bx:
+                        switch (bx.NodeType)
+                        {
+                            case ExpressionType.And:
+                            case ExpressionType.AndAlso:
+                            case ExpressionType.Or:
+                            case ExpressionType.OrElse:
+                                return IsBoolean(((BinaryExpression)expr).Type);
+                            case ExpressionType.Not:
+                                return IsBoolean(((UnaryExpression)expr).Type);
+                            case ExpressionType.Equal:
+                            case ExpressionType.NotEqual:
+                            case ExpressionType.LessThan:
+                            case ExpressionType.LessThanOrEqual:
+                            case ExpressionType.GreaterThan:
+                            case ExpressionType.GreaterThanOrEqual:
+                                return true;
+                            default:
+                                return false;
+                        }
+                    case MethodCallExpression mc:
+                        return IsBoolean(mc.Type);
+                    case IsNullExpression _:
+                    case BetweenExpression _:
+                    case ExistsSubqueryExpression _:
+                    case InSubqueryExpression _:
                         return true;
-                    case ExpressionType.Call:
-                        return IsBoolean(((MethodCallExpression)expr).Type);
                     default:
                         return false;
                 }
@@ -1374,7 +1381,7 @@ namespace IQToolkit.AnsiSql
                 }
             }
 
-            protected override void VisitDbFunctionCall(DbFunctionCallExpression func)
+            protected override void VisitDbFunctionCall(ScalarFunctionCallExpression func)
             {
                 this.Write(func.Name);
 

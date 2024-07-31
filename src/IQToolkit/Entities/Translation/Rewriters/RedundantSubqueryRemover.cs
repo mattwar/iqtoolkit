@@ -14,7 +14,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Removes select expressions that don't add any additional semantic value
     /// </summary>
-    public class RedundantSubqueryRemover : DbExpressionVisitor
+    public class RedundantSubqueryRemover : SqlExpressionVisitor
     {
         public RedundantSubqueryRemover() 
         {

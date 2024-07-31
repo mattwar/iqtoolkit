@@ -12,7 +12,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A join that will happen on the client.
     /// </summary>
-    public sealed class ClientJoinExpression : DbExpression
+    public sealed class ClientJoinExpression : SqlExpression
     {
         /// <summary>
         /// The projection of the joined data.
@@ -40,9 +40,6 @@ namespace IQToolkit.SqlExpressions
             this.Projection = projection;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.ClientJoin;
-
         public ClientJoinExpression Update(
             ClientProjectionExpression projection, 
             IEnumerable<Expression> outerKey, 
@@ -62,7 +59,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitClientJoin(this);
             return base.Accept(visitor);
         }

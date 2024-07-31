@@ -8,7 +8,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Base class for subquery expressions; scalar, exists and in expressions.
     /// </summary>
-    public abstract class SubqueryExpression : DbExpression
+    public abstract class SubqueryExpression : SqlExpression
     {
         /// <summary>
         /// An optional expression

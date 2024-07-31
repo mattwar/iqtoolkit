@@ -13,7 +13,7 @@ namespace Test.Toolkit
         {
             // verify that FindAll sees through DbExpressions
             TestFindAll<ConstantExpression>(
-                new DbBinaryExpression(
+                new ScalarBinaryExpression(
                     typeof(int),
                     false,
                     Expression.Constant(1),
@@ -34,7 +34,7 @@ namespace Test.Toolkit
         public void TestReplace()
         {
             TestReplace(
-                new DbBinaryExpression(
+                new ScalarBinaryExpression(
                     typeof(int),
                     false,
                     Expression.Constant(1),

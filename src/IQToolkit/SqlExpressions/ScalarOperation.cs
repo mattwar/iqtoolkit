@@ -8,11 +8,11 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Base class for database scalar functions and operators.
     /// </summary>
-    public abstract class DbOperation : DbExpression
+    public abstract class ScalarOperation : SqlExpression
     {
         public override bool IsPredicate { get; }
 
-        protected DbOperation(Type type, bool isPredicate)
+        protected ScalarOperation(Type type, bool isPredicate)
             : base(type)
         {
             this.IsPredicate = isPredicate;

@@ -13,7 +13,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Moves order-bys to the outermost select if possible
     /// </summary>
-    public class MoveOrderByToOuterMostSelectRewriter : DbExpressionVisitor
+    public class MoveOrderByToOuterMostSelectRewriter : SqlExpressionVisitor
     {
         private readonly QueryLanguage _language;
         private List<OrderExpression>? _gatheredOrderings;

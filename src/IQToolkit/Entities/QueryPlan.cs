@@ -85,7 +85,7 @@ namespace IQToolkit.Entities
         /// The executor described via pseudo code.
         /// </summary>
         internal string ExecutorDebugText =>
-            _executorDebugText ??= DbExpressionDebugFormatter.Singleton.Format(this.Executor);
+            _executorDebugText ??= SqlExpressionDebugFormatter.Singleton.Format(this.Executor);
 #endif
     }
 }

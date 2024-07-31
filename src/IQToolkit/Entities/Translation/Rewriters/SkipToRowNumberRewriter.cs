@@ -17,7 +17,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Rewrites skip expressions into uses of TSQL row_number function
     /// </summary>
-    public class SkipToRowNumberRewriter : DbExpressionVisitor
+    public class SkipToRowNumberRewriter : SqlExpressionVisitor
     {
         private readonly QueryLanguage _language;
 

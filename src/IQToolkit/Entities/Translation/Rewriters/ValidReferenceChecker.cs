@@ -19,7 +19,7 @@ namespace IQToolkit.Entities.Translation
     /// such as reference to table alias not in scope or columns not selected.
     /// Also checks for duplicate table alias declarations.
     /// </summary>
-    public class ValidReferenceChecker : DbExpressionVisitor
+    public class ValidReferenceChecker : SqlExpressionVisitor
     {
         private ImmutableDictionary<TableAlias, AliasedExpression> _aliasesInScope;
         private ImmutableList<ColumnExpression> _invalidReferences;

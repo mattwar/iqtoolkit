@@ -33,9 +33,6 @@ namespace IQToolkit.SqlExpressions
             this.IfFalse = ifFalse;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.IfCommand;
-
         public IfCommand Update(
             Expression test, 
             Expression ifTrue, 
@@ -55,7 +52,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitIfCommand(this);
             return base.Accept(visitor);
         }

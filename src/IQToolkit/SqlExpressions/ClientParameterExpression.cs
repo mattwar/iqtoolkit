@@ -9,7 +9,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Designates an expression to be evaluated on the client and sent as a parameter to the query.
     /// </summary>
-    public sealed class ClientParameterExpression : DbExpression
+    public sealed class ClientParameterExpression : SqlExpression
     {
         public string Name { get; }
         public QueryType QueryType { get; }
@@ -22,9 +22,6 @@ namespace IQToolkit.SqlExpressions
             this.QueryType = queryType;
             this.Value = value;
         }
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.ClientParameter;
 
         public ClientParameterExpression Update(
             string name,
@@ -45,7 +42,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitClientParameter(this);
             return base.Accept(visitor);
         }

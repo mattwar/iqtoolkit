@@ -7,9 +7,9 @@ using System.Linq.Expressions;
 namespace IQToolkit.SqlExpressions
 {
     /// <summary>
-    /// A database query language unary operator expression.
+    /// A SQL prefix unary operator expression.
     /// </summary>
-    public sealed class DbPrefixUnaryExpression : DbOperation
+    public sealed class ScalarPrefixUnaryExpression : ScalarOperation
     {
         /// <summary>
         /// The text of the operator.
@@ -21,24 +21,21 @@ namespace IQToolkit.SqlExpressions
         /// </summary>
         public Expression Operand { get; }
 
-        public DbPrefixUnaryExpression(Type type, bool isPredicate, string @operator, Expression operand)
+        public ScalarPrefixUnaryExpression(Type type, bool isPredicate, string @operator, Expression operand)
             : base(type, isPredicate)
         {
             this.Operator = @operator;
             this.Operand = operand;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.DbPrefixUnary;
-
-        public DbPrefixUnaryExpression Update(Type type, bool isPredicate, string @operator, Expression operand)
+        public ScalarPrefixUnaryExpression Update(Type type, bool isPredicate, string @operator, Expression operand)
         {
             if (type != this.Type
                 || isPredicate != this.IsPredicate
                 || @operator != this.Operator
                 || operand != this.Operand)
             {
-                return new DbPrefixUnaryExpression(type, isPredicate, @operator, operand);
+                return new ScalarPrefixUnaryExpression(type, isPredicate, @operator, operand);
             }
             else
             {
@@ -48,8 +45,8 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
-                return dbVisitor.VisitDbPrefixUnary(this);
+            if (visitor is SqlExpressionVisitor dbVisitor)
+                return dbVisitor.VisitScalarPrefixUnary(this);
             return base.Accept(visitor);
         }
 

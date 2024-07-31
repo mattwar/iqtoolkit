@@ -14,7 +14,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Rewrites queries with skip and take to use nested queries with inverted ordering technique
     /// </summary>
-    public class SkipTakeToTopRewriter : DbExpressionVisitor
+    public class SkipTakeToTopRewriter : SqlExpressionVisitor
     {
         private readonly QueryLanguage _language;
 

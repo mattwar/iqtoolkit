@@ -10,7 +10,7 @@ namespace IQToolkit.SqlExpressions
     /// A SQL select query and the operations applied to the tabular results
     /// on the client to construct the output value for each row.
     /// </summary>
-    public sealed class ClientProjectionExpression : DbExpression
+    public sealed class ClientProjectionExpression : SqlExpression
     {
         /// <summary>
         /// The SQL select query that is being executed.
@@ -41,9 +41,6 @@ namespace IQToolkit.SqlExpressions
             this.Aggregator = aggregator;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.ClientProjection;
-
         public bool IsSingleton => 
             this.Aggregator?.Body.Type == this.Projector.Type;
 
@@ -66,7 +63,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitClientProjection(this);
             return base.Accept(visitor);
         }

@@ -11,7 +11,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// A TSQL expression that evaluates the current row number.
     /// </summary>
-    public sealed class RowNumberExpression : DbExpression
+    public sealed class RowNumberExpression : SqlExpression
     {
         public IReadOnlyList<OrderExpression> OrderBy { get; }
 
@@ -20,9 +20,6 @@ namespace IQToolkit.SqlExpressions
         {
             this.OrderBy = orderBy.ToReadOnly();
         }
-
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.RowNumber;
 
         public RowNumberExpression Update(IReadOnlyList<OrderExpression> orderBy)
         {
@@ -38,7 +35,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitRowNumber(this);
             return base.Accept(visitor);
         }

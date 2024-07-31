@@ -12,8 +12,23 @@ namespace IQToolkit.SqlExpressions
     using Entities.Translation;
     using Utils;
 
-    public static class DbExpressionExtensions
+    public static class SqlExpressionExtensions
     {
+        public static string GetNodeTypeName(this Expression e)
+        {
+            if (e is SqlExpression d)
+            {
+                var name = d.GetType().Name;
+                if (name.EndsWith("Expression"))
+                    return name.Substring(0, name.Length - 11);
+                return name;
+            }
+            else
+            {
+                return e.NodeType.ToString();
+            }
+        }
+
         // These really belond on SelectExpression as first class methods
         #region SelectExpression extensions
         public static string GetAvailableColumnName(
@@ -83,7 +98,7 @@ namespace IQToolkit.SqlExpressions
         }
 
         public static string ToDebugText(this Expression expression) =>
-            DbExpressionDebugFormatter.Singleton.Format(expression);
+            SqlExpressionDebugFormatter.Singleton.Format(expression);
         #endregion
     }
 }

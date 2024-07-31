@@ -14,7 +14,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Adds relationship to query results depending on policy
     /// </summary>
-    public class RelationshipIncluder : DbExpressionVisitor
+    public class RelationshipIncluder : SqlExpressionVisitor
     {
         private readonly QueryMappingRewriter _mapper;
         private readonly QueryPolicy _policy;

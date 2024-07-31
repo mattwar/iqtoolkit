@@ -54,7 +54,7 @@ namespace IQToolkit.Entities
             return new QueryPlan(executor, diagnostics);
         }
 
-        private class Builder : DbExpressionVisitor
+        private class Builder : SqlExpressionVisitor
         {
             private readonly QueryPolicy _policy;
             private readonly QueryLanguageRewriter _linguist;
@@ -191,7 +191,7 @@ namespace IQToolkit.Entities
                 ParameterExpression kvp = Expression.Parameter(constructKVPair.Type, "kvp");
 
                 // filter out nulls
-                if (join.Projection.Projector.NodeType == (ExpressionType)DbExpressionType.OuterJoined)
+                if (join.Projection.Projector is OuterJoinedExpression)
                 {
                     LambdaExpression pred = Expression.Lambda(
                         Expression.PropertyOrField(kvp, "Value").NotEqual(TypeHelper.GetNullConstant(join.Projection.Projector.Type)),
@@ -411,11 +411,11 @@ namespace IQToolkit.Entities
                 if (command == null)
                     return false;
 
-                switch ((DbExpressionType)command.NodeType)
+                switch (command)
                 {
-                    case DbExpressionType.InsertCommand:
-                    case DbExpressionType.DeleteCommand:
-                    case DbExpressionType.UpdateCommand:
+                    case InsertCommand _:
+                    case DeleteCommand _:
+                    case UpdateCommand _:
                         return false;
                     default:
                         return true;
@@ -460,14 +460,14 @@ namespace IQToolkit.Entities
                 return this.Visit(test)!;
             }
 
-            protected internal override Expression VisitDbFunctionCall(DbFunctionCallExpression func)
+            protected internal override Expression VisitScalarFunctionCall(ScalarFunctionCallExpression func)
             {
                 if (_linguist.Language.IsRowsAffectedExpressions(func))
                 {
                     return Expression.Property(_executor, "RowsAffected");
                 }
 
-                return base.VisitDbFunctionCall(func);
+                return base.VisitScalarFunctionCall(func);
             }
 
             protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
@@ -626,7 +626,7 @@ namespace IQToolkit.Entities
             /// <summary>
             /// columns referencing the outer alias are turned into special client parameters
             /// </summary>
-            private sealed class OuterParameterizer : DbExpressionVisitor
+            private sealed class OuterParameterizer : SqlExpressionVisitor
             {
                 private readonly TableAlias _outerAlias;
                 private readonly Dictionary<ColumnExpression, ClientParameterExpression> _map =

@@ -80,9 +80,6 @@ namespace IQToolkit.SqlExpressions
         {
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Select;
-
         public string SqlText => 
             AnsiSql.AnsiSqlFormatter.Default.Format(this, FormattingOptions.DebugDefault).Text;
 
@@ -327,7 +324,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitSelect(this);
             return base.Accept(visitor);
         }

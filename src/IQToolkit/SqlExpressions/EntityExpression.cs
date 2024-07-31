@@ -10,7 +10,7 @@ namespace IQToolkit.SqlExpressions
     /// <summary>
     /// Associates the expression with a mapped entity.
     /// </summary>
-    public sealed class EntityExpression : DbExpression
+    public sealed class EntityExpression : SqlExpression
     {
         /// <summary>
         /// The entity.
@@ -29,9 +29,6 @@ namespace IQToolkit.SqlExpressions
             this.Expression = expression;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Entity;
-
         public EntityExpression Update(MappingEntity entity, Expression expression)
         {
             if (entity != this.Entity
@@ -47,7 +44,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitEntity(this);
             return base.Accept(visitor);
         }

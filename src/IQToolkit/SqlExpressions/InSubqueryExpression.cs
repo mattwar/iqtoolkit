@@ -21,9 +21,6 @@ namespace IQToolkit.SqlExpressions
             this.Expression = expression;
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.InSubquery;
-
         public override bool IsPredicate => true;
 
         public InSubqueryExpression Update(
@@ -43,7 +40,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitInSubquery(this);
             return base.Accept(visitor);
         }

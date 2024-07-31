@@ -17,7 +17,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Rewrites comparisions of entities into comparisons of the primary key values.
     /// </summary>
-    public class EntityComparisonRewriter : DbExpressionVisitor
+    public class EntityComparisonRewriter : SqlExpressionVisitor
     {
         private readonly EntityMapping _mapping;
 

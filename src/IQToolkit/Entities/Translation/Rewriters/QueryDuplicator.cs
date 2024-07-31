@@ -17,7 +17,7 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Deep clone's the expression, creating new parameter and table aliases when they are declared.
     /// </summary>
-    public class QueryDuplicator : DbExpressionVisitor
+    public class QueryDuplicator : SqlExpressionVisitor
     {
         private ImmutableDictionary<ParameterExpression, ParameterExpression> _parameterMap;
         private ImmutableDictionary<TableAlias, TableAlias> _aliasMap;
@@ -194,7 +194,7 @@ namespace IQToolkit.Entities.Translation
             return original.Update(original.Type, original.AggregateName, argument, original.IsDistinct);
         }
 
-        protected internal override Expression VisitDbFunctionCall(DbFunctionCallExpression original)
+        protected internal override Expression VisitScalarFunctionCall(ScalarFunctionCallExpression original)
         {
             var arguments = original.Arguments.Rewrite(this);
             return original.Update(original.Type, original.IsPredicate, original.Name, arguments);

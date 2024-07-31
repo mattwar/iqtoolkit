@@ -13,7 +13,7 @@ namespace IQToolkit.Entities.Translation
     using SqlExpressions;
     using Utils;
 
-    public abstract class TableAliasScopeTracker : DbExpressionVisitor
+    public abstract class TableAliasScopeTracker : SqlExpressionVisitor
     {
         private ImmutableHashSet<TableAlias> _aliasesInScope;
 

@@ -9,7 +9,7 @@ namespace IQToolkit.SqlExpressions
     /// An expression that can be identified in the tree by its <see cref="Id"/>,
     /// which stays the same regardless of rewrites.
     /// </summary>
-    public sealed class TaggedExpression : DbExpression
+    public sealed class TaggedExpression : SqlExpression
     {
         public int Id { get; }
         public Expression Expression { get; }
@@ -28,9 +28,6 @@ namespace IQToolkit.SqlExpressions
         {
         }
 
-        public override DbExpressionType DbNodeType =>
-            DbExpressionType.Tagged;
-
         public TaggedExpression Update(
             Expression expression)
         {
@@ -46,7 +43,7 @@ namespace IQToolkit.SqlExpressions
 
         protected override Expression Accept(ExpressionVisitor visitor)
         {
-            if (visitor is DbExpressionVisitor dbVisitor)
+            if (visitor is SqlExpressionVisitor dbVisitor)
                 return dbVisitor.VisitTagged(this);
             return base.Accept(visitor);
         }

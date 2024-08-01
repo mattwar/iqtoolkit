@@ -21,17 +21,17 @@ namespace IQToolkit.Entities.Translation
         public static LambdaExpression? GetAggregator(Type expectedType, Type actualType)
         {
             Type actualElementType = TypeHelper.GetSequenceElementType(actualType);
-            if (!expectedType.GetTypeInfo().IsAssignableFrom(actualType.GetTypeInfo()))
+            if (!expectedType.IsAssignableFrom(actualType))
             {
                 var expectedElementType = TypeHelper.GetSequenceElementType(expectedType);
                 var p = Expression.Parameter(actualType, "p");
                 Expression? body = null;
 
-                if (expectedType.GetTypeInfo().IsAssignableFrom(actualElementType.GetTypeInfo()))
+                if (expectedType.IsAssignableFrom(actualElementType))
                 {
                     body = Expression.Call(typeof(Enumerable), "SingleOrDefault", new Type[] { actualElementType }, p);
                 }
-                else if (expectedType.GetTypeInfo().IsGenericType 
+                else if (expectedType.IsGenericType 
                     && (expectedType == typeof(IQueryable) 
                         || expectedType == typeof(IOrderedQueryable) 
                         || expectedType.GetGenericTypeDefinition() == typeof(IQueryable<>) 
@@ -48,13 +48,13 @@ namespace IQToolkit.Entities.Translation
                 {
                     body = Expression.Call(typeof(Enumerable), "ToArray", new Type[] { expectedElementType }, CoerceElement(expectedElementType, p));
                 }
-                else if (expectedType.GetTypeInfo().IsGenericType && expectedType.GetGenericTypeDefinition().GetTypeInfo().IsAssignableFrom(typeof(IList<>).GetTypeInfo()))
+                else if (expectedType.IsGenericType && expectedType.GetGenericTypeDefinition().IsAssignableFrom(typeof(IList<>)))
                 {
-                    var gt = typeof(DeferredList<>).MakeGenericType(expectedType.GetTypeInfo().GenericTypeArguments);
-                    var cn = TypeHelper.FindConstructor(gt, new Type[] {typeof(IEnumerable<>).MakeGenericType(expectedType.GetTypeInfo().GenericTypeArguments)});
+                    var gt = typeof(DeferredList<>).MakeGenericType(expectedType.GenericTypeArguments);
+                    var cn = TypeHelper.FindDeclaredConstructor(gt, new Type[] {typeof(IEnumerable<>).MakeGenericType(expectedType.GenericTypeArguments)});
                     body = Expression.New(cn, CoerceElement(expectedElementType, p));
                 }
-                else if (expectedType.GetTypeInfo().IsAssignableFrom(typeof(List<>).MakeGenericType(actualElementType).GetTypeInfo()))
+                else if (expectedType.IsAssignableFrom(typeof(List<>).MakeGenericType(actualElementType)))
                 {
                     // List<T> can be assigned to expectedType
                     body = Expression.Call(typeof(Enumerable), "ToList", new Type[] { expectedElementType }, CoerceElement(expectedElementType, p));
@@ -62,7 +62,7 @@ namespace IQToolkit.Entities.Translation
                 else
                 {
                     // some other collection type that has a constructor that takes IEnumerable<T>
-                    var ci = TypeHelper.FindConstructor(expectedType, new Type[] { actualType });
+                    var ci = TypeHelper.FindDeclaredConstructor(expectedType, new Type[] { actualType });
                     if (ci != null)
                     {
                         body = Expression.New(ci, p);
@@ -82,8 +82,8 @@ namespace IQToolkit.Entities.Translation
         {
             Type elementType = TypeHelper.GetSequenceElementType(expression.Type);
             if (expectedElementType != elementType 
-                && (expectedElementType.GetTypeInfo().IsAssignableFrom(elementType.GetTypeInfo()) 
-                    || elementType.GetTypeInfo().IsAssignableFrom(expectedElementType.GetTypeInfo())))
+                && (expectedElementType.IsAssignableFrom(elementType) 
+                    || elementType.IsAssignableFrom(expectedElementType)))
             {
                 return Expression.Call(typeof(Enumerable), "Cast", new Type[] { expectedElementType }, expression);
             }

@@ -23,7 +23,7 @@ namespace IQToolkit.Utils
 
             if (type != vtype)
             {
-                if (type.GetTypeInfo().IsEnum)
+                if (type.IsEnum)
                 {
                     if (vtype == typeof(string)
                         && Enum.TryParse(type, (string)value, out var enumValue))

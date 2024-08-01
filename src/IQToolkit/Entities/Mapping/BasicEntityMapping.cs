@@ -168,10 +168,12 @@ namespace IQToolkit.Entities.Mapping
         /// </summary>
         public override IReadOnlyList<MemberInfo> GetMappedMembers(MappingEntity entity)
         {
-            Type type = entity.StaticType;
-            HashSet<MemberInfo> members = new HashSet<MemberInfo>(type.GetTypeInfo().DeclaredFields.Where(m => this.IsMapped(entity, m)));
-            members.UnionWith(type.GetTypeInfo().DeclaredProperties.Where(m => this.IsMapped(entity, m)));
-            return members.OrderBy(m => m.Name).ToReadOnly();
+            var type = entity.StaticType;
+            var mappedMembers = TypeHelper.GetDeclaredFieldsAndProperties(type)
+                .Where(m => this.IsMapped(entity, m))
+                .OrderBy(m => m.Name)
+                .ToReadOnly();
+            return mappedMembers;
         }
 
         public override object CloneEntity(MappingEntity entity, object instance)

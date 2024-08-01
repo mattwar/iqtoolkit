@@ -13,7 +13,7 @@ namespace IQToolkit.Expressions
 
     /// <summary>
     /// Rewrites an expression tree so that locally isolatable sub-expressions are evaluated 
-    /// and converted into ConstantExpression nodes.
+    /// and converted into <see cref="ConstantExpression"> nodes.
     /// </summary>
     public static class PartialEvaluator
     {
@@ -75,15 +75,14 @@ namespace IQToolkit.Expressions
 
             protected override Expression VisitConditional(ConditionalExpression c)
             {
-                // if the conditional test can be evaluated locally, rewrite expression
-                // to the valid case
+                // if the conditional test can be evaluated locally,
+                // rewrite expression to the matching branch
                 if (_candidates.Contains(c.Test))
                 {
-                    Expression test = Evaluate(c.Test);
-
-                    if (test is ConstantExpression && ((ConstantExpression)test).Type == typeof(Boolean))
+                    var test = Evaluate(c.Test);
+                    if (test is ConstantExpression cex && cex.Value is bool bValue)
                     {
-                        if ((Boolean)((ConstantExpression)test).Value)
+                        if (bValue)
                         {
                             return this.Visit(c.IfTrue);
                         }
@@ -148,17 +147,14 @@ namespace IQToolkit.Expressions
                     }
                 }
 
-                if (type.GetTypeInfo().IsValueType)
+                if (type.IsValueType)
                 {
                     e = Expression.Convert(e, typeof(object));
                 }
 
-                Expression<Func<object>> lambda = Expression.Lambda<Func<object>>(e);
-#if NOREFEMIT
-                Func<object> fn = ExpressionEvaluator.CreateDelegate(lambda);
-#else
-                Func<object> fn = lambda.Compile();
-#endif
+                var lambda = Expression.Lambda<Func<object>>(e);
+                var fn = lambda.Compile();
+
                 return this.PostEval(Expression.Constant(fn(), type));
             }
         }

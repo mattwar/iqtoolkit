@@ -13,6 +13,7 @@ namespace IQToolkit.Entities.Translation
 {
     using Expressions;
     using Expressions.Sql;
+    using Utils;
 
     /// <summary>
     /// Rewrites comparisions of entities into comparisons of the primary key values.
@@ -173,11 +174,16 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
+        /// <summary>
+        /// Converts method-info's that are a property's get method into the property.
+        /// </summary>
         private static MemberInfo FixMember(MemberInfo member)
         {
-            if (member is MethodInfo && member.Name.StartsWith("get_"))
+            if (member is MethodInfo 
+                && member.Name.StartsWith("get_")
+                && member.DeclaringType.FindDeclaredProperty(member.Name.Substring(4)) is { } prop)
             {
-                return member.DeclaringType.GetTypeInfo().GetDeclaredProperty(member.Name.Substring(4));
+                return prop;
             }
 
             return member;

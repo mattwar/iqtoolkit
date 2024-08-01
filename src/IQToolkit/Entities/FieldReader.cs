@@ -830,8 +830,8 @@ namespace IQToolkit.Entities
 
             public static ReaderMethodInfo Create()
             {
-                var meths = typeof(FieldReader).GetTypeInfo().DeclaredMethods
-                    .Where(m => m.IsPublic && !m.IsStatic && m.Name.StartsWith("Read"))
+                var meths = typeof(FieldReader).GetMethods(BindingFlags.Instance|BindingFlags.Public|BindingFlags.DeclaredOnly)
+                    .Where(m => m.Name.StartsWith("Read"))
                     .ToList();
                 var readerMethods = meths.ToImmutableDictionary(m => m.ReturnType);
                 var readValue = meths.Single(m => m.Name == "ReadValue");

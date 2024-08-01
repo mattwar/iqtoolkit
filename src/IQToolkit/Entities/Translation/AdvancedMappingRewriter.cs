@@ -135,7 +135,7 @@ namespace IQToolkit.Entities.Translation
                 pc.Projector
                 );
 
-            return (ClientProjectionExpression)this.Translator.PolicyRewriter.ApplyPolicy(proj, entity.StaticType.GetTypeInfo());
+            return (ClientProjectionExpression)this.Translator.PolicyRewriter.ApplyPolicy(proj, entity.StaticType);
         }
 
         private void GetColumns(MappingEntity entity, Dictionary<string, TableAlias> aliases, List<ColumnDeclaration> columns)

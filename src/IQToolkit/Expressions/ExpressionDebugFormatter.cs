@@ -373,7 +373,7 @@ namespace IQToolkit.Expressions
                 }
                 else
                 {
-                    var dms = TypeHelper.GetFieldsAndProperties(type)
+                    var dms = TypeHelper.GetDeclaredFieldsAndProperties(type)
                         .OrderBy(p => p.Name)
                         .ToList();
 
@@ -985,13 +985,12 @@ namespace IQToolkit.Expressions
                     name = name.Substring(0, iGeneneric);
                 }
 
-                var info = type.GetTypeInfo();
-                if (info.IsGenericType || info.IsGenericTypeDefinition)
+                if (type.IsGenericType || type.IsGenericTypeDefinition)
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append(name);
                     sb.Append("<");
-                    var args = info.GenericTypeArguments;
+                    var args = type.GenericTypeArguments;
                     for (int i = 0, n = args.Length; i < n; i++)
                     {
                         if (i > 0)
@@ -999,7 +998,7 @@ namespace IQToolkit.Expressions
                             sb.Append(",");
                         }
 
-                        if (info.IsGenericType)
+                        if (type.IsGenericType)
                         {
                             sb.Append(this.GetTypeName(args[i]));
                         }

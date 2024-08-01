@@ -160,12 +160,12 @@ namespace IQToolkit.Entities
         {
             Type mType = TypeHelper.GetMemberType(member);
 
-            if (mType.GetTypeInfo().IsGenericType)
+            if (mType.IsGenericType)
             {
                 var gType = mType.GetGenericTypeDefinition();
                 if (gType != typeof(IEnumerable<>)
                     && gType != typeof(IList<>)
-                    && !typeof(IDeferLoadable).GetTypeInfo().IsAssignableFrom(mType.GetTypeInfo()))
+                    && !typeof(IDeferLoadable).IsAssignableFrom(mType))
                 {
                     throw new InvalidOperationException(string.Format("The member '{0}' cannot be deferred due to its type.", member));
                 }

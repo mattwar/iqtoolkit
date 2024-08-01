@@ -60,7 +60,7 @@ namespace IQToolkit.Entities.Translation
                 pc.Projector
                 );
 
-            return (ClientProjectionExpression)this.Translator.PolicyRewriter.ApplyPolicy(proj, entity.StaticType.GetTypeInfo());
+            return (ClientProjectionExpression)this.Translator.PolicyRewriter.ApplyPolicy(proj, entity.StaticType);
         }
 
         public override EntityExpression GetEntityExpression(Expression root, MappingEntity entity)
@@ -105,7 +105,7 @@ namespace IQToolkit.Entities.Translation
 
             // handle cases where members are not directly assignable
             var readonlyMembers = assignments.Where(b => TypeHelper.IsReadOnly(b.Member)).ToArray();
-            var cons = entity.RuntimeType.GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic && !c.IsStatic).ToArray();
+            var cons = entity.RuntimeType.GetDeclaredConstructors();
             var hasNoArgConstructor = cons.Any(c => c.GetParameters().Length == 0);
 
             if (readonlyMembers.Length > 0 || !hasNoArgConstructor)
@@ -139,7 +139,7 @@ namespace IQToolkit.Entities.Translation
             Expression result;
             if (assignments.Count > 0)
             {
-                if (entity.StaticType.GetTypeInfo().IsInterface)
+                if (entity.StaticType.IsInterface)
                 {
                     assignments = this.RemapAssignments(assignments, entity.RuntimeType).ToList();
                 }
@@ -163,7 +163,7 @@ namespace IQToolkit.Entities.Translation
         {
             foreach (var assign in assignments)
             {
-                var member = TypeHelper.FindFieldOrProperty(entityType, assign.Member.Name);
+                var member = TypeHelper.FindDeclaredFieldOrProperty(entityType, assign.Member.Name);
                 if (member != null)
                 {
                     yield return new EntityAssignment(member, assign.Expression);
@@ -175,7 +175,14 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
-        protected virtual ConstructorBindResult? BindConstructor(ConstructorInfo cons, IReadOnlyList<EntityAssignment> assignments)
+        /// <summary>
+        /// Attempts to match up entity assignments with constructor parameters.
+        /// Returns the <see cref="NewExpression"/> that constructs the entity with the matching assignment values
+        /// and the remaining unused assignments.
+        /// </summary>
+        protected virtual ConstructorBindResult? BindConstructor(
+            ConstructorInfo cons, 
+            IReadOnlyList<EntityAssignment> assignments)
         {
             var ps = cons.GetParameters();
             var args = new Expression[ps.Length];
@@ -207,7 +214,7 @@ namespace IQToolkit.Entities.Translation
                 else
                 {
                     // find member with same name as parameter and associate it in object initializer
-                    MemberInfo mem = TypeHelper.GetFieldsAndProperties(cons.DeclaringType).Where(m => string.Compare(m.Name, p.Name, StringComparison.OrdinalIgnoreCase) == 0).FirstOrDefault();
+                    MemberInfo mem = TypeHelper.GetDeclaredFieldsAndProperties(cons.DeclaringType).Where(m => string.Compare(m.Name, p.Name, StringComparison.OrdinalIgnoreCase) == 0).FirstOrDefault();
                     if (mem != null)
                     {
                         args[i] = Expression.Constant(TypeHelper.GetDefault(p.ParameterType), p.ParameterType);

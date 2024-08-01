@@ -274,10 +274,7 @@ namespace IQToolkit.Entities.Mapping
                 list.OfType<MemberAttribute>().Select(m => m.Member).OfType<string>());
 
             // look for members that are not explicitly mapped and create column mappings for them.
-            var entityTypeInfo = entityType.GetTypeInfo();
-
-            var dataMembers = entityTypeInfo.DeclaredProperties.Where(p => p.GetMethod.IsPublic && !p.GetMethod.IsStatic).Cast<MemberInfo>()
-                            .Concat(entityTypeInfo.DeclaredFields.Where(f => f.IsPublic && !f.IsStatic));
+            var dataMembers = TypeHelper.GetDeclaredFieldsAndProperties(entityType);
                             
             foreach (var member in dataMembers)
             {
@@ -465,7 +462,7 @@ namespace IQToolkit.Entities.Mapping
         private void GetTypeMappingAttributes(Type entityType, List<MappingAttribute> list)
         {
             // get attributes from entity type itself
-            foreach (var ma in entityType.GetTypeInfo().GetCustomAttributes<MappingAttribute>())
+            foreach (var ma in entityType.GetCustomAttributes<MappingAttribute>())
             {
                 var entity = ma as EntityAttribute;
                 if (entity != null && entity.RuntimeType == null)
@@ -482,7 +479,7 @@ namespace IQToolkit.Entities.Mapping
                 list.Add(ma);
             }
 
-            foreach (var member in TypeHelper.GetFieldsAndProperties(entityType, includeNonPublic: true))
+            foreach (var member in TypeHelper.GetDeclaredFieldsAndProperties(entityType, includeNonPublic: true))
             {
                 this.GetMemberMappingAttributes(member, list);
             }
@@ -510,7 +507,7 @@ namespace IQToolkit.Entities.Mapping
             else
             {
                 // look for entity id specified on table attribute 
-                var entityAttr = entityType.GetTypeInfo().GetCustomAttribute<EntityAttribute>();
+                var entityAttr = entityType.GetCustomAttribute<EntityAttribute>();
                 if (entityAttr != null && entityAttr.Id != null)
                 {
                     return entityAttr.Id;
@@ -577,7 +574,7 @@ namespace IQToolkit.Entities.Mapping
             if (_contextCollectionMembers == null)
             {
                 var tmp = _contextType != null
-                    ? TypeHelper.GetFieldsAndProperties(_contextType, includeNonPublic: true)
+                    ? TypeHelper.GetDeclaredFieldsAndProperties(_contextType, includeNonPublic: true)
                         .Where(IsContextCollectionMember)
                         .ToList()
                     : ReadOnlyList<MemberInfo>.Empty;
@@ -696,7 +693,7 @@ namespace IQToolkit.Entities.Mapping
 
             foreach (string name in names)
             {
-                member = TypeHelper.FindFieldOrProperty(type, name, includeNonPublic: true);
+                member = TypeHelper.FindDeclaredFieldOrProperty(type, name, includeNonPublic: true);
 
                 if (member == null)
                 {

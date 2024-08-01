@@ -129,7 +129,7 @@ namespace IQToolkit.Entities.Mapping
         private MappingAttribute GetMappingAttribute(Type attrType, XElement element)
         {
             var ma = (MappingAttribute)Activator.CreateInstance(attrType);
-            foreach (var prop in attrType.GetFieldsAndProperties().OfType<PropertyInfo>())
+            foreach (var prop in attrType.GetDeclaredFieldsAndProperties().OfType<PropertyInfo>())
             {
                 var xa = element.Attribute(prop.Name);
                 if (xa != null)

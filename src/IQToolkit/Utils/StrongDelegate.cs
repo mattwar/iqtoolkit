@@ -26,7 +26,7 @@ namespace IQToolkit.Utils
             // find all the various M<> methods
             _meths = new MethodInfo[9];
 
-            foreach (var gm in typeof(StrongDelegate).GetTypeInfo().DeclaredMethods)
+            foreach (var gm in typeof(StrongDelegate).GetDeclaredMethods())
             {
                 if (gm.Name.StartsWith("M"))
                 {
@@ -48,7 +48,7 @@ namespace IQToolkit.Utils
             if (delegateType == null)
                 throw new ArgumentNullException(nameof(delegateType));
 
-            if (!delegateType.GetTypeInfo().IsSubclassOf(typeof(Delegate)))
+            if (!delegateType.IsSubclassOf(typeof(Delegate)))
                 throw new ArgumentException(string.Format("The type '{0}' is not a delegate type.", delegateType.FullName));
 
             if (method == null)
@@ -71,15 +71,15 @@ namespace IQToolkit.Utils
             if (delegateType == null)
                 throw new ArgumentNullException(nameof(delegateType));
 
-            if (!delegateType.GetTypeInfo().IsSubclassOf(typeof(Delegate)))
+            if (!delegateType.IsSubclassOf(typeof(Delegate)))
                 throw new ArgumentException(string.Format("The type '{0}' is not a delegate type.", delegateType.FullName));
 
             if (fn == null)
                 throw new ArgumentNullException(nameof(fn));
 
-            MethodInfo invoke = delegateType.GetTypeInfo().GetDeclaredMethod("Invoke");
-            var parameters = invoke.GetParameters();
-            Type[] typeArgs = new Type[1 + parameters.Length];
+            var invoke = delegateType.FindDeclaredMethod("Invoke");
+            var parameters = invoke!.GetParameters();
+            var typeArgs = new Type[1 + parameters.Length];
 
             for (int i = 0, n = parameters.Length; i < n; i++)
             {

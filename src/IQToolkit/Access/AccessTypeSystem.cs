@@ -231,7 +231,7 @@ namespace IQToolkit.Access
         /// </summary>
         public override QueryType GetQueryType(Type type)
         {
-            bool isNotNull = type.GetTypeInfo().IsValueType && !TypeHelper.IsNullableType(type);
+            bool isNotNull = type.IsValueType && !TypeHelper.IsNullableType(type);
             type = TypeHelper.GetNonNullableType(type);
 
             switch (Type.GetTypeCode(type))
@@ -271,7 +271,7 @@ namespace IQToolkit.Access
                     else if (type == typeof(DateTimeOffset)
                         || type == typeof(TimeSpan))
                         return new AccessQueryType(AccessType.DateTime, isNotNull);
-                    else if (type.GetTypeInfo().IsEnum)
+                    else if (type.IsEnum)
                         return new AccessQueryType(AccessType.Integer, isNotNull);
                     else
                         return QueryType.Unknown;

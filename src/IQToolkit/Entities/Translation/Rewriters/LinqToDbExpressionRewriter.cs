@@ -245,7 +245,7 @@ namespace IQToolkit.Entities.Translation
                         break;
                 }
             }
-            else if (typeof(Updatable).GetTypeInfo().IsAssignableFrom(m.Method.DeclaringType.GetTypeInfo()))
+            else if (typeof(Updatable).IsAssignableFrom(m.Method.DeclaringType))
             {
                 IEntityTable upd = _batchUpd != null
                     ? _batchUpd

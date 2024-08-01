@@ -56,7 +56,7 @@ namespace IQToolkit.Entities.Translation
                             }
                         }
                     }
-                    else if (nex.Type.GetTypeInfo().IsGenericType && nex.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
+                    else if (nex.Type.IsGenericType && nex.Type.GetGenericTypeDefinition() == typeof(Grouping<,>))
                     {
                         if (member.Name == "Key")
                         {

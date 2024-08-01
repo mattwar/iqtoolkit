@@ -128,7 +128,7 @@ namespace IQToolkit.Utils
         /// </summary>
         public static bool IsNullAssignable(Type type)
         {
-            return !type.GetTypeInfo().IsValueType || IsNullableType(type);
+            return !type.IsValueType || IsNullableType(type);
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace IQToolkit.Utils
         /// </summary>
         public static object? GetDefault(Type type)
         {
-            bool isNullable = !type.GetTypeInfo().IsValueType || TypeHelper.IsNullableType(type);
+            bool isNullable = !type.IsValueType || TypeHelper.IsNullableType(type);
             if (!isNullable)
                 return Activator.CreateInstance(type);
             return null;
@@ -230,33 +230,73 @@ namespace IQToolkit.Utils
             }
         }
 
-        /// <summary>
-        /// Gets the instance fields and properties of the type.
-        /// </summary>
-        public static IReadOnlyList<MemberInfo> GetFieldsAndProperties(
-            this Type type, 
-            string? name = null, 
-            bool includeNonPublic = false)
-        {
-            var flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.FlattenHierarchy
+        private static BindingFlags GetDeclaredBindingFlags(bool includeNonPublic) =>
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.FlattenHierarchy
                 | (includeNonPublic ? BindingFlags.NonPublic : BindingFlags.Default);
 
+        /// <summary>
+        /// Returns the declared instance fields and properties of the type.
+        /// Does not include indexer properties.
+        /// </summary>
+        public static IReadOnlyList<MemberInfo> GetDeclaredFieldsAndProperties(
+            this Type type,
+            Func<MemberInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            var flags = GetDeclaredBindingFlags(includeNonPublic);
             return
                 type.GetProperties(flags)
                     .Where(p => p.CanRead
-                    && (name == null || p.Name == name)
-                    && p.GetIndexParameters().Length == 0)
+                    && p.GetIndexParameters().Length == 0
+                    && (fnMatch == null || fnMatch(p))
+                    )
                 .Cast<MemberInfo>().Concat(
                     type.GetFields(flags)
-                        .Where(f => name == null || f.Name == name))
+                        .Where(f => fnMatch == null || fnMatch(f))
+                        )
                 .ToReadOnly();
+        }
+
+        /// <summary>
+        /// Returns the declared instance fields and properties of the type.
+        /// Does not include indexer properties.
+        /// </summary>
+        public static IReadOnlyList<MemberInfo> GetDeclaredFieldsAndProperties(
+            this Type type, 
+            string name, 
+            Func<MemberInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return GetDeclaredFieldsAndProperties(
+                type,
+                m => m.Name == name
+                    && (fnMatch == null || fnMatch(m)),
+                includeNonPublic
+                )
+                .ToReadOnly();               
+        }
+
+        /// <summary>
+        /// Returns the matching instance field or property or null if not found.
+        /// Does not include indexer properties.
+        /// </summary>
+        public static MemberInfo? FindDeclaredFieldOrProperty(
+            this Type type,
+            string name,
+            Func<MemberInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return GetDeclaredFieldsAndProperties(type, name, fnMatch, includeNonPublic)
+                .FirstOrDefault();
         }
 
         /// <summary>
         /// Gets the value of the field or property.
         /// </summary>
         public static bool TryGetFieldOrPropertyValue(
-            this MemberInfo fieldOrProperty, object? instance, out object? value)
+            this MemberInfo fieldOrProperty, 
+            object? instance, 
+            out object? value)
         {
             if (fieldOrProperty is PropertyInfo prop
                 && prop.CanRead
@@ -282,7 +322,8 @@ namespace IQToolkit.Utils
         /// Gets the value of the field or property.
         /// </summary>
         public static object? GetFieldOrPropertyValue(
-            this MemberInfo fieldOrProperty, object? instance)
+            this MemberInfo fieldOrProperty, 
+            object? instance)
         {
             return TryGetFieldOrPropertyValue(fieldOrProperty, instance, out var value)
                 ? value
@@ -293,7 +334,9 @@ namespace IQToolkit.Utils
         /// Sets the value of the field or property.
         /// </summary>
         public static bool TrySetFieldOrPropertyValue(
-            this MemberInfo fieldOrProperty, object? instance, object? value)
+            this MemberInfo fieldOrProperty, 
+            object? instance, 
+            object? value)
         {
             if (fieldOrProperty is PropertyInfo prop
                 && prop.CanWrite)
@@ -320,79 +363,304 @@ namespace IQToolkit.Utils
         /// Sets the value of the field or property.
         /// </summary>
         public static void SetFieldOrPropertyValue(
-            this MemberInfo fieldOrProperty, object? instance, object? value)
+            this MemberInfo fieldOrProperty, 
+            object? instance, 
+            object? value)
         {
             if (!fieldOrProperty.TrySetFieldOrPropertyValue(instance, value))
                 throw new InvalidOperationException($"Cannot set the value of '{fieldOrProperty.DeclaringType.Name}.{fieldOrProperty.Name}'.");
         }
 
         /// <summary>
-        /// Gets the instance field or property with the specified name.
+        /// Returns the matching declared instance properties of the type.
+        /// Does not include indexer properties.
         /// </summary>
-        public static MemberInfo? FindFieldOrProperty(
+        public static IReadOnlyList<PropertyInfo> GetDeclaredProperties(
             this Type type,
-            string name,
+            Func<PropertyInfo, bool>? fnMatch = null,
             bool includeNonPublic = false)
         {
-            return GetFieldsAndProperties(type, name, includeNonPublic).FirstOrDefault();
+            return type.GetProperties(GetDeclaredBindingFlags(includeNonPublic))
+                .Where(p => p.CanRead
+                    && p.GetIndexParameters().Length == 0
+                    && (fnMatch == null || fnMatch(p))
+                    )
+                .ToReadOnly();
         }
 
         /// <summary>
-        /// Finds the matching method declared on the specified type, or inherited from a base type.
+        /// Returns the matching declared instance property of the type or null if not found.
+        /// Does not include indexer properties.
         /// </summary>
-        public static MethodInfo? FindMethod(
-            this Type type, 
-            string name, 
-            IReadOnlyList<Type>? typeArguments, 
-            IReadOnlyList<Type> parameterTypes)
+        public static PropertyInfo? FindDeclaredProperty(
+            this Type type,
+            Func<PropertyInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
         {
-            var flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.FlattenHierarchy;
-
-            var typeArgumentCount = typeArguments?.Count ?? 0;
-            var typeArgumentsAsArray = typeArguments as Type[];
-
-            foreach (var method in type.GetMethods(flags))
-            {
-                if (method.IsGenericMethodDefinition != (typeArgumentCount > 0))
-                    continue;
-
-                if (method.Name != name)
-                    continue;
-
-                if (method.IsGenericMethodDefinition && typeArguments != null)
-                {
-                    if (method.GetGenericArguments().Length != typeArgumentCount)
-                        continue;
-
-                    if (typeArgumentsAsArray == null)
-                        typeArgumentsAsArray = typeArguments.ToArray();
-
-                    var constructedMethod = method.MakeGenericMethod(typeArgumentsAsArray);
-
-                    if (ParametersMatch(constructedMethod.GetParameters(), parameterTypes))
-                    {
-                        return constructedMethod;
-                    }
-                }
-
-                if (ParametersMatch(method.GetParameters(), parameterTypes))
-                {
-                    return method;
-                }
-            }
-
-            return null;
+            return type.GetProperties(GetDeclaredBindingFlags(includeNonPublic))
+                .FirstOrDefault(p => p.CanRead
+                    && p.GetIndexParameters().Length == 0
+                    && (fnMatch == null || fnMatch(p))
+                    );
         }
 
         /// <summary>
-        /// Finds the matching constructor declared on the specified type.
+        /// Returns the matching declared instance property of the type or null if not found.
+        /// Does not include indexer properties.
         /// </summary>
-        public static ConstructorInfo? FindConstructor(
-            this Type type, 
-            IReadOnlyList<Type> parameterTypes)
+        public static PropertyInfo? FindDeclaredProperty(
+            this Type type,
+            string name,
+            Func<PropertyInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
         {
-            return type.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-                .FirstOrDefault(c => ParametersMatch(c.GetParameters(), parameterTypes));
+            return FindDeclaredProperty(
+                type,
+                p => name == p.Name && (fnMatch == null || fnMatch(p)),
+                includeNonPublic
+                );
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance indexer properties.
+        /// </summary>
+        public static IReadOnlyList<PropertyInfo> GetDeclaredIndexer(
+            this Type type,
+            Func<PropertyInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return type.GetProperties(GetDeclaredBindingFlags(includeNonPublic))
+                .Where(p => p.CanRead
+                    && p.GetIndexParameters().Length > 0
+                    && (fnMatch == null || fnMatch(p))
+                    )
+                .ToReadOnly();
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance indexer property or null if not found.
+        /// </summary>
+        public static PropertyInfo? FindDeclaredIndexer(
+            this Type type,
+            Func<PropertyInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return type.GetProperties(GetDeclaredBindingFlags(includeNonPublic))
+                .FirstOrDefault(p => p.CanRead
+                    && p.GetIndexParameters().Length > 0
+                    && (fnMatch == null || fnMatch(p))
+                    );
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance indexer property or null if not found.
+        /// </summary>
+        public static PropertyInfo? FindDeclaredIndexer(
+            this Type type,
+            string name,
+            Func<PropertyInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return FindDeclaredIndexer(
+                type,
+                p => name == p.Name && (fnMatch == null || fnMatch(p)),
+                includeNonPublic
+                );
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance methods.
+        /// </summary>
+        public static IReadOnlyList<MethodInfo> GetDeclaredMethods(
+            this Type type,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return type.GetMethods(GetDeclaredBindingFlags(includeNonPublic))
+                .Where(m => (fnMatch == null || fnMatch(m)))
+                .ToReadOnly();
+        }
+
+        /// <summary>
+        /// Returns the first matching declared instance method or null.
+        /// </summary>
+        public static MethodInfo? FindDeclaredMethod(
+            this Type type,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return type.GetMethods(GetDeclaredBindingFlags(includeNonPublic))
+                .FirstOrDefault(m => fnMatch == null || fnMatch(m));
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance methods.
+        /// </summary>
+        public static IReadOnlyList<MethodInfo> GetDeclaredMethods(
+            this Type type,
+            string name,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return GetDeclaredMethods(
+                type,
+                m => m.Name == name && (fnMatch == null || fnMatch(m)),
+                includeNonPublic
+                );
+        }
+
+        /// <summary>
+        /// Returns the first matching declared instance method or null.
+        /// </summary>
+        public static MethodInfo? FindDeclaredMethod(
+            this Type type,
+            string name,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return FindDeclaredMethod(
+                type,
+                m => m.Name == name && (fnMatch == null || fnMatch(m)),
+                includeNonPublic
+                );
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance methods.
+        /// </summary>
+        public static IReadOnlyList<MethodInfo> GetDeclaredMethods(
+            this Type type,
+            string name,
+            IReadOnlyList<Type> parameterTypes,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return GetDeclaredMethods(type,
+                name,
+                m => !m.IsGenericMethod
+                    && ParametersMatch(m.GetParameters(), parameterTypes) 
+                    && (fnMatch == null || fnMatch(m)),
+                includeNonPublic
+                );
+        }
+
+        /// <summary>
+        /// Returns the first matching declared instance method or null.
+        /// </summary>
+        public static MethodInfo? FindDeclaredMethod(
+            this Type type,
+            string name,
+            IReadOnlyList<Type> parameterTypes,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return FindDeclaredMethod(type,
+                name,
+                m => !m.IsGenericMethod
+                    && ParametersMatch(m.GetParameters(), parameterTypes)
+                    && (fnMatch == null || fnMatch(m)),
+                includeNonPublic
+                );
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance methods.
+        /// </summary>
+        public static IReadOnlyList<MethodInfo> GetDeclaredMethods(
+            this Type type,
+            string name,
+            IReadOnlyList<Type> typeArguments,
+            IReadOnlyList<Type> parameterTypes,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            var typeArgArray = typeArguments.ToArray();
+
+            return GetDeclaredMethods(
+                type,
+                m => m.IsGenericMethodDefinition
+                    && m.Name == name
+                    && m.GetGenericArguments().Length == typeArguments.Count
+                    && m.GetParameters().Length == parameterTypes.Count
+                    && m.MakeGenericMethod(typeArgArray) is { } constructedMethod
+                    && ParametersMatch(constructedMethod.GetParameters(), parameterTypes)
+                    && (fnMatch == null || fnMatch(constructedMethod)),
+                includeNonPublic
+                )
+                .Select(m => m.MakeGenericMethod(typeArgArray))
+                .ToReadOnly();
+        }
+
+        /// <summary>
+        /// Returns the first matching declared instance method or null.
+        /// </summary>
+        public static MethodInfo? FindDeclaredMethod(
+            this Type type,
+            string name,
+            IReadOnlyList<Type> typeArguments,
+            IReadOnlyList<Type> parameterTypes,
+            Func<MethodInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            var typeArgArray = typeArguments.ToArray();
+
+            var method = FindDeclaredMethod(
+                type,
+                m => m.IsGenericMethodDefinition
+                    && m.Name == name
+                    && m.GetGenericArguments().Length == typeArguments.Count
+                    && m.GetParameters().Length == parameterTypes.Count
+                    && m.MakeGenericMethod(typeArgArray) is { } constructedMethod
+                    && ParametersMatch(constructedMethod.GetParameters(), parameterTypes)
+                    && (fnMatch == null || fnMatch(constructedMethod)),
+                includeNonPublic
+                );
+
+            return method != null
+                ? method.MakeGenericMethod(typeArgArray)
+                : null;
+        }
+
+        /// <summary>
+        /// Returns the matching declared instance constructors.
+        /// </summary>
+        public static IReadOnlyList<ConstructorInfo> GetDeclaredConstructors(
+            this Type type,
+            Func<ConstructorInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return type.GetConstructors(GetDeclaredBindingFlags(includeNonPublic))
+                .Where(c => fnMatch == null || fnMatch(c))
+                .ToReadOnly();
+        }
+
+        /// <summary>
+        /// Returns the first matching declared instance constructor.
+        /// </summary>
+        public static ConstructorInfo? FindDeclaredConstructor(
+            this Type type,
+            Func<ConstructorInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return type.GetConstructors(GetDeclaredBindingFlags(includeNonPublic))
+                .FirstOrDefault(c => fnMatch == null || fnMatch(c));
+        }
+
+        /// <summary>
+        /// Returns the first matching declared instance constructor.
+        /// </summary>
+        public static ConstructorInfo? FindDeclaredConstructor(
+            this Type type, 
+            IReadOnlyList<Type> parameterTypes,
+            Func<ConstructorInfo, bool>? fnMatch = null,
+            bool includeNonPublic = false)
+        {
+            return FindDeclaredConstructor(
+                type, 
+                c => ParametersMatch(c.GetParameters(), parameterTypes) 
+                    && (fnMatch == null || fnMatch(c)), 
+                includeNonPublic
+                );
         }
 
         /// <summary>
@@ -457,7 +725,7 @@ namespace IQToolkit.Utils
         {
             if (_fnGetUninitializedObject == null)
             {
-                var a = typeof(System.Runtime.CompilerServices.RuntimeHelpers).GetTypeInfo().Assembly;
+                var a = typeof(System.Runtime.CompilerServices.RuntimeHelpers).Assembly;
                 var fs = a.DefinedTypes.FirstOrDefault(t => t.FullName == "System.Runtime.Serialization.FormatterServices");
                 var guo = fs?.DeclaredMethods.FirstOrDefault(m => m.Name == nameof(GetUninitializedObject));
                 if (guo == null)

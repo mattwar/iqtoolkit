@@ -206,7 +206,7 @@ namespace IQToolkit.AnsiSql
         /// </summary>
         public override QueryType GetQueryType(Type type)
         {
-            bool isNotNull = type.GetTypeInfo().IsValueType && !TypeHelper.IsNullableType(type);
+            bool isNotNull = type.IsValueType && !TypeHelper.IsNullableType(type);
             type = TypeHelper.GetNonNullableType(type);
 
             switch (Type.GetTypeCode(type))
@@ -245,7 +245,7 @@ namespace IQToolkit.AnsiSql
                         return NewType(AnsiSqlType.DateTimeOffset, isNotNull, 0, 0, 0);
                     else if (type == typeof(TimeSpan))
                         return NewType(AnsiSqlType.Time, isNotNull, 0, 0, 0);
-                    else if (type.GetTypeInfo().IsEnum)
+                    else if (type.IsEnum)
                         return NewType(AnsiSqlType.Integer, isNotNull, 0, 0, 0);
                     else
                         return QueryType.Unknown;

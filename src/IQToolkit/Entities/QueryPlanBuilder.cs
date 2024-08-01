@@ -164,7 +164,7 @@ namespace IQToolkit.Entities
                 }
                 else
                 {
-                    var constructor = TypeHelper.FindConstructor(typeof(CompoundKey), new[] { typeof(object[]) });
+                    var constructor = TypeHelper.FindDeclaredConstructor(typeof(CompoundKey), new[] { typeof(object[]) });
 
                     return Expression.New(
                         constructor,
@@ -181,7 +181,7 @@ namespace IQToolkit.Entities
                 Expression innerKey = MakeJoinKey(join.InnerKey);
                 Expression outerKey = MakeJoinKey(join.OuterKey);
 
-                var kvpConstructor = TypeHelper.FindConstructor(typeof(KeyValuePair<,>).MakeGenericType(innerKey.Type, join.Projection.Projector.Type), new Type[] { innerKey.Type, join.Projection.Projector.Type });
+                var kvpConstructor = TypeHelper.FindDeclaredConstructor(typeof(KeyValuePair<,>).MakeGenericType(innerKey.Type, join.Projection.Projector.Type), new Type[] { innerKey.Type, join.Projection.Projector.Type });
                 Expression constructKVPair = Expression.New(kvpConstructor, innerKey, join.Projection.Projector);
                 ClientProjectionExpression newProjection = new ClientProjectionExpression(join.Projection.Select, constructKVPair);
 
@@ -207,8 +207,8 @@ namespace IQToolkit.Entities
 
                 // 2) agg(lookup[outer])
                 var lookup = Expression.Parameter(toLookup.Type, "lookup" + iLookup);
-                var property = lookup.Type.GetTypeInfo().GetDeclaredProperty("Item");
-                Expression access = Expression.Call(lookup, property.GetMethod, this.Visit(outerKey));
+                var indexer = lookup.Type.FindDeclaredIndexer("Item");
+                Expression access = Expression.Call(lookup, indexer!.GetMethod, this.Visit(outerKey));
 
                 if (join.Projection.Aggregator != null)
                 {

@@ -18,21 +18,23 @@ namespace IQToolkit.Entities.Data
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
             : base(
                   executor,
                   language,
                   mapping,
                   policy,
                   log,
-                  cache)
+                  cache,
+                  options)
         {
         }
 
         public DbEntityProvider(
             DbQueryExecutor executor,
             QueryLanguage? language = null)
-            : this(executor, language, null, null, null, null)
+            : this(executor, language, null, null, null, null, null)
         {
         }
 
@@ -64,13 +66,17 @@ namespace IQToolkit.Entities.Data
         public new DbEntityProvider WithCache(QueryCache? cache) =>
             (DbEntityProvider)With(cache: cache);
 
+        public new DbEntityProvider WithOptions(QueryOptions options) =>
+            (DbEntityProvider)With(options: options);
+
         protected override EntityProvider Construct(
             QueryExecutor executor,
             QueryLanguage language,
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
         {
             return new DbEntityProvider(
                 (DbQueryExecutor)executor,
@@ -78,7 +84,8 @@ namespace IQToolkit.Entities.Data
                 mapping,
                 policy,
                 log,
-                cache
+                cache,
+                options
                 );
         }
     }

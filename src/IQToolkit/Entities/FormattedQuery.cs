@@ -8,17 +8,6 @@ namespace IQToolkit.Entities
 {
     using Utils;
 
-    /// <summary>
-    /// Formats query expressions.
-    /// </summary>
-    public abstract class QueryFormatter
-    {
-        /// <summary>
-        /// Format the query expression as query language text.
-        /// </summary>
-        public abstract FormattedQuery Format(Expression expression, FormattingOptions? options = null);
-    }
-
     public class FormattedQuery
     {
         /// <summary>

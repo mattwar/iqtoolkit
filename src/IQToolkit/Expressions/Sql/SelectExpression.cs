@@ -81,7 +81,7 @@ namespace IQToolkit.Expressions.Sql
         }
 
         public string SqlText => 
-            AnsiSql.AnsiSqlFormatter.Default.Format(this, FormattingOptions.DebugDefault).Text;
+            AnsiSql.AnsiSqlFormatter.Default.Format(this).Text;
 
         public SelectExpression Update(
             TableAlias alias,

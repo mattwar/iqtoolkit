@@ -11,14 +11,13 @@ using System.IO;
 namespace IQToolkit.AnsiSql
 {
     using Entities;
-    using Expressions;
     using Expressions.Sql;
     using Utils;
 
     /// <summary>
-    /// ANSI SQL <see cref="QueryFormatter"/>
+    /// ANSI SQL formatter
     /// </summary>
-    public sealed class AnsiSqlFormatter : QueryFormatter
+    public sealed class AnsiSqlFormatter
     {
         private AnsiSqlFormatter()
         {
@@ -27,7 +26,7 @@ namespace IQToolkit.AnsiSql
         public static readonly AnsiSqlFormatter Default =
             new AnsiSqlFormatter();
 
-        public override FormattedQuery Format(Expression expression, FormattingOptions? options = null)
+        public FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
         {
             var textWriter = new StringWriter();
             var parameters = new List<Expression>();
@@ -48,7 +47,7 @@ namespace IQToolkit.AnsiSql
         /// </summary>
         public class SqlFormatterVisitor : SqlVoidExpressionVisitor
         {
-            private readonly FormattingOptions _options;
+            private readonly QueryOptions _options;
             private readonly QueryLanguage? _language;
             private readonly List<Expression> _parameterReferences;
             private readonly List<Diagnostic> _diagnostics;
@@ -56,21 +55,21 @@ namespace IQToolkit.AnsiSql
             private readonly IndentWriter _writer;
 
             public SqlFormatterVisitor(
-                FormattingOptions? options,
+                QueryOptions? options,
                 QueryLanguage? language,
                 TextWriter writer,
                 List<Expression> parameterReferences,
                 List<Diagnostic> diagnostics)
             {
-                _options = options ?? FormattingOptions.Default;
+                _options = options ?? QueryOptions.Default;
                 _language = language;
                 _parameterReferences = parameterReferences;
                 _diagnostics = diagnostics;
                 _aliases = new Dictionary<TableAlias, string>();
-                _writer = new IndentWriter(writer, _options.Indentation);
+                _writer = new IndentWriter(writer, _options.Indentation());
             }
 
-            protected FormattingOptions Options => _options;
+            protected QueryOptions Options => _options;
             protected QueryLanguage? Language => _language;
 
             protected bool HideColumnAliases { get; set; }
@@ -229,7 +228,7 @@ namespace IQToolkit.AnsiSql
             /// </summary>
             protected virtual void WriteParameterName(string name)
             {
-                if (this.Options.IsOdbc)
+                if (this.Options.IsOdbc())
                 {
                     this.Write("?");
                 }
@@ -274,15 +273,30 @@ namespace IQToolkit.AnsiSql
                 this.WriteColumnName(columnName);
             }
 
+            protected virtual string GetBracketedName(string name)
+            {
+                if (name.StartsWith("[") && name.EndsWith("]"))
+                {
+                    return name;
+                }
+                else if (name.IndexOf('.') > 0)
+                {
+                    return "[" + string.Join("].[", name.Split(splitChars, StringSplitOptions.RemoveEmptyEntries)) + "]";
+                }
+                else
+                {
+                    return "[" + name + "]";
+                }
+            }
+
+            private static readonly char[] splitChars = new char[] { '.' };
+
             /// <summary>
             /// Writes a column name.
             /// </summary>
             protected virtual void WriteColumnName(string columnName)
             {
-                string name = (this.Language != null) 
-                    ? this.Language.Quote(columnName) 
-                    : columnName;
-                this.Write(name);
+                this.Write(this.GetBracketedName(columnName));
             }
 
             /// <summary>
@@ -290,10 +304,7 @@ namespace IQToolkit.AnsiSql
             /// </summary>
             protected virtual void WriteTableName(string tableName)
             {
-                string name = (this.Language != null) 
-                    ? this.Language.Quote(tableName) 
-                    : tableName;
-                this.Write(name);
+                this.Write(this.GetBracketedName(tableName));
             }
 
             /// <summary>

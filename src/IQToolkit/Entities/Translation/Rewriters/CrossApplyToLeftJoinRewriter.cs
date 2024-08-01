@@ -2,13 +2,7 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace IQToolkit.Entities.Translation
 {
@@ -20,11 +14,11 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class CrossApplyToLeftJoinRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLanguage _language;
+        private readonly QueryLinguist _linguist;
 
-        public CrossApplyToLeftJoinRewriter(QueryLanguage language)
+        public CrossApplyToLeftJoinRewriter(QueryLinguist linguist)
         {
-            _language = language;
+            _linguist = linguist;
         }
 
         protected internal override Expression VisitJoin(JoinExpression join)
@@ -61,7 +55,7 @@ namespace IQToolkit.Entities.Translation
                             select = selectWithoutWhere;
                             if (where != null)
                             {
-                                var pc = ColumnProjector.ProjectColumns(_language, where, select.Columns, select.Alias, DeclaredAliasGatherer.Gather(select.From));
+                                var pc = ColumnProjector.ProjectColumns(_linguist, where, select.Columns, select.Alias, DeclaredAliasGatherer.Gather(select.From));
                                 select = select.WithColumns(pc.Columns);
                                 where = pc.Projector;
                             }

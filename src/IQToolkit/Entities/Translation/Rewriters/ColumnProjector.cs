@@ -65,7 +65,7 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class ColumnProjector : SqlExpressionVisitor
     {
-        private readonly QueryLanguage _language;
+        private readonly QueryLinguist _linguist;
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
         private readonly List<ColumnDeclaration> _columns;
         private readonly HashSet<string> _columnNames;
@@ -75,14 +75,14 @@ namespace IQToolkit.Entities.Translation
         private int _iColumn;
 
         private ColumnProjector(
-            QueryLanguage language, 
+            QueryLinguist linguist, 
             ProjectionAffinity affinity, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
             IEnumerable<TableAlias> existingAliases)
         {
-            _language = language;
+            _linguist = linguist;
             _newAlias = newAlias;
             _existingAliases = existingAliases.ToImmutableHashSet();
             _map = new Dictionary<ColumnExpression, ColumnExpression>();
@@ -98,51 +98,51 @@ namespace IQToolkit.Entities.Translation
                 _columnNames = new HashSet<string>();
             }
 
-            _candidates = Nominator.Nominate(language, affinity, _existingAliases, expression);
+            _candidates = Nominator.Nominate(linguist, affinity, _existingAliases, expression);
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLanguage language, 
+            QueryLinguist linguist, 
             ProjectionAffinity affinity, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
             IEnumerable<TableAlias> existingAliases)
         {
-            var projector = new ColumnProjector(language, affinity, expression, existingColumns, newAlias, existingAliases);
+            var projector = new ColumnProjector(linguist, affinity, expression, existingColumns, newAlias, existingAliases);
             var expr = projector.Visit(expression);
             return new ProjectedColumns(expr, projector._columns.AsReadOnly());
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLanguage language, 
+            QueryLinguist linguist, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
             IEnumerable<TableAlias> existingAliases)
         {
-            return ProjectColumns(language, ProjectionAffinity.Client, expression, existingColumns, newAlias, existingAliases);
+            return ProjectColumns(linguist, ProjectionAffinity.Client, expression, existingColumns, newAlias, existingAliases);
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLanguage language, 
+            QueryLinguist linguist, 
             ProjectionAffinity affinity, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
             params TableAlias[] existingAliases)
         {
-            return ProjectColumns(language, affinity, expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
+            return ProjectColumns(linguist, affinity, expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLanguage language, 
+            QueryLinguist linguist, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
             params TableAlias[] existingAliases)
         {
-            return ProjectColumns(language, expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
+            return ProjectColumns(linguist, expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
         }
 
         public override Expression Visit(Expression expression)
@@ -187,7 +187,7 @@ namespace IQToolkit.Entities.Translation
                 else
                 {
                     var columnName = this.GetNextColumnName();
-                    var colType = _language.TypeSystem.GetQueryType(expression.Type);
+                    var colType = _linguist.Language.TypeSystem.GetQueryType(expression.Type);
                     _columns.Add(new ColumnDeclaration(columnName, expression, colType));
                     return new ColumnExpression(expression.Type, colType, _newAlias, columnName);
                 }
@@ -227,7 +227,7 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         private class Nominator : SqlExpressionVisitor
         {
-            private readonly QueryLanguage _language;
+            private readonly QueryLinguist _linguist;
             private readonly HashSet<Expression> _candidates;
             private readonly ProjectionAffinity _affinity;
             private readonly ImmutableHashSet<TableAlias> _validAliases;
@@ -243,11 +243,11 @@ namespace IQToolkit.Entities.Translation
             }
 
             private Nominator(
-                QueryLanguage language, 
+                QueryLinguist linguist, 
                 ProjectionAffinity affinity,
                 ImmutableHashSet<TableAlias> validAliases)
             {
-                _language = language;
+                _linguist = linguist;
                 _affinity = affinity;
                 _validAliases = validAliases;
                 _candidates = new HashSet<Expression>();
@@ -255,12 +255,12 @@ namespace IQToolkit.Entities.Translation
             }
 
             internal static HashSet<Expression> Nominate(
-                QueryLanguage language, 
+                QueryLinguist linguist, 
                 ProjectionAffinity affinity, 
                 ImmutableHashSet<TableAlias> validAliases,
                 Expression expression)
             {
-                Nominator nominator = new Nominator(language, affinity, validAliases);
+                Nominator nominator = new Nominator(linguist, affinity, validAliases);
                 nominator.Visit(expression);
                 return nominator._candidates;
             }
@@ -280,11 +280,11 @@ namespace IQToolkit.Entities.Translation
                     // not a reference to valid column
                     return State.CannotBeColumn;
                 }
-                else if (_language.MustBeColumn(expression))
+                else if (_linguist.MustBeColumn(expression))
                 {
                     return State.MustBeColumn;
                 }
-                else if (_language.CanBeColumn(expression))
+                else if (_linguist.CanBeColumn(expression))
                 {
                     return State.CanBeColumn;
                 }

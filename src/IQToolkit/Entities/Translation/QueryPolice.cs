@@ -49,10 +49,10 @@ namespace IQToolkit.Entities.Translation
             var included = expression.AddIncludedRelationships(linguist, mapper, this);
 
             // convert any singleton (1:1 or n:1) projections into server-side joins
-            var singletonsConverted = included.ConvertSingletonProjections(linguist.Language, mapper.Mapping);
+            var singletonsConverted = included.ConvertSingletonProjections(linguist, mapper.Mapping);
 
             // convert projections into client-side joins
-            var nestedConverted = singletonsConverted.ConvertNestedProjectionsToClientJoins(this.Policy, linguist.Language);
+            var nestedConverted = singletonsConverted.ConvertNestedProjectionsToClientJoins(linguist, this);
 
             return nestedConverted;
         }

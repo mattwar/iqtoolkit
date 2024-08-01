@@ -1,12 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq.Expressions;
 
 namespace IQToolkit.Entities.Translation
 {
-    using Expressions;
     using Expressions.Sql;
-    using System.Collections;
-    using System.Collections.Generic;
 
     public static class TranslationExtensions
     {
@@ -40,10 +38,12 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Converts CROSS APPLY and OUTER APPLY joins to INNER and LEFT OUTER joins.
         /// </summary>
-        public static Expression ConvertCrossApplyToInnerJoin(this Expression expression, QueryLanguage language)
+        public static Expression ConvertCrossApplyToInnerJoin(
+            this Expression expression, 
+            QueryLinguist linguist)
         {
             // simplify before attempting to convert cross applies.
-            var rewritten = new CrossApplyToLeftJoinRewriter(language).Visit(expression);
+            var rewritten = new CrossApplyToLeftJoinRewriter(linguist).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
@@ -64,9 +64,12 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// rewrites nested projections into client-side joins
         /// </summary>
-        public static Expression ConvertNestedProjectionsToClientJoins(this Expression expression, QueryPolicy policy, QueryLanguage language)
+        public static Expression ConvertNestedProjectionsToClientJoins(
+            this Expression expression, 
+            QueryLinguist linguist,
+            QueryPolice police)
         {
-            var rewritten = new ClientProjectionToClientJoinRewriter(policy, language).Visit(expression);
+            var rewritten = new ClientProjectionToClientJoinRewriter(linguist, police.Policy).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             return rewritten != expression
@@ -111,9 +114,12 @@ namespace IQToolkit.Entities.Translation
         /// Converts nested singleton projection into server-side joins
         /// </summary>
         public static Expression ConvertSingletonProjections(
-            this Expression expression, QueryLanguage language, EntityMapping mapping)
+            this Expression expression, 
+            QueryLinguist linguist, 
+            EntityMapping mapping)
         {
-            var rewritten = new SingletonProjectionRewriter(language).Visit(expression);
+            var rewritten = new SingletonProjectionRewriter(linguist).Visit(expression);
+
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             if (rewritten != expression)

@@ -13,9 +13,9 @@ namespace IQToolkit.TSql
     using Expressions.Sql;
 
     /// <summary>
-    /// Microsoft Transact SQL (TSQL) <see cref="QueryFormatter"/>
+    /// Microsoft Transact SQL (TSQL) formatter.
     /// </summary>
-    public class TSqlFormatter : QueryFormatter
+    public class TSqlFormatter
     {
         protected TSqlFormatter()
         {
@@ -24,13 +24,15 @@ namespace IQToolkit.TSql
         public static readonly TSqlFormatter Singleton =
             new TSqlFormatter();
 
-        public override FormattedQuery Format(Expression expression, FormattingOptions? options = null)
+        public FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
         {
             var writer = new StringWriter();
             var parameters = new List<Expression>();
             var diagnostics = new List<Diagnostic>();
+
             var visitor = new TSqlFormatterVisitor(options, writer, parameters, diagnostics);
             visitor.Visit(expression);
+
             return new FormattedQuery(
                 writer.ToString(),
                 parameters,
@@ -41,7 +43,7 @@ namespace IQToolkit.TSql
         public class TSqlFormatterVisitor : AnsiSql.AnsiSqlFormatter.SqlFormatterVisitor
         {
             public TSqlFormatterVisitor(
-                FormattingOptions? options,
+                QueryOptions? options,
                 StringWriter writer,
                 List<Expression> parameters,
                 List<Diagnostic> diagnostics)
@@ -640,114 +642,93 @@ namespace IQToolkit.TSql
 
             protected override void VisitIfCommand(IfCommand ifx)
             {
-                if (this.Language.AllowsMultipleCommands)
+                this.WriteLine();
+                this.Write("IF ");
+                this.WritePredicate(ifx.Test);
+
+                this.WriteLine();
+                this.Write("BEGIN");
+                this.WriteIndented(() =>
                 {
                     this.WriteLine();
-                    this.Write("IF ");
-                    this.WritePredicate(ifx.Test);
+                    this.VisitStatement(ifx.IfTrue);
+                });
 
-                    this.WriteLine();
-                    this.Write("BEGIN");
+                if (ifx.IfFalse != null)
+                {
+                    this.Write("END ELSE BEGIN");
                     this.WriteIndented(() =>
                     {
                         this.WriteLine();
-                        this.VisitStatement(ifx.IfTrue);
+                        this.VisitStatement(ifx.IfFalse);
                     });
-
-                    if (ifx.IfFalse != null)
-                    {
-                        this.Write("END ELSE BEGIN");
-                        this.WriteIndented(() =>
-                        {
-                            this.WriteLine();
-                            this.VisitStatement(ifx.IfFalse);
-                        });
-                    }
-
-                    this.WriteLine();
-                    this.Write("END");
                 }
-                else
-                {
-                    base.VisitIfCommand(ifx);
-                }
+
+                this.WriteLine();
+                this.Write("END");
             }
 
             protected override void VisitBlockCommand(BlockCommand block)
             {
-                if (this.Language.AllowsMultipleCommands)
-                {
-                    this.WriteBlankLineSeparated(
-                        block.Commands,
-                        command => this.VisitStatement(command)
-                        );
-                }
-                else
-                {
-                    base.VisitBlockCommand(block);
-                }
+                this.WriteBlankLineSeparated(
+                    block.Commands,
+                    command => this.VisitStatement(command)
+                    );
             }
 
             protected override void VisitDeclarationCommand(DeclarationCommand decl)
             {
-                if (this.Language.AllowsMultipleCommands)
+                this.WriteLineSeparated(
+                    decl.Variables,
+                    variable =>
+                    {
+                        this.Write("DECLARE ");
+                        this.WriteVariableName(variable.Name);
+                        this.Write(" ");
+                        this.Write(this.Language.TypeSystem.Format(variable.QueryType, false));
+                    });
+
+                if (decl.Source != null)
+                {
+                    this.WriteLine();
+                    this.Write("SELECT ");
+                    this.WriteCommaSeparated(
+                        decl.Variables,
+                        variable =>
+                        {
+                            this.WriteVariableName(variable.Name);
+                            this.Write(" = ");
+                            this.WriteValue(variable.Expression);
+                        });
+
+                    if (decl.Source.From != null)
+                    {
+                        this.WriteLine();
+                        this.Write("FROM ");
+                        this.WriteIndented(() =>
+                            this.WriteSource(decl.Source.From)
+                            );
+                    }
+
+                    if (decl.Source.Where != null)
+                    {
+                        this.WriteLine();
+                        this.Write("WHERE ");
+                        this.WriteIndented(() => 
+                            this.WritePredicate(decl.Source.Where));
+                    }
+                }
+                else
                 {
                     this.WriteLineSeparated(
                         decl.Variables,
                         variable =>
                         {
-                            this.Write("DECLARE ");
+                            this.Write("SET ");
                             this.WriteVariableName(variable.Name);
-                            this.Write(" ");
-                            this.Write(this.Language.TypeSystem.Format(variable.QueryType, false));
+                            this.Write(" = ");
+                            this.Visit(variable.Expression);
                         });
-
-                    if (decl.Source != null)
-                    {
-                        this.WriteLine();
-                        this.Write("SELECT ");
-                        this.WriteCommaSeparated(
-                            decl.Variables,
-                            variable =>
-                            {
-                                this.WriteVariableName(variable.Name);
-                                this.Write(" = ");
-                                this.WriteValue(variable.Expression);
-                            });
-
-                        if (decl.Source.From != null)
-                        {
-                            this.WriteLine();
-                            this.Write("FROM ");
-                            this.WriteIndented(() =>
-                                this.WriteSource(decl.Source.From)
-                                );
-                        }
-
-                        if (decl.Source.Where != null)
-                        {
-                            this.WriteLine();
-                            this.Write("WHERE ");
-                            this.WriteIndented(() => 
-                                this.WritePredicate(decl.Source.Where));
-                        }
-                    }
-                    else
-                    {
-                        this.WriteLineSeparated(
-                            decl.Variables,
-                            variable =>
-                            {
-                                this.Write("SET ");
-                                this.WriteVariableName(variable.Name);
-                                this.Write(" = ");
-                                this.Visit(variable.Expression);
-                            });
-                    }
-                }
-                else
-                {
-                    base.VisitDeclarationCommand(decl);
                 }
             }
         }

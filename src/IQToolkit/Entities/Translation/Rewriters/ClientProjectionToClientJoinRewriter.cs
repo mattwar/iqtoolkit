@@ -17,17 +17,17 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class ClientProjectionToClientJoinRewriter : SqlExpressionVisitor
     {
+        private readonly QueryLinguist _linguist;
         private readonly QueryPolicy _policy;
-        private readonly QueryLanguage _language;
         private bool _isTopLevel = true;
         private SelectExpression? _currentSelect;
         private MemberInfo? _currentMember;
         private bool _canJoinOnClient = true;
 
-        public ClientProjectionToClientJoinRewriter(QueryPolicy policy, QueryLanguage language)
+        public ClientProjectionToClientJoinRewriter(QueryLinguist linguist, QueryPolicy policy)
         {
+            _linguist = linguist;
             _policy = policy;
-            _language = language;
         }
 
         private readonly Dictionary<Expression, MemberInfo> _matchingMembers =
@@ -89,13 +89,13 @@ namespace IQToolkit.Entities.Translation
                         var newInnerSelect = proj.Select.RemapTableAliases(newOuterSelect.Alias, previousSelect.Alias);
                         
                         // add outer-join test
-                        var newInnerProjection = _language.AddOuterJoinTest(new ClientProjectionExpression(newInnerSelect, proj.Projector));
+                        var newInnerProjection = _linguist.AddOuterJoinTest(new ClientProjectionExpression(newInnerSelect, proj.Projector));
                         newInnerSelect = newInnerProjection.Select;
 
                         var newProjector = newInnerProjection.Projector;
 
                         var newAlias = new TableAlias();
-                        var pc = ColumnProjector.ProjectColumns(_language, newProjector, null, newAlias, newOuterSelect.Alias, newInnerSelect.Alias);
+                        var pc = ColumnProjector.ProjectColumns(_linguist, newProjector, null, newAlias, newOuterSelect.Alias, newInnerSelect.Alias);
 
                         var join = new JoinExpression(JoinType.OuterApply, newOuterSelect, newInnerSelect, null);
                         var joinedSelect = new SelectExpression(newAlias, pc.Columns, join, null, null, null, proj.IsSingleton, null, null, false);

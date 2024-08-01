@@ -55,7 +55,7 @@ namespace IQToolkit.Entities.Translation
             var table = new TableExpression(tableAlias, entity, _mapping.GetTableName(entity));
 
             Expression projector = this.GetEntityExpression(table, entity, linguist, police);
-            var pc = ColumnProjector.ProjectColumns(linguist.Language, projector, null, selectAlias, tableAlias);
+            var pc = ColumnProjector.ProjectColumns(linguist, projector, null, selectAlias, tableAlias);
 
             var proj = new ClientProjectionExpression(
                 new SelectExpression(selectAlias, pc.Columns, table, null),
@@ -351,7 +351,7 @@ namespace IQToolkit.Entities.Translation
                 }
 
                 TableAlias newAlias = new TableAlias();
-                var pc = ColumnProjector.ProjectColumns(linguist.Language, projection.Projector, null, newAlias, projection.Select.Alias);
+                var pc = ColumnProjector.ProjectColumns(linguist, projection.Projector, null, newAlias, projection.Select.Alias);
 
                 var aggregator = Aggregator.GetAggregator(TypeHelper.GetMemberType(member), typeof(IEnumerable<>).MakeGenericType(pc.Projector.Type));
                 var result = new ClientProjectionExpression(
@@ -448,7 +448,7 @@ namespace IQToolkit.Entities.Translation
                 if (map == null || !generatedIds.Any(m => map.ContainsKey(m)))
                 {
                     var localMap = new Dictionary<MemberInfo, Expression>();
-                    genIdCommand = this.GetGeneratedIdCommand(entity, generatedIds.ToList(), localMap, linguist.Language);
+                    genIdCommand = this.GetGeneratedIdCommand(entity, generatedIds.ToList(), localMap, linguist);
                     map = localMap;
                 }
 
@@ -489,7 +489,7 @@ namespace IQToolkit.Entities.Translation
             var typeProjector = this.GetEntityExpression(tex, entity, linguist, police);
             var selection = selector.Body.Replace(selector.Parameters[0], typeProjector);
             var newAlias = new TableAlias();
-            var pc = ColumnProjector.ProjectColumns(linguist.Language, selection, null, newAlias, tableAlias);
+            var pc = ColumnProjector.ProjectColumns(linguist, selection, null, newAlias, tableAlias);
             var pe = new ClientProjectionExpression(
                 new SelectExpression(newAlias, pc.Columns, tex, where),
                 pc.Projector,
@@ -508,7 +508,7 @@ namespace IQToolkit.Entities.Translation
             MappingEntity entity, 
             List<MemberInfo> members, 
             Dictionary<MemberInfo, Expression> map,
-            QueryLanguage language)
+            QueryLinguist linguist)
         {
             var columns = new List<ColumnDeclaration>();
             var decls = new List<VariableDeclaration>();
@@ -516,9 +516,9 @@ namespace IQToolkit.Entities.Translation
 
             foreach (var member in members)
             {
-                var genId = language.GetGeneratedIdExpression(member);
+                var genId = linguist.GetGeneratedIdExpression(member);
                 var name = member.Name;
-                var colType = this.GetColumnType(entity, member, language);
+                var colType = this.GetColumnType(entity, member, linguist.Language);
                 
                 columns.Add(new ColumnDeclaration(member.Name, genId, colType));
                 decls.Add(new VariableDeclaration(member.Name, colType, new ColumnExpression(genId.Type, colType, alias, member.Name)));
@@ -611,7 +611,7 @@ namespace IQToolkit.Entities.Translation
                 return new BlockCommand(
                     update,
                     new IfCommand(
-                        linguist.Language.GetRowsAffectedExpression(update).GreaterThan(Expression.Constant(0)),
+                        linguist.GetRowsAffectedExpression(update).GreaterThan(Expression.Constant(0)),
                         this.GetUpdateResult(entity, instance, selector, linguist, police),
                         @else
                         )
@@ -622,7 +622,7 @@ namespace IQToolkit.Entities.Translation
                 return new BlockCommand(
                     update,
                     new IfCommand(
-                        linguist.Language.GetRowsAffectedExpression(update).LessThanOrEqual(Expression.Constant(0)),
+                        linguist.GetRowsAffectedExpression(update).LessThanOrEqual(Expression.Constant(0)),
                         @else,
                         null
                         )
@@ -645,7 +645,7 @@ namespace IQToolkit.Entities.Translation
             var where = this.GetIdentityCheck(tq.Select, entity, instance, linguist, police);
             var selection = selector.Body.Replace(selector.Parameters[0], tq.Projector);
             var newAlias = new TableAlias();
-            var pc = ColumnProjector.ProjectColumns(linguist.Language, selection, null, newAlias, tq.Select.Alias);
+            var pc = ColumnProjector.ProjectColumns(linguist, selection, null, newAlias, tq.Select.Alias);
 
             return new ClientProjectionExpression(
                 new SelectExpression(newAlias, pc.Columns, tq.Select, where),

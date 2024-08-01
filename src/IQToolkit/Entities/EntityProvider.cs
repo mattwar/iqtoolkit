@@ -4,22 +4,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using IQToolkit.Expressions;
 
 namespace IQToolkit.Entities
 {
     using Factories;
     using Mapping;
-    using Translation;
     using Utils;
 
     /// <summary>
-    /// A base type for LINQ IQueryable query providers that executes translated queries against a database.
+    /// An abstract base for an implementation of <see cref="IEntityProvider"/>
     /// </summary>
-    public class EntityProvider : QueryProvider, IEntityProvider, IHaveExecutor
+    public class EntityProvider : QueryProvider, IEntityProvider
     {
         /// <summary>
         /// The <see cref="QueryLanguage"/> used by the provider.
@@ -51,15 +47,21 @@ namespace IQToolkit.Entities
         /// </summary>
         public QueryCache? Cache { get; }
 
+        /// <summary>
+        /// The <see cref="QueryOptions"/> used.
+        /// </summary>
+        public QueryOptions Options { get; }
+
         private readonly Dictionary<MappingEntity, IEntityTable> _entityToEntityTableMap;
 
-        public EntityProvider(
+        protected EntityProvider(
             QueryExecutor executor,
             QueryLanguage? language,
             EntityMapping? mapping,
             QueryPolicy? policy,
-            TextWriter? log = null,
-            QueryCache? cache = null)
+            TextWriter? log,
+            QueryCache? cache,
+            QueryOptions? options)
         {
             this.Language = language ?? AnsiSql.AnsiSqlLanguage.Singleton;
             this.Mapping = mapping ?? new AttributeEntityMapping();
@@ -67,35 +69,10 @@ namespace IQToolkit.Entities
             this.Executor = executor;
             this.Log = log;
             this.Cache = cache;
+            this.Options = options ?? QueryOptions.Default;
 
             _entityToEntityTableMap = new Dictionary<MappingEntity, IEntityTable>();
         }
-
-        /// <summary>
-        /// Creates an <see cref="EntityProvider"/> for the connection string.
-        /// </summary>
-        public static EntityProvider CreateForConnection(string connectionString) =>
-            EntityProviderFactoryRegistry.Singleton.CreateProviderForConnection(connectionString);
-
-        /// <summary>
-        /// Creates an <see cref="EntityProvider"/> for the file path.
-        /// </summary>
-        public static EntityProvider CreateForFilePath(string filePath) =>
-            EntityProviderFactoryRegistry.Singleton.CreateProviderForFilePath(filePath);
-
-        /// <summary>
-        /// Creates an <see cref="EntityProvider"/> for the connection string, 
-        /// if the connection string is compatible.
-        /// </summary>
-        public static bool TryCreateForConnection(string connectionString, out EntityProvider provider) =>
-            EntityProviderFactoryRegistry.Singleton.TryCreateProviderForConnection(connectionString, out provider);
-
-        /// <summary>
-        /// Creates an <see cref="EntityProvider"/> for the file path, 
-        /// if the file path is compatible.
-        /// </summary>
-        public static bool TryCreateForFilePath(string filePath, out EntityProvider provider) =>
-            EntityProviderFactoryRegistry.Singleton.TryCreateProviderForFilePath(filePath, out provider);
 
         /// <summary>
         /// Creates a new <see cref="EntityProvider"/> with the <see cref="Executor"/> property assigned.
@@ -115,21 +92,11 @@ namespace IQToolkit.Entities
         public EntityProvider WithMapping(EntityMapping mapping) =>
             With(mapping: mapping);
 
-        IEntityProvider IEntityProvider.WithMapping(EntityMapping mapping) =>
-            this.WithMapping(mapping);
-
-        EntityMapping IEntityProvider.Mapping => this.Mapping;
-
         /// <summary>
         /// Creates a new <see cref="EntityProvider"/> with the <see cref="Policy"/> property assigned.
         /// </summary>
         public EntityProvider WithPolicy(QueryPolicy policy) =>
             With(policy: policy);
-
-        QueryPolicy IEntityProvider.Policy => this.Policy;
-
-        IEntityProvider IEntityProvider.WithPolicy(QueryPolicy policy) =>
-            this.WithPolicy(policy);
 
         /// <summary>
         /// Creates a new <see cref="EntityProvider"/> with the <see cref="Log"/> property assigned.
@@ -143,15 +110,42 @@ namespace IQToolkit.Entities
         public EntityProvider WithCache(QueryCache? cache) =>
             With(cache: cache);
 
+        /// <summary>
+        /// Creates a new <see cref="EntityProvider"/> with the <see cref="Option"/> property assigned.
+        /// </summary>
+        public EntityProvider WithOptions(QueryOptions options) =>
+            With(options: options);
+
+        #region IEntityProvider
+        IEntityProvider IEntityProvider.WithLanguage(QueryLanguage language) =>
+            With(language: language);
+
+        IEntityProvider IEntityProvider.WithMapping(EntityMapping mapping) =>
+            With(mapping: mapping);
+
+        IEntityProvider IEntityProvider.WithPolicy(QueryPolicy policy) =>
+            With(policy: policy);
+
+        IEntityProvider IEntityProvider.WithLog(TextWriter? log) =>
+            With(log: log);
+
+        IEntityProvider IEntityProvider.WithCache(QueryCache? cache) =>
+            With(cache: cache);
+
+        IEntityProvider IEntityProvider.WithOptions(QueryOptions options) =>
+            With(options: options);
+        #endregion
+
         protected virtual EntityProvider Construct(
             QueryExecutor executor,
             QueryLanguage language,
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
         {
-            return new EntityProvider(executor, language, mapping, policy, log, cache);
+            return new EntityProvider(executor, language, mapping, policy, log, cache, options);
         }
 
         protected virtual EntityProvider With(
@@ -160,7 +154,8 @@ namespace IQToolkit.Entities
             QueryPolicy? policy = null,
             QueryExecutor? executor = null,
             Optional<TextWriter?> log = default,
-            Optional<QueryCache?> cache = default)
+            Optional<QueryCache?> cache = default,
+            QueryOptions? options = null)
         {
             var newLanguage = language ?? this.Language;
             var newMapping = mapping ?? this.Mapping;
@@ -168,12 +163,14 @@ namespace IQToolkit.Entities
             var newExecutor = executor ?? this.Executor;
             var newLog = log.HasValue ? log.Value : this.Log;
             var newCache = cache.HasValue ? cache.Value : this.Cache;
+            var newOptions = options ?? this.Options;
 
             if (newLanguage != this.Language
                 || newMapping != this.Mapping
                 || newPolicy != this.Policy
                 || newLog != this.Log
-                || newCache != this.Cache)
+                || newCache != this.Cache
+                || newOptions != this.Options)
             {
                 return Construct(
                     newExecutor.WithLog(newLog),
@@ -181,7 +178,8 @@ namespace IQToolkit.Entities
                     newMapping,
                     newPolicy,
                     newLog,
-                    newCache
+                    newCache,
+                    newOptions
                     );
             }
 
@@ -272,51 +270,6 @@ namespace IQToolkit.Entities
             }
         }
 
-        protected virtual QueryLinguist CreateLinguist()
-        {
-            if (this.Language is IHaveLinguist clt)
-                return clt.Linguist;
-
-            return new QueryLinguist(this.Language);
-        }
-
-        protected virtual QueryMapper CreateMapper()
-        {
-            if (this.Mapping is IHaveMapper cmt)
-                return cmt.Mapper;
-
-            if (this.Mapping is AdvancedEntityMapping advMapping)
-            {
-                return new AdvancedMapper(advMapping);
-            }
-            else if (this.Mapping is BasicEntityMapping basicMapping)
-            {
-                return new BasicMapper(basicMapping);
-            }
-            else
-            {
-                // TODO: create unknown mapping translator...
-                throw new InvalidOperationException(
-                    string.Format("Unhandled mapping kind: {0}", this.Mapping.GetType().Name)
-                    );
-            }
-        }
-
-        protected virtual QueryPolice CreatePolice()
-        {
-            if (this.Policy is IHavePolice cpt)
-                return cpt.Police;
-
-            if (this.Policy is EntityPolicy entityPolicy)
-            {
-                return new EntityPolice(entityPolicy);
-            }
-            else
-            {
-                return new QueryPolice(this.Policy);
-            }
-        }
-
         /// <summary>
         /// Execute the query expression and return the result.
         /// This API will cause the connection to be opened, and then closed after the action is complete.
@@ -330,7 +283,7 @@ namespace IQToolkit.Entities
                 return this.Cache.Execute(expression);
             }
 
-            var plan = this.GetExecutionPlan(expression);
+            var plan = this.GetQueryPlan(expression);
             Console.WriteLine(plan.QueryText);
             return this.ExecutePlan(plan);
         }
@@ -371,70 +324,39 @@ namespace IQToolkit.Entities
         }
 
         /// <summary>
-        /// Gets the execution plan for the query expression.
+        /// Gets the query plan for the query.
         /// </summary>
-        public virtual QueryPlan GetExecutionPlan(Expression query)
+        public virtual QueryPlan GetQueryPlan(Expression query)
         {
-            // remove possible lambda and add back later
-            var lambda = query as LambdaExpression;
-            if (lambda != null)
-                query = lambda.Body;
-
-            var linguist = this.CreateLinguist();
-            var mapper = this.CreateMapper();
-            var police = this.CreatePolice();
-
-            // translate query into client & server parts
-
-            // pre-evaluate local sub-trees
-            var evaluated = PartialEvaluator.Eval(query, mapper.Mapping.CanBeEvaluatedLocally);
-
-            // convert LINQ operators to SqlExpressions (with initial mapping & policy)
-            var sqlized = evaluated.ConvertLinqOperatorToSqlExpressions(linguist, mapper, police);
-
-            var mapped = mapper.Apply(sqlized, linguist, police);
-            var policed = police.Apply(mapped, linguist, mapper);
-            var translation = linguist.Apply(policed, mapper, police);
-
-            var parameters = lambda?.Parameters;
-            var provider = this.Find(query, parameters, typeof(EntityProvider));
-            if (provider == null)
-            {
-                var rootQueryable = this.Find(query, parameters, typeof(IQueryable));
-                var providerProperty = typeof(IQueryable).GetProperty("Provider", BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-                provider = Expression.Property(rootQueryable, providerProperty);
-            }
-
-            // add back lambda
-            if (lambda != null)
-                translation = lambda.Update(lambda.Type, translation, lambda.Parameters);
-
-            // build the plan
-            return QueryPlanBuilder.Build(
-                this.Language,
-                this.Policy,
-                this.FormattingOptions,
-                translation, 
-                provider
-                );
+            return this.Language.GetQueryPlan(query, this);
         }
 
-        protected virtual FormattingOptions FormattingOptions =>
-            FormattingOptions.Default;
+        #region Factory Nonsense
+        /// <summary>
+        /// Creates an <see cref="EntityProvider"/> for the connection string.
+        /// </summary>
+        public static IEntityProvider CreateForConnection(string connectionString) =>
+            EntityProviderFactoryRegistry.Singleton.CreateProviderForConnection(connectionString);
 
         /// <summary>
-        /// Find the expression of the specified type, either in the specified expression or parameters.
+        /// Creates an <see cref="EntityProvider"/> for the file path.
         /// </summary>
-        private Expression? Find(Expression expression, IReadOnlyList<ParameterExpression>? parameters, Type type)
-        {
-            if (parameters != null)
-            {
-                Expression found = parameters.FirstOrDefault(p => type.IsAssignableFrom(p.Type));
-                if (found != null)
-                    return found;
-            }
+        public static IEntityProvider CreateForFilePath(string filePath) =>
+            EntityProviderFactoryRegistry.Singleton.CreateProviderForFilePath(filePath);
 
-            return expression.FindFirstUpOrDefault(expr => type.IsAssignableFrom(expr.Type));
-        }
+        /// <summary>
+        /// Creates an <see cref="EntityProvider"/> for the connection string, 
+        /// if the connection string is compatible.
+        /// </summary>
+        public static bool TryCreateForConnection(string connectionString, out IEntityProvider provider) =>
+            EntityProviderFactoryRegistry.Singleton.TryCreateProviderForConnection(connectionString, out provider);
+
+        /// <summary>
+        /// Creates an <see cref="EntityProvider"/> for the file path, 
+        /// if the file path is compatible.
+        /// </summary>
+        public static bool TryCreateForFilePath(string filePath, out IEntityProvider provider) =>
+            EntityProviderFactoryRegistry.Singleton.TryCreateProviderForFilePath(filePath, out provider);
+        #endregion
     }
 }

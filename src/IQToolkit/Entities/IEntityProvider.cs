@@ -2,7 +2,7 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -30,14 +30,49 @@ namespace IQToolkit.Entities
         IEntityTable GetTable(Type entityType, string? entityId = null);
 
         /// <summary>
-        /// The current mapping used by the provider.
+        /// The <see cref="QueryLanguage"/>.
+        /// </summary>
+        public QueryLanguage Language { get; }
+
+        /// <summary>
+        /// The <see cref="EntityMapping"/>.
         /// </summary>
         public EntityMapping Mapping { get; }
 
         /// <summary>
-        /// The current policy used by the provider.
+        /// The <see cref="QueryPolicy"/>.
         /// </summary>
         public QueryPolicy Policy { get; }
+
+        /// <summary>
+        /// The <see cref="QueryExecutor"/> that executes the queries.
+        /// </summary>
+        public QueryExecutor Executor { get; }
+
+        /// <summary>
+        /// The <see cref="TextWriter"/> used for logging messages.
+        /// </summary>
+        public TextWriter? Log { get; }
+
+        /// <summary>
+        /// The <see cref="QueryCache"/> used to cache queries.
+        /// </summary>
+        public QueryCache? Cache { get; }
+
+        /// <summary>
+        /// The <see cref="QueryOptions"/>.
+        /// </summary>
+        public QueryOptions Options { get; }
+
+        /// <summary>
+        /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Language"/> property assigned.
+        /// </summary>
+        public IEntityProvider WithLanguage(QueryLanguage language);
+
+        /// <summary>
+        /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Mapping"/> property assigned.
+        /// </summary>
+        public IEntityProvider WithMapping(EntityMapping mapping);
 
         /// <summary>
         /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Policy"/> property assigned.
@@ -45,9 +80,19 @@ namespace IQToolkit.Entities
         public IEntityProvider WithPolicy(QueryPolicy policy);
 
         /// <summary>
-        /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Mapping"/> property assigned.
+        /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Log"/> property assigned.
         /// </summary>
-        public IEntityProvider WithMapping(EntityMapping mapping);
+        public IEntityProvider WithLog(TextWriter? log);
+
+        /// <summary>
+        /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Cache"/> property assigned.
+        /// </summary>
+        public IEntityProvider WithCache(QueryCache? cache);
+
+        /// <summary>
+        /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Options"/> property assigned.
+        /// </summary>
+        public IEntityProvider WithOptions(QueryOptions options);
 
         /// <summary>
         /// True if the expression can be evaluated locally (client-side)
@@ -65,9 +110,9 @@ namespace IQToolkit.Entities
         object? ExecutePlan(QueryPlan plan);
 
         /// <summary>
-        /// Gets the execution plan for the query expression,
+        /// Gets the query plan for executing the query expression,
         /// including the translated queries.
         /// </summary>
-        QueryPlan GetExecutionPlan(Expression expression);
+        QueryPlan GetQueryPlan(Expression expression);
     }
 }

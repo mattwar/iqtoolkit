@@ -2,7 +2,6 @@
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
 using System;
-using System.Data;
 using System.Data.Odbc;
 using System.IO;
 
@@ -12,7 +11,7 @@ namespace IQToolkit.Odbc
     using Entities.Data;
 
     /// <summary>
-    /// A base <see cref="DbEntityProvider"/> for OLEDB database providers
+    /// A entity provider for ODBC drivers.
     /// </summary>
     public class OdbcEntityProvider : DbEntityProvider
     {
@@ -22,21 +21,23 @@ namespace IQToolkit.Odbc
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
             : base(
                   executor,
                   language,
                   mapping,
                   policy,
                   log,
-                  cache)
+                  cache,
+                  (options ?? QueryOptions.Default).WithIsOdbc(true))
         {
         }
 
         public OdbcEntityProvider(
             OdbcQueryExecutor executor,
             QueryLanguage? language = null)
-            : this(executor, language, null, null, null, null)
+            : this(executor, language, null, null, null, null, null)
         {
         }
 
@@ -68,13 +69,17 @@ namespace IQToolkit.Odbc
         public new OdbcEntityProvider WithCache(QueryCache? cache) =>
             (OdbcEntityProvider)With(cache: cache);
 
+        public new OdbcEntityProvider WithOptions(QueryOptions options) =>
+            (OdbcEntityProvider)With(options: options);
+
         protected override EntityProvider Construct(
             QueryExecutor executor,
             QueryLanguage language,
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
         {
             return new OdbcEntityProvider(
                 (OdbcQueryExecutor)executor, 
@@ -82,11 +87,9 @@ namespace IQToolkit.Odbc
                 mapping, 
                 policy, 
                 log, 
-                cache
+                cache,
+                options
                 );
         }
-
-        protected override FormattingOptions FormattingOptions { get; } =
-            FormattingOptions.Default.WithIsOdbc(true);
     }
 }

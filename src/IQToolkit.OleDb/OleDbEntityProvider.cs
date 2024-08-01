@@ -11,7 +11,7 @@ namespace IQToolkit.OleDb
     using Entities.Data;
 
     /// <summary>
-    /// A base <see cref="DbEntityProvider"/> for OLEDB database providers
+    /// An entity provider for OLEDB providers.
     /// </summary>
     public class OleDbEntityProvider : DbEntityProvider
     {
@@ -21,21 +21,23 @@ namespace IQToolkit.OleDb
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
             : base(
                   executor,
                   language,
                   mapping,
                   policy,
                   log,
-                  cache)
+                  cache,
+                  options)
         {
         }
 
         public OleDbEntityProvider(
             OleDbQueryExecutor executor,
             QueryLanguage language)
-            : this(executor, language, null, null, null, null)
+            : this(executor, language, null, null, null, null, null)
         {
         }
 
@@ -67,13 +69,17 @@ namespace IQToolkit.OleDb
         public new OleDbEntityProvider WithCache(QueryCache? cache) =>
             (OleDbEntityProvider)With(cache: cache);
 
+        public new OleDbEntityProvider WithOptions(QueryOptions options) =>
+            (OleDbEntityProvider)With(options: options);
+
         protected override EntityProvider Construct(
             QueryExecutor executor,
             QueryLanguage language,
             EntityMapping? mapping,
             QueryPolicy? policy,
             TextWriter? log,
-            QueryCache? cache)
+            QueryCache? cache,
+            QueryOptions? options)
         {
             return new OleDbEntityProvider(
                 (OleDbQueryExecutor)executor, 
@@ -81,7 +87,8 @@ namespace IQToolkit.OleDb
                 mapping, 
                 policy, 
                 log, 
-                cache
+                cache,
+                options
                 );
         }
     }

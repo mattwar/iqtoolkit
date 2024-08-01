@@ -8,12 +8,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace IQToolkit.Entities
+namespace IQToolkit.Entities.Translation
 {
     using Expressions;
     using Expressions.Sql;
     using Mapping;
-    using Translation;
     using Utils;
 
     /// <summary>
@@ -23,11 +22,9 @@ namespace IQToolkit.Entities
     public class QueryPlanBuilder
     {
         public static QueryPlan Build(
-            QueryLanguage language,
-            QueryPolicy policy,
-            FormattingOptions formattingOptions,
-            Expression query,
-            Expression provider)
+            IEntityProvider provider,
+            QueryLinguist linguist,
+            Expression query)
         {
             // remove possible lambda and add back later
             var lambda = query as LambdaExpression;
@@ -36,10 +33,11 @@ namespace IQToolkit.Entities
 
             // add executor parameter
             var executorParam = Expression.Parameter(typeof(QueryExecutor), "executor");
-            var initializer = Expression.Property(Expression.Convert(provider, typeof(IHaveExecutor)), "Executor");
+            var initializer = Expression.Constant(provider.Executor, typeof(QueryExecutor));
+           
 
             var diagnostics = new List<Diagnostic>();
-            var builder = new Builder(language, policy, formattingOptions, executorParam, diagnostics);
+            var builder = new Builder(linguist, provider.Policy, provider.Options, executorParam, diagnostics);
 
             // add parameters & values for top level lambda
             builder.AddExecutorParameter(executorParam, initializer);
@@ -55,10 +53,10 @@ namespace IQToolkit.Entities
 
         private class Builder : SqlExpressionVisitor
         {
-            private readonly QueryLanguage _language;
+            private readonly QueryLinguist _linguist;
             private readonly QueryPolicy _policy;
-            private readonly FormattingOptions _formattingOptions;
-            private readonly ParameterExpression _executor;
+            private readonly QueryOptions _options;
+            private readonly ParameterExpression _executorParameter;
             private readonly List<Diagnostic> _diagnostics;
             private Scope? _scope;
             private bool _isTop = true;
@@ -69,17 +67,17 @@ namespace IQToolkit.Entities
             private Dictionary<string, Expression> _variableMap = new Dictionary<string, Expression>();
 
             public Builder(
-                QueryLanguage language,
+                QueryLinguist linguist,
                 QueryPolicy policy,
-                FormattingOptions formattingOptions,
+                QueryOptions options,
                 ParameterExpression executor,
                 List<Diagnostic> diagnostics
                 )
             {
-                _language = language;
+                _linguist = linguist;
                 _policy = policy;
-                _formattingOptions = formattingOptions;
-                _executor = executor;
+                _options = options;
+                _executorParameter = executor;
                 _variables = new List<ParameterExpression>();
                 _initializers = new List<Expression>();
                 _diagnostics = diagnostics;
@@ -135,7 +133,7 @@ namespace IQToolkit.Entities
 
             private Expression BuildInner(Expression expression)
             {
-                var eb = new Builder(_language, _policy, _formattingOptions, _executor, _diagnostics);
+                var eb = new Builder(_linguist, _policy, _options, _executorParameter, _diagnostics);
                 eb._scope = _scope;
                 eb._receivingMember = _receivingMember;
                 eb._nReaders = _nReaders;
@@ -249,7 +247,7 @@ namespace IQToolkit.Entities
                         );
                 }
 
-                return _language.Parameterize(expression);
+                return _linguist.Parameterize(expression);
             }
 
             private Expression GetProjectionExecutor(ClientProjectionExpression projection, bool okayToDefer)
@@ -269,21 +267,22 @@ namespace IQToolkit.Entities
             }
 
             private void GetQueryCommandAndValues(
-                Expression expression, 
+                SqlExpression expression, 
                 out Expression command,
                 out IReadOnlyList<Expression> values)
             {
-
-                var formatted = _language.Formatter.Format(expression, _formattingOptions);
+                var formatted = _linguist.Format(expression, _options);
                 if (formatted.Diagnostics.Count > 0)
                     _diagnostics.AddRange(formatted.Diagnostics);
 
                 var commandText = formatted.Text;
 
-                var clientParameters = formatted.ParameterReferences.OfType<ClientParameterExpression>().ToList();
+                var clientParameters = formatted.ParameterReferences
+                    .OfType<ClientParameterExpression>()
+                    .ToList();
 
                 // ODBC needs each reference to be a separate parameter.
-                if (!_formattingOptions.IsOdbc)
+                if (!_options.IsOdbc())
                     clientParameters = clientParameters.DistinctBy(cp => cp.Name).ToList();
                 
                 var parameters = clientParameters
@@ -320,7 +319,7 @@ namespace IQToolkit.Entities
                     : "Execute";
 
                 // call low-level execute directly on supplied DbQueryProvider
-                Expression result = Expression.Call(_executor, methExecute, new Type[] { projector.Body.Type },
+                Expression result = Expression.Call(_executorParameter, methExecute, new Type[] { projector.Body.Type },
                     command,
                     projector,
                     Expression.Constant(entity, typeof(MappingEntity)),
@@ -338,7 +337,7 @@ namespace IQToolkit.Entities
 
             protected internal override Expression VisitBatch(BatchExpression batch)
             {
-                if (_language.AllowsMultipleCommands 
+                if (_linguist.AllowsMultipleCommands 
                     || !IsMultipleCommands(batch.Operation.Body as CommandExpression))
                 {
                     return this.BuildExecuteBatch(batch);
@@ -355,7 +354,7 @@ namespace IQToolkit.Entities
             protected virtual Expression BuildExecuteBatch(BatchExpression batch)
             {
                 // parameterize query
-                var operation = this.Parameterize(batch.Operation.Body);
+                var operation = (SqlExpression)this.Parameterize(batch.Operation.Body);
 
                 GetQueryCommandAndValues(operation, out var command, out var values);
                 
@@ -383,7 +382,7 @@ namespace IQToolkit.Entities
 
                     var entity = projection.Projector.FindFirstDownOrDefault<EntityExpression>()?.Entity;
 
-                    plan = Expression.Call(_executor, "ExecuteBatch", new Type[] { projector.Body.Type },
+                    plan = Expression.Call(_executorParameter, "ExecuteBatch", new Type[] { projector.Body.Type },
                         command,
                         paramSets,
                         projector,
@@ -394,7 +393,7 @@ namespace IQToolkit.Entities
                 }
                 else
                 {
-                    plan = Expression.Call(_executor, "ExecuteBatch", null,
+                    plan = Expression.Call(_executorParameter, "ExecuteBatch", null,
                         command,
                         paramSets,
                         batch.BatchSize,
@@ -452,7 +451,7 @@ namespace IQToolkit.Entities
                         ifx.IfFalse != null
                             ? ifx.IfFalse
                             : ifx.IfTrue.Type == typeof(int)
-                                ? (Expression)Expression.Property(_executor, "RowsAffected")
+                                ? (Expression)Expression.Property(_executorParameter, "RowsAffected")
                                 : (Expression)Expression.Constant(TypeHelper.GetDefault(ifx.IfTrue.Type), ifx.IfTrue.Type)
                                 );
 
@@ -461,9 +460,9 @@ namespace IQToolkit.Entities
 
             protected internal override Expression VisitScalarFunctionCall(ScalarFunctionCallExpression func)
             {
-                if (_language.IsRowsAffectedExpressions(func))
+                if (_linguist.IsRowsAffectedExpressions(func))
                 {
-                    return Expression.Property(_executor, "RowsAffected");
+                    return Expression.Property(_executorParameter, "RowsAffected");
                 }
 
                 return base.VisitScalarFunctionCall(func);
@@ -472,7 +471,7 @@ namespace IQToolkit.Entities
             protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
             {
                 // how did we get here? Translate exists into count query
-                var colType = _language.TypeSystem.GetQueryType(typeof(int));
+                var colType = _linguist.Language.TypeSystem.GetQueryType(typeof(int));
                 var newSelect = exists.Select.WithColumns(
                     new[] { new ColumnDeclaration("value", new AggregateExpression(typeof(int), "Count", null, false), colType) }
                     );
@@ -532,7 +531,7 @@ namespace IQToolkit.Entities
             protected virtual Expression BuildExecuteCommand(CommandExpression command)
             {
                 // parameterize query
-                var expression = this.Parameterize(command);
+                var expression = (SqlExpression)this.Parameterize(command);
 
                 GetQueryCommandAndValues(expression, out var queryCommand, out var values);
 
@@ -542,7 +541,7 @@ namespace IQToolkit.Entities
                     return this.GetProjectionExecutor(projection, false, queryCommand, values);
                 }
 
-                Expression plan = Expression.Call(_executor, "ExecuteCommand", null,
+                Expression plan = Expression.Call(_executorParameter, "ExecuteCommand", null,
                     queryCommand,
                     Expression.NewArrayInit(typeof(object), values)
                     );

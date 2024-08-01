@@ -16,7 +16,7 @@ namespace Test
             params string[] expectedQueries)
         {
             var provider = (EntityProvider)query.Provider;
-            var plan = provider.GetExecutionPlan(query.Expression);
+            var plan = provider.GetQueryPlan(query.Expression);
             if (plan.Diagnostics.Count > 0)
             {
                 Assert.Fail($"Query had errors: {plan.Diagnostics[0].Message}");

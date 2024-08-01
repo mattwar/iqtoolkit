@@ -16,7 +16,7 @@ namespace IQToolkit.Entities.Factories
         /// Creates an <see cref="EntityProvider"/> for the connection string, 
         /// if the connection string is compatible.
         /// </summary>
-        public virtual bool TryCreateProviderForConnection(string connectionString, out EntityProvider provider)
+        public virtual bool TryCreateProviderForConnection(string connectionString, out IEntityProvider provider)
         {
             provider = default!;
             return false;
@@ -26,7 +26,7 @@ namespace IQToolkit.Entities.Factories
         /// Creates an <see cref="EntityProvider"/> for the file path, 
         /// if the file path is compatible.
         /// </summary>
-        public virtual bool TryCreateProviderForFilePath(string filePath, out EntityProvider provider)
+        public virtual bool TryCreateProviderForFilePath(string filePath, out IEntityProvider provider)
         {
             provider = default!;
             return false;
@@ -36,14 +36,14 @@ namespace IQToolkit.Entities.Factories
         /// Creates an <see cref="EntityProvider"/> for the connection string, 
         /// if the connection string is compatible.
         /// </summary>
-        public EntityProvider CreateProviderForConnection(string connectionString)
+        public IEntityProvider CreateProviderForConnection(string connectionString)
         {
             if (TryCreateProviderForConnection(connectionString, out var provider))
                 return provider;
             throw new InvalidOperationException($"Cannot create provider for the connection string.");
         }
 
-        public EntityProvider CreateProviderForFilePath(string filePath)
+        public IEntityProvider CreateProviderForFilePath(string filePath)
         {
             if (TryCreateProviderForFilePath(filePath, out var provider))
                 return provider;

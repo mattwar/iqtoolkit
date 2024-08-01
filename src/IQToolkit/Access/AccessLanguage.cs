@@ -7,20 +7,18 @@ using System.Reflection;
 namespace IQToolkit.Access
 {
     using Entities;
-    using Expressions.Sql;
     using IQToolkit.Entities.Translation;
-    using Utils;
 
     /// <summary>
     /// Microsoft Access SQL <see cref="QueryLanguage"/>
     /// </summary>
-    public sealed class AccessLanguage : QueryLanguage, IHaveLinguist
+    public sealed class AccessLanguage : SqlQueryLanguage
     {
-        private readonly AccessLinguist _linguist;
+        protected override QueryLinguist Linguist { get; }
 
         private AccessLanguage()
         {
-            _linguist = new AccessLinguist(this);
+            this.Linguist = new AccessLinguist(this);
         }
 
         public static readonly AccessLanguage Singleton =
@@ -28,27 +26,5 @@ namespace IQToolkit.Access
 
         public override QueryTypeSystem TypeSystem => 
             AccessTypeSystem.Singleton;
-
-        public override QueryFormatter Formatter =>
-            AccessFormatter.Singleton;
-
-        QueryLinguist IHaveLinguist.Linguist => _linguist;
-
-        public override string Quote(string name)
-        {
-            if (name.StartsWith("[") && name.EndsWith("]"))
-            {
-                return name;
-            }
-            else 
-            {
-                return "[" + name + "]";
-            }
-        }
-
-        public override Expression GetGeneratedIdExpression(MemberInfo member)
-        {
-            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), false, "@@IDENTITY", null);
-        }
     }
 }

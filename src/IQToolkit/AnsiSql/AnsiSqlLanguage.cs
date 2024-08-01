@@ -8,6 +8,7 @@ using System.Reflection;
 namespace IQToolkit.AnsiSql
 {
     using Entities;
+    using Entities.Translation;
     using Expressions;
     using Expressions.Sql;
     using Utils;
@@ -15,10 +16,13 @@ namespace IQToolkit.AnsiSql
     /// <summary>
     /// ANSI SQL <see cref="QueryLanguage"/>
     /// </summary>
-    public sealed class AnsiSqlLanguage : QueryLanguage
+    public sealed class AnsiSqlLanguage : SqlQueryLanguage
     {
+        protected override QueryLinguist Linguist { get; }
+
         public AnsiSqlLanguage()
         {
+            this.Linguist = new AnsiSqlLinguist(this);
         }
 
         public static readonly AnsiSqlLanguage Singleton =
@@ -26,31 +30,5 @@ namespace IQToolkit.AnsiSql
 
         public override QueryTypeSystem TypeSystem =>
             AnsiSqlTypeSystem.Singleton;
-
-        public override QueryFormatter Formatter =>
-            AnsiSqlFormatter.Default;
-       
-        public override string Quote(string name)
-        {
-            if (name.StartsWith("[") && name.EndsWith("]"))
-            {
-                return name;
-            }
-            else if (name.IndexOf('.') > 0)
-            {
-                return "[" + string.Join("].[", name.Split(splitChars, StringSplitOptions.RemoveEmptyEntries)) + "]";
-            }
-            else
-            {
-                return "[" + name + "]";
-            }
-        }
-
-        private static readonly char[] splitChars = new char[] { '.' };
-
-        public override Expression GetGeneratedIdExpression(MemberInfo member)
-        {
-            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), "@@IDENTITY");
-        }
     }
 }

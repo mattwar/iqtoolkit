@@ -1,8 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
+using IQToolkit.Entities;
 using IQToolkit.Entities.Translation;
+using IQToolkit.Expressions.Sql;
+using IQToolkit.Utils;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace IQToolkit.TSql
 {
@@ -33,6 +37,31 @@ namespace IQToolkit.TSql
             expression = expression.MoveOrderByToOuterSelect(this.Language);
 
             return expression;
+        }
+
+        public override bool AllowsMultipleCommands
+        {
+            get { return true; }
+        }
+
+        public override bool AllowSubqueryInSelectWithoutFrom
+        {
+            get { return true; }
+        }
+
+        public override bool AllowDistinctInAggregates
+        {
+            get { return true; }
+        }
+
+        public override FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        {
+            return TSqlFormatter.Singleton.Format(expression, options);
+        }
+
+        public override Expression GetGeneratedIdExpression(MemberInfo member)
+        {
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), "SCOPE_IDENTITY()", null);
         }
     }
 }

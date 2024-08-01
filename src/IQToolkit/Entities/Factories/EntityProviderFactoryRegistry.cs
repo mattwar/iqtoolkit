@@ -32,6 +32,9 @@ namespace IQToolkit.Entities.Factories
             });
         }
 
+        public static readonly EntityProviderFactoryRegistry Singleton =
+            new EntityProviderFactoryRegistry();
+
         private void RegisterFactories()
         {
             var thisAssemblyName =
@@ -72,12 +75,9 @@ namespace IQToolkit.Entities.Factories
             return assembly.GetReferencedAssemblies().Any(an => an.FullName == assemblyName);
         }
 
-        public static readonly EntityProviderFactoryRegistry Singleton =
-            new EntityProviderFactoryRegistry();
-
         public override string Name => "Registry";
 
-        public override bool TryCreateProviderForConnection(string connectionString, out EntityProvider provider)
+        public override bool TryCreateProviderForConnection(string connectionString, out IEntityProvider provider)
         {
             CheckFactoriesLoaded();
 
@@ -92,7 +92,7 @@ namespace IQToolkit.Entities.Factories
             return false;
         }
 
-        public override bool TryCreateProviderForFilePath(string filePath, out EntityProvider provider)
+        public override bool TryCreateProviderForFilePath(string filePath, out IEntityProvider provider)
         {
             CheckFactoriesLoaded();
 

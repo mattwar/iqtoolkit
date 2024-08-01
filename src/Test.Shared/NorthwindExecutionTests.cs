@@ -2117,7 +2117,7 @@ namespace Test
                     .Select(c => c.CustomerID == "ALFKI" ? null : c.CustomerID)
                     .Where(x => x == null);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NULL"));
 
                 var n = query.Count();
@@ -2130,7 +2130,7 @@ namespace Test
                     .Select(c => c.CustomerID == "ALFKI" ? null : c.CustomerID)
                     .Where(x => null == x);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NULL"));
 
                 var n = query.Count();
@@ -2147,7 +2147,7 @@ namespace Test
                     .Select(c => c.CustomerID == "ALFKI" ? null : c.CustomerID)
                     .Where(x => x != null);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NOT NULL"));
 
                 var n = query.Count();
@@ -2160,7 +2160,7 @@ namespace Test
                     .Select(c => c.CustomerID == "ALFKI" ? null : c.CustomerID)
                     .Where(x => null != x);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NOT NULL"));
 
                 var n = query.Count();
@@ -2175,7 +2175,7 @@ namespace Test
             {
                 var query = db.Orders.Where(o => o.Customer == null);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NULL"));
 
                 var n = query.Count();
@@ -2186,7 +2186,7 @@ namespace Test
             {
                 var query = db.Orders.Where(o => null == o.Customer);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NULL"));
 
                 var n = query.Count();
@@ -2201,7 +2201,7 @@ namespace Test
             {
                 var query = db.Orders.Where(o => o.Customer != null);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NOT NULL"));
 
                 var n = query.Count();
@@ -2212,7 +2212,7 @@ namespace Test
             {
                 var query = db.Orders.Where(o => null != o.Customer);
 
-                var plan = db.Provider.GetExecutionPlan(query.Expression);
+                var plan = db.Provider.GetQueryPlan(query.Expression);
                 Assert.AreEqual(true, plan.QueryText.Contains("IS NOT NULL"));
 
                 var n = query.Count();

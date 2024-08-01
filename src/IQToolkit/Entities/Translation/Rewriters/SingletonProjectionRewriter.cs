@@ -14,11 +14,11 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class SingletonProjectionRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLanguage _language;
+        private readonly QueryLinguist _linguist;
 
-        public SingletonProjectionRewriter(QueryLanguage language)
+        public SingletonProjectionRewriter(QueryLinguist linguist)
         {
-            _language = language;
+            _linguist = linguist;
         }
 
         public override Expression Visit(Expression exp)
@@ -52,7 +52,7 @@ namespace IQToolkit.Entities.Translation
                 foreach (var cp in nestedClientProjections)
                 {
                     var cpDuped = new ClientProjectionExpression(cp.Select, cp.Projector.Duplicate());
-                    var cpWithTest = _language.AddOuterJoinTest(cpDuped);
+                    var cpWithTest = _linguist.AddOuterJoinTest(cpDuped);
                     var newSelect = cpWithTest.Select;
                     newFrom = new JoinExpression(JoinType.OuterApply, newFrom!, newSelect, null);
                     altExpressions.Add(cpWithTest.Projector);
@@ -91,14 +91,14 @@ namespace IQToolkit.Entities.Translation
                 foreach (var cp in nestedClientProjections)
                 {
                     TableAlias newAlias = new TableAlias();
-                    var extraSelect = newProjection.Select.AddRedundantSelect(_language, newAlias);
+                    var extraSelect = newProjection.Select.AddRedundantSelect(_linguist.Language, newAlias);
 
                     // remap any references to the outer select to the new alias;
                     var source = cp.Select.RemapTableAliases(newAlias, extraSelect.Alias);
 
                     // add outer-join test
-                    var pex = _language.AddOuterJoinTest(new ClientProjectionExpression(source, cp.Projector));
-                    var pc = ColumnProjector.ProjectColumns(_language, pex.Projector, extraSelect.Columns, extraSelect.Alias, newAlias, cp.Select.Alias);
+                    var pex = _linguist.AddOuterJoinTest(new ClientProjectionExpression(source, cp.Projector));
+                    var pc = ColumnProjector.ProjectColumns(_linguist, pex.Projector, extraSelect.Columns, extraSelect.Alias, newAlias, cp.Select.Alias);
                     var join = new JoinExpression(JoinType.OuterApply, extraSelect.From!, pex.Select, null);
                     var newSelect = new SelectExpression(extraSelect.Alias, pc.Columns, join, null);
 

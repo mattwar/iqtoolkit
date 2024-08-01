@@ -13,7 +13,7 @@ namespace IQToolkit.Access
 
         public override string Name => "Access";
 
-        public override bool TryCreateProviderForFilePath(string filePath, out EntityProvider provider)
+        public override bool TryCreateProviderForFilePath(string filePath, out IEntityProvider provider)
         {
             var extension = Path.GetExtension(filePath);
             if (extension == ".mdb" || extension == ".accdb")

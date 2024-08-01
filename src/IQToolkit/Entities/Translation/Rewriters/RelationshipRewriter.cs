@@ -73,7 +73,7 @@ namespace IQToolkit.Entities.Translation
                     // remap projector onto new select that includes new from
                     var alias = new TableAlias();
                     var existingAliases = GetAliases(_currentFrom);
-                    ProjectedColumns pc = ColumnProjector.ProjectColumns(_linguist.Language, projector, null, alias, existingAliases);
+                    var pc = ColumnProjector.ProjectColumns(_linguist, projector, null, alias, existingAliases);
                     projector = pc.Projector;
                     select = new SelectExpression(alias, pc.Columns, _currentFrom, null);
                 }
@@ -123,7 +123,7 @@ namespace IQToolkit.Entities.Translation
                     // convert singleton associations directly to OUTER APPLY
                     // by adding join to relavent FROM clause
                     // and placing an OuterJoinedExpression in the projection to remember the outer-join test-for-null condition
-                    projection = _linguist.Language.AddOuterJoinTest(projection);
+                    projection = _linguist.AddOuterJoinTest(projection);
                     var newFrom = new JoinExpression(JoinType.OuterApply, _currentFrom, projection.Select, null);
                     _currentFrom = newFrom;
                     return projection.Projector;

@@ -19,14 +19,14 @@ namespace IQToolkit.Entities.Sessions
     /// </summary>
     public class EntitySession : IEntitySession
     {
-        private readonly EntityProvider _provider;
+        private readonly IEntityProvider _provider;
         private readonly SessionProvider _sessionProvider;
         private readonly Dictionary<MappingEntity, ISessionTable> _tables;
 
         /// <summary>
         /// Construct a <see cref="EntitySession"/>
         /// </summary>
-        public EntitySession(EntityProvider provider)
+        public EntitySession(IEntityProvider provider)
         {
             _provider = provider;
             _sessionProvider = new SessionProvider(this, provider);
@@ -150,31 +150,46 @@ namespace IQToolkit.Entities.Sessions
         /// A provider that wraps an underlying provider to intercept entity creation.
         /// </summary>
         private class SessionProvider 
-            : QueryProvider, IEntityProvider, IHaveExecutor
+            : QueryProvider, IEntityProvider
         {
             private readonly EntitySession _session;
-            private readonly EntityProvider _provider;
+            private readonly IEntityProvider _provider;
 
-            public SessionProvider(EntitySession session, EntityProvider provider)
+            public SessionProvider(EntitySession session, IEntityProvider provider)
             {
                 _session = session;
                 _provider = provider;
             }
 
-            public EntityProvider Provider => _provider;
+            public IEntityProvider Provider => _provider;
+
             public QueryExecutor Executor => _provider.Executor;
+            public QueryLanguage Language => _provider.Language;
+            public EntityMapping Mapping => _provider.Mapping;
+            public QueryPolicy Policy => _provider.Policy;
+            public TextWriter? Log => _provider.Log;
+            public QueryCache? Cache => _provider.Cache;
+            public QueryOptions Options => _provider.Options;
 
-            EntityMapping IEntityProvider.Mapping =>
-                _provider.Mapping;
-
-            QueryPolicy IEntityProvider.Policy =>
-                _provider.Policy;
+            #region IEntityProvider
+            IEntityProvider IEntityProvider.WithLanguage(QueryLanguage language) =>
+                new SessionProvider(_session, _provider.WithLanguage(language));
 
             IEntityProvider IEntityProvider.WithMapping(EntityMapping mapping) =>
                 new SessionProvider(_session, _provider.WithMapping(mapping));
 
             IEntityProvider IEntityProvider.WithPolicy(QueryPolicy policy) =>
                 new SessionProvider(_session, _provider.WithPolicy(policy));
+
+            IEntityProvider IEntityProvider.WithLog(TextWriter? log) =>
+                new SessionProvider(_session, _provider.WithLog(log));
+
+            IEntityProvider IEntityProvider.WithCache(QueryCache? cache) =>
+                new SessionProvider(_session, _provider.WithCache(cache));
+
+            IEntityProvider IEntityProvider.WithOptions(QueryOptions options) =>
+                new SessionProvider(_session, _provider.WithOptions(options: options));
+            #endregion
 
             public override object? Execute(Expression expression)
             {
@@ -207,9 +222,9 @@ namespace IQToolkit.Entities.Sessions
                 return _provider.ExecutePlan(plan);
             }
 
-            public QueryPlan GetExecutionPlan(Expression expression)
+            public QueryPlan GetQueryPlan(Expression expression)
             {
-                return _provider.GetExecutionPlan(expression);
+                return _provider.GetQueryPlan(expression);
             }
         }
 

@@ -17,7 +17,7 @@ namespace IQToolkit.Odbc
 
         public override string Name => "Odbc";
 
-        public override bool TryCreateProviderForConnection(string connectionString, out EntityProvider provider)
+        public override bool TryCreateProviderForConnection(string connectionString, out IEntityProvider provider)
         {
             // looks like an ODBC connection string?
             if (connectionString.Contains("Driver=", StringComparison.OrdinalIgnoreCase))

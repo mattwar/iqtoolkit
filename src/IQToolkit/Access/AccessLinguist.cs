@@ -7,6 +7,9 @@ namespace IQToolkit.Access
 {
     using Entities;
     using Entities.Translation;
+    using IQToolkit.Expressions.Sql;
+    using IQToolkit.Utils;
+    using System.Reflection;
 
     internal class AccessLinguist : QueryLinguist
     {
@@ -35,6 +38,16 @@ namespace IQToolkit.Access
             var result = movedAgain.SimplifyQueries();
 
             return result;
+        }
+
+        public override FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        {
+            return AccessFormatter.Singleton.Format(expression, options);
+        }
+
+        public override Expression GetGeneratedIdExpression(MemberInfo member)
+        {
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), false, "@@IDENTITY", null);
         }
     }
 }

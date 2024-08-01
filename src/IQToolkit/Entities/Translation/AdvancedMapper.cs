@@ -141,7 +141,7 @@ namespace IQToolkit.Entities.Translation
 
             var projector = this.GetEntityExpression(root, entity, linguist, police);
             var selectAlias = new TableAlias();
-            var pc = ColumnProjector.ProjectColumns(linguist.Language, projector, null, selectAlias, root.Alias);
+            var pc = ColumnProjector.ProjectColumns(linguist, projector, null, selectAlias, root.Alias);
             var proj = new ClientProjectionExpression(
                 new SelectExpression(selectAlias, pc.Columns, root, null),
                 pc.Projector
@@ -262,7 +262,7 @@ namespace IQToolkit.Entities.Translation
 
             if (generatedIds.Count > 0)
             {
-                genIdCommand = this.GetGeneratedIdCommand(entity, members, map, linguist.Language);
+                genIdCommand = this.GetGeneratedIdCommand(entity, members, map, linguist);
 
                 // if that's all there is then just return the generated ids
                 if (members.Count == generatedIds.Count)
@@ -425,7 +425,7 @@ namespace IQToolkit.Entities.Translation
             {
                 commands.Add(
                     new IfCommand(
-                        linguist.Language.GetRowsAffectedExpression(commands[commands.Count - 1]).GreaterThan(Expression.Constant(0)),
+                        linguist.GetRowsAffectedExpression(commands[commands.Count - 1]).GreaterThan(Expression.Constant(0)),
                         this.GetUpdateResult(entity, instance, selector, linguist, police),
                         @else
                         )
@@ -435,7 +435,7 @@ namespace IQToolkit.Entities.Translation
             {
                 commands.Add(
                     new IfCommand(
-                        linguist.Language.GetRowsAffectedExpression(commands[commands.Count - 1]).LessThanOrEqual(Expression.Constant(0)),
+                        linguist.GetRowsAffectedExpression(commands[commands.Count - 1]).LessThanOrEqual(Expression.Constant(0)),
                         @else,
                         null
                         )

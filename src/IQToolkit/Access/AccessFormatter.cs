@@ -15,9 +15,9 @@ namespace IQToolkit.Access
     using Utils;
 
     /// <summary>
-    /// Microsoft Access SQL <see cref="QueryFormatter"/>
+    /// Microsoft Access SQL formatter
     /// </summary>
-    public sealed class AccessFormatter : QueryFormatter
+    public sealed class AccessFormatter
     {
         private AccessFormatter()
         {
@@ -26,13 +26,15 @@ namespace IQToolkit.Access
         public static readonly AccessFormatter Singleton =
             new AccessFormatter();
 
-        public override FormattedQuery Format(Expression expression, FormattingOptions? options = null)
+        public FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
         {
             var writer = new StringWriter();
             var parameterRefs = new List<Expression>();
             var diagnostics = new List<Diagnostic>();
+
             var formatter = new AccessFormatterVisitor(options, writer, parameterRefs, diagnostics);
             formatter.FormatWithParameters(expression);
+
             return new FormattedQuery(
                 writer.ToString(),
                 parameterRefs,
@@ -43,7 +45,7 @@ namespace IQToolkit.Access
         public class AccessFormatterVisitor : AnsiSql.AnsiSqlFormatter.SqlFormatterVisitor
         {
             public AccessFormatterVisitor(
-                FormattingOptions? options, 
+                QueryOptions? options, 
                 TextWriter writer,
                 List<Expression> parameterReferences,
                 List<Diagnostic> diagnostics)
@@ -53,7 +55,7 @@ namespace IQToolkit.Access
 
             public virtual void FormatWithParameters(Expression expression)
             {
-                if (!this.Options.IsOdbc)
+                if (!this.Options.IsOdbc())
                 {
                     var parameters = expression
                         .FindAll<ClientParameterExpression>()
@@ -75,6 +77,18 @@ namespace IQToolkit.Access
                 }
 
                 this.Visit(expression);
+            }
+
+            protected override string GetBracketedName(string name)
+            {
+                if (name.StartsWith("[") && name.EndsWith("]"))
+                {
+                    return name;
+                }
+                else
+                {
+                    return "[" + name + "]";
+                }
             }
 
             protected override void WriteValue(Expression expr)

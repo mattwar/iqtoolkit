@@ -84,11 +84,6 @@ namespace IQToolkit.Expressions.Sql
                     : $"A{alias.SequenceId}";
             }
 
-            private string FormatQuery(Expression query)
-            {
-                return AnsiSql.AnsiSqlFormatter.Default.Format(query, FormattingOptions.DebugDefault).Text;
-            }
-
             public override void Write(Expression exp)
             {
                 var oldAliasMap = _aliasMap;

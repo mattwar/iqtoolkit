@@ -547,7 +547,7 @@ namespace IQToolkit.Entities.Sessions
 
             private EntityMapping Mapping
             {
-                get { return ((EntitySession)this.Session)._provider.Mapping; }
+                get { return this.Session.Provider.Mapping; }
             }
 
             private TEntity AddToCache(TEntity instance)
@@ -690,6 +690,7 @@ namespace IQToolkit.Entities.Sessions
                     case SubmitAction.Delete:
                         // all things that depend on this instance must come first
                         return tsLookup[item];
+
                     default:
                         return TrackedItem.EmptyList;
                 }

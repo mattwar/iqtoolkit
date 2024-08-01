@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using IQToolkit.Expressions;
 
 namespace IQToolkit.Entities.Translation
 {
@@ -15,18 +14,23 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Translates accesses to relationship members into projections or joins
     /// </summary>
-    public class RelationshipBinder : SqlExpressionVisitor
+    public class RelationshipRewriter : SqlExpressionVisitor
     {
-        private readonly QueryMappingRewriter _mapper;
+        private readonly QueryLinguist _linguist;
+        private readonly QueryMapper _mapper;
+        private readonly QueryPolice _police;
         private readonly EntityMapping _mapping;
-        private readonly QueryLanguage _language;
         private Expression? _currentFrom;
 
-        public RelationshipBinder(QueryMappingRewriter mappingRewriter)
+        public RelationshipRewriter(
+            QueryLinguist linguist,
+            QueryMapper mapper,
+            QueryPolice police)
         {
-            _mapper = mappingRewriter;
-            _mapping = mappingRewriter.Mapping;
-            _language = mappingRewriter.Translator.LanguageRewriter.Language;
+            _linguist = linguist;
+            _mapper = mapper;
+            _police = police;
+            _mapping = mapper.Mapping;
         }
 
         protected internal override Expression VisitSelect(SelectExpression select)
@@ -69,7 +73,7 @@ namespace IQToolkit.Entities.Translation
                     // remap projector onto new select that includes new from
                     var alias = new TableAlias();
                     var existingAliases = GetAliases(_currentFrom);
-                    ProjectedColumns pc = ColumnProjector.ProjectColumns(_language, projector, null, alias, existingAliases);
+                    ProjectedColumns pc = ColumnProjector.ProjectColumns(_linguist.Language, projector, null, alias, existingAliases);
                     projector = pc.Projector;
                     select = new SelectExpression(alias, pc.Columns, _currentFrom, null);
                 }
@@ -111,7 +115,7 @@ namespace IQToolkit.Entities.Translation
                 && _mapping.IsRelationship(entity.Entity, memberAccess.Member))
             {
                 var projection = (ClientProjectionExpression)this.Visit(
-                    _mapper.GetMemberExpression(source, entity.Entity, memberAccess.Member)
+                    _mapper.GetMemberExpression(source, entity.Entity, memberAccess.Member, _linguist, _police)
                     );
 
                 if (_currentFrom != null && _mapping.IsSingletonRelationship(entity.Entity, memberAccess.Member))
@@ -119,7 +123,7 @@ namespace IQToolkit.Entities.Translation
                     // convert singleton associations directly to OUTER APPLY
                     // by adding join to relavent FROM clause
                     // and placing an OuterJoinedExpression in the projection to remember the outer-join test-for-null condition
-                    projection = _language.AddOuterJoinTest(projection);
+                    projection = _linguist.Language.AddOuterJoinTest(projection);
                     var newFrom = new JoinExpression(JoinType.OuterApply, _currentFrom, projection.Select, null);
                     _currentFrom = newFrom;
                     return projection.Projector;

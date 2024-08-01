@@ -8,24 +8,25 @@ namespace IQToolkit.Entities.Translation
     /// <summary>
     /// Applies language specific rules to a query.
     /// </summary>
-    public class QueryLanguageRewriter
+    public class QueryLinguist
     {
-        public QueryTranslator Translator { get; }
         public QueryLanguage Language { get; }
 
         /// <summary>
-        /// Construct a <see cref="QueryLanguageRewriter"/>
+        /// Construct a <see cref="QueryLinguist"/>
         /// </summary>
-        public QueryLanguageRewriter(QueryTranslator translator, QueryLanguage language)
+        public QueryLinguist(QueryLanguage language)
         {
-            this.Translator = translator;
             this.Language = language;
         }
 
         /// <summary>
-        /// Applies language-specific translations.
+        /// Apply additional language rewrites.
         /// </summary>
-        public virtual Expression Rewrite(Expression expression)
+        public virtual Expression Apply(
+            Expression expression,
+            QueryMapper mapper,
+            QueryPolice police)
         {
             // pre-simplify to help 
             var simplified = expression.SimplifyQueries();
@@ -37,14 +38,6 @@ namespace IQToolkit.Entities.Translation
             var crossJoined = crossApplied.ConvertCrossJoinToInnerJoin();
 
             return crossJoined;
-        }
-
-        /// <summary>
-        /// Determine which sub-expressions must be parameters
-        /// </summary>
-        public virtual Expression Parameterize(Expression expression)
-        {
-            return ClientParameterRewriter.Rewrite(this.Language, expression);
         }
     }
 }

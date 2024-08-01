@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using IQToolkit.Expressions;
 
 namespace IQToolkit.Entities.Translation
 {
@@ -16,54 +15,61 @@ namespace IQToolkit.Entities.Translation
     using Utils;
 
     /// <summary>
-    /// A <see cref="QueryMappingRewriter"/> that can apply a <see cref="BasicEntityMapping"/> to a query expression.
+    /// A <see cref="QueryMapper"/> that can apply a <see cref="BasicEntityMapping"/> to a query expression.
     /// </summary>
-    public class BasicMappingRewriter : QueryMappingRewriter
+    public class BasicMapper : QueryMapper
     {
         private readonly BasicEntityMapping _mapping;
         public override EntityMapping Mapping => _mapping;
 
-        public override QueryTranslator Translator { get; }
-
-        public BasicMappingRewriter(BasicEntityMapping mapping, QueryTranslator translator)
+        public BasicMapper(BasicEntityMapping mapping)
         {
             _mapping = mapping;
-            this.Translator = translator;
         }
 
         /// <summary>
         /// The query language specific type for the column
         /// </summary>
-        public virtual QueryType GetColumnType(MappingEntity entity, MemberInfo member)
+        public virtual QueryType GetColumnType(
+            MappingEntity entity, 
+            MemberInfo member,
+            QueryLanguage language)
         {
             var dbType = _mapping.GetColumnDbType(entity, member);
 
             if (dbType != null)
             {
-                return this.Translator.LanguageRewriter.Language.TypeSystem.Parse(dbType) ?? QueryType.Unknown;
+                return language.TypeSystem.Parse(dbType) ?? QueryType.Unknown;
             }
 
-            return this.Translator.LanguageRewriter.Language.TypeSystem.GetQueryType(TypeHelper.GetMemberType(member))!;
+            return language.TypeSystem.GetQueryType(TypeHelper.GetMemberType(member))!;
         }
 
-        public override ClientProjectionExpression GetQueryExpression(MappingEntity entity)
+        public override ClientProjectionExpression GetQueryExpression(
+            MappingEntity entity, 
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             var tableAlias = new TableAlias();
             var selectAlias = new TableAlias();
             var table = new TableExpression(tableAlias, entity, _mapping.GetTableName(entity));
 
-            Expression projector = this.GetEntityExpression(table, entity);
-            var pc = ColumnProjector.ProjectColumns(this.Translator.LanguageRewriter.Language, projector, null, selectAlias, tableAlias);
+            Expression projector = this.GetEntityExpression(table, entity, linguist, police);
+            var pc = ColumnProjector.ProjectColumns(linguist.Language, projector, null, selectAlias, tableAlias);
 
             var proj = new ClientProjectionExpression(
                 new SelectExpression(selectAlias, pc.Columns, table, null),
                 pc.Projector
                 );
 
-            return (ClientProjectionExpression)this.Translator.PolicyRewriter.ApplyPolicy(proj, entity.StaticType);
+            return (ClientProjectionExpression)police.ApplyPolicy(proj, entity.StaticType, linguist, this);
         }
 
-        public override EntityExpression GetEntityExpression(Expression root, MappingEntity entity)
+        public override EntityExpression GetEntityExpression(
+            Expression root, 
+            MappingEntity entity,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             // must be some complex type constructed from multiple columns
             var assignments = new List<EntityAssignment>();
@@ -71,7 +77,7 @@ namespace IQToolkit.Entities.Translation
             {
                 if (!_mapping.IsAssociationRelationship(entity, mi))
                 {
-                    Expression me = this.GetMemberExpression(root, entity, mi);
+                    Expression me = this.GetMemberExpression(root, entity, mi, linguist, police);
                     if (me != null)
                     {
                         assignments.Add(new EntityAssignment(mi, me));
@@ -245,36 +251,43 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
-        public override bool HasIncludedMembers(EntityExpression entity)
+        public override bool HasIncludedMembers(EntityExpression entity, QueryPolicy policy)
         {
-            var policy = this.Translator.PolicyRewriter.Policy;
             foreach (var mi in _mapping.GetMappedMembers(entity.Entity))
             {
                 if (policy.IsIncluded(mi))
                     return true;
             }
+
             return false;
         }
 
-        public override EntityExpression IncludeMembers(EntityExpression entity, Func<MemberInfo, bool> fnIsIncluded)
+        public override EntityExpression IncludeMembers(
+            EntityExpression entity, 
+            Func<MemberInfo, bool> fnIsIncluded,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             var assignments = this.GetAssignments(entity.Expression).ToDictionary(ma => ma.Member.Name);
             bool anyAdded = false;
+            
             foreach (var mi in _mapping.GetMappedMembers(entity.Entity))
             {
                 EntityAssignment ea;
                 bool okayToInclude = !assignments.TryGetValue(mi.Name, out ea) || IsNullRelationshipAssignment(entity.Entity, ea);
                 if (okayToInclude && fnIsIncluded(mi))
                 {
-                    ea = new EntityAssignment(mi, this.GetMemberExpression(entity.Expression, entity.Entity, mi));
+                    ea = new EntityAssignment(mi, this.GetMemberExpression(entity.Expression, entity.Entity, mi, linguist, police));
                     assignments[mi.Name] = ea;
                     anyAdded = true;
                 }
             }
+
             if (anyAdded)
             {
                 return new EntityExpression(entity.Entity, this.BuildEntityExpression(entity.Entity, assignments.Values.ToList()));
             }
+
             return entity;
         }
 
@@ -311,13 +324,17 @@ namespace IQToolkit.Entities.Translation
             return assignments;
         }
 
-
-        public override Expression GetMemberExpression(Expression root, MappingEntity entity, MemberInfo member)
+        public override Expression GetMemberExpression(
+            Expression root, 
+            MappingEntity entity, 
+            MemberInfo member,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             if (_mapping.IsAssociationRelationship(entity, member))
             {
-                MappingEntity relatedEntity = _mapping.GetRelatedEntity(entity, member);
-                ClientProjectionExpression projection = this.GetQueryExpression(relatedEntity);
+                var relatedEntity = _mapping.GetRelatedEntity(entity, member);
+                var projection = this.GetQueryExpression(relatedEntity, linguist, police);
 
                 // make where clause for joining back to 'root'
                 var declaredTypeMembers = _mapping.GetAssociationKeyMembers(entity, member).ToList();
@@ -328,14 +345,13 @@ namespace IQToolkit.Entities.Translation
                 for (int i = 0, n = associatedMembers.Count; i < n; i++)
                 {
                     Expression equal =
-                        this.GetMemberExpression(projection.Projector, relatedEntity, associatedMembers[i]).Equal(
-                            this.GetMemberExpression(root, entity, declaredTypeMembers[i])
-                        );
+                        this.GetMemberExpression(projection.Projector, relatedEntity, associatedMembers[i], linguist, police)
+                            .Equal(this.GetMemberExpression(root, entity, declaredTypeMembers[i], linguist, police));
                     where = (where != null) ? where.And(equal) : equal;
                 }
 
                 TableAlias newAlias = new TableAlias();
-                var pc = ColumnProjector.ProjectColumns(this.Translator.LanguageRewriter.Language, projection.Projector, null, newAlias, projection.Select.Alias);
+                var pc = ColumnProjector.ProjectColumns(linguist.Language, projection.Projector, null, newAlias, projection.Select.Alias);
 
                 var aggregator = Aggregator.GetAggregator(TypeHelper.GetMemberType(member), typeof(IEnumerable<>).MakeGenericType(pc.Projector.Type));
                 var result = new ClientProjectionExpression(
@@ -343,13 +359,13 @@ namespace IQToolkit.Entities.Translation
                     pc.Projector, aggregator
                     );
 
-                return this.Translator.PolicyRewriter.ApplyPolicy(result, member);
+                return police.ApplyPolicy(result, member, linguist, this);
             }
             else
             {
                 if (root is AliasedExpression aliasedRoot 
                     && _mapping.IsColumn(entity, member)
-                    && this.GetColumnType(entity, member) is { } columnType)
+                    && this.GetColumnType(entity, member, linguist.Language) is { } columnType)
                 {
                     return new ColumnExpression(
                         TypeHelper.GetMemberType(member), 
@@ -363,38 +379,62 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
-        public override Expression GetInsertExpression(MappingEntity entity, Expression instance, LambdaExpression? selector)
+        public override Expression GetInsertExpression(
+            MappingEntity entity, 
+            Expression instance, 
+            LambdaExpression? selector,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             var tableAlias = new TableAlias();
             var table = new TableExpression(tableAlias, entity, _mapping.GetTableName(entity));
-            var assignments = this.GetColumnAssignments(table, instance, entity, (e, m) => !(_mapping.IsGenerated(e, m) || _mapping.IsReadOnly(e, m)));   // #MLCHANGE
+            var assignments = this.GetColumnAssignments(
+                table, 
+                instance, 
+                entity, 
+                (e, m) => !(_mapping.IsGenerated(e, m) || _mapping.IsReadOnly(e, m)),
+                linguist,
+                police
+                );
 
             if (selector != null)
             {
                 return new BlockCommand(
                     new InsertCommand(table, assignments),
-                    this.GetInsertResult(entity, instance, selector, null)
+                    this.GetInsertResult(entity, instance, selector, null, linguist, police)
                     );
             }
 
             return new InsertCommand(table, assignments);
         }
 
-        private IEnumerable<ColumnAssignment> GetColumnAssignments(Expression table, Expression instance, MappingEntity entity, Func<MappingEntity, MemberInfo, bool> fnIncludeColumn)
+        private IEnumerable<ColumnAssignment> GetColumnAssignments(
+            Expression table, 
+            Expression instance, 
+            MappingEntity entity, 
+            Func<MappingEntity, MemberInfo, bool> fnIncludeColumn,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             foreach (var m in _mapping.GetMappedMembers(entity))
             {
                 if (_mapping.IsColumn(entity, m) && fnIncludeColumn(entity, m))
                 {
                     yield return new ColumnAssignment(
-                        (ColumnExpression)this.GetMemberExpression(table, entity, m),
+                        (ColumnExpression)this.GetMemberExpression(table, entity, m, linguist, police),
                         Expression.MakeMemberAccess(instance, m)
                         );
                 }
             }
         }
 
-        protected virtual Expression GetInsertResult(MappingEntity entity, Expression instance, LambdaExpression selector, Dictionary<MemberInfo, Expression>? map)
+        protected virtual Expression GetInsertResult(
+            MappingEntity entity, 
+            Expression instance, 
+            LambdaExpression selector, 
+            Dictionary<MemberInfo, Expression>? map,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             var tableAlias = new TableAlias();
             var tex = new TableExpression(tableAlias, entity, _mapping.GetTableName(entity));
@@ -408,7 +448,7 @@ namespace IQToolkit.Entities.Translation
                 if (map == null || !generatedIds.Any(m => map.ContainsKey(m)))
                 {
                     var localMap = new Dictionary<MemberInfo, Expression>();
-                    genIdCommand = this.GetGeneratedIdCommand(entity, generatedIds.ToList(), localMap);
+                    genIdCommand = this.GetGeneratedIdCommand(entity, generatedIds.ToList(), localMap, linguist.Language);
                     map = localMap;
                 }
 
@@ -428,7 +468,7 @@ namespace IQToolkit.Entities.Translation
                     else
                     {
                         TableAlias alias = new TableAlias();
-                        var colType = this.GetColumnType(entity, mex.Member);
+                        var colType = this.GetColumnType(entity, mex.Member, linguist.Language);
                         return new ClientProjectionExpression(
                             new SelectExpression(alias, new[] { new ColumnDeclaration("", map[mex.Member], colType) }, null, null),
                             new ColumnExpression(TypeHelper.GetMemberType(mex.Member), colType, alias, ""),
@@ -438,18 +478,18 @@ namespace IQToolkit.Entities.Translation
                 }
 
                 where = generatedIds.Select((m, i) =>
-                    this.GetMemberExpression(tex, entity, m).Equal(map[m])
+                    this.GetMemberExpression(tex, entity, m, linguist, police).Equal(map[m])
                     ).Aggregate((x, y) => x.And(y));
             }
             else
             {
-                where = this.GetIdentityCheck(tex, entity, instance);
+                where = this.GetIdentityCheck(tex, entity, instance, linguist, police);
             }
 
-            var typeProjector = this.GetEntityExpression(tex, entity);
+            var typeProjector = this.GetEntityExpression(tex, entity, linguist, police);
             var selection = selector.Body.Replace(selector.Parameters[0], typeProjector);
             var newAlias = new TableAlias();
-            var pc = ColumnProjector.ProjectColumns(this.Translator.LanguageRewriter.Language, selection, null, newAlias, tableAlias);
+            var pc = ColumnProjector.ProjectColumns(linguist.Language, selection, null, newAlias, tableAlias);
             var pe = new ClientProjectionExpression(
                 new SelectExpression(newAlias, pc.Columns, tex, where),
                 pc.Projector,
@@ -460,10 +500,15 @@ namespace IQToolkit.Entities.Translation
             {
                 return new BlockCommand(genIdCommand, pe);
             }
+
             return pe;
         }
 
-        protected virtual DeclarationCommand GetGeneratedIdCommand(MappingEntity entity, List<MemberInfo> members, Dictionary<MemberInfo, Expression> map)
+        protected virtual DeclarationCommand GetGeneratedIdCommand(
+            MappingEntity entity, 
+            List<MemberInfo> members, 
+            Dictionary<MemberInfo, Expression> map,
+            QueryLanguage language)
         {
             var columns = new List<ColumnDeclaration>();
             var decls = new List<VariableDeclaration>();
@@ -471,9 +516,9 @@ namespace IQToolkit.Entities.Translation
 
             foreach (var member in members)
             {
-                var genId = this.Translator.LanguageRewriter.Language.GetGeneratedIdExpression(member);
+                var genId = language.GetGeneratedIdExpression(member);
                 var name = member.Name;
-                var colType = this.GetColumnType(entity, member);
+                var colType = this.GetColumnType(entity, member, language);
                 
                 columns.Add(new ColumnDeclaration(member.Name, genId, colType));
                 decls.Add(new VariableDeclaration(member.Name, colType, new ColumnExpression(genId.Type, colType, alias, member.Name)));
@@ -490,45 +535,74 @@ namespace IQToolkit.Entities.Translation
             return new DeclarationCommand(decls, select);
         }
 
-        protected virtual Expression GetIdentityCheck(Expression root, MappingEntity entity, Expression instance)
+        protected virtual Expression GetIdentityCheck(
+            Expression root, 
+            MappingEntity entity, 
+            Expression instance,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             return _mapping.GetMappedMembers(entity)
                 .Where(m => _mapping.IsPrimaryKey(entity, m))
-                .Select(m => this.GetMemberExpression(root, entity, m).Equal(Expression.MakeMemberAccess(instance, m)))
+                .Select(m => this.GetMemberExpression(root, entity, m, linguist, police)
+                    .Equal(Expression.MakeMemberAccess(instance, m)))
                 .Aggregate((x, y) => x.And(y));
         }
 
-        protected virtual Expression GetEntityExistsTest(MappingEntity entity, Expression instance)
+        protected virtual Expression GetEntityExistsTest(
+            MappingEntity entity, 
+            Expression instance,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
-            ClientProjectionExpression tq = this.GetQueryExpression(entity);
-            Expression where = this.GetIdentityCheck(tq.Select, entity, instance);
+            ClientProjectionExpression tq = this.GetQueryExpression(entity, linguist, police);
+            Expression where = this.GetIdentityCheck(tq.Select, entity, instance, linguist, police);
             return new ExistsSubqueryExpression(new SelectExpression(new TableAlias(), null, tq.Select, where));
         }
 
-        protected virtual Expression GetEntityStateTest(MappingEntity entity, Expression? instance, LambdaExpression updateCheck)
+        protected virtual Expression GetEntityStateTest(
+            MappingEntity entity,
+            Expression? instance,
+            LambdaExpression updateCheck,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
-            var tq = this.GetQueryExpression(entity);
-            var where = instance != null ? this.GetIdentityCheck(tq.Select, entity, instance) : null;
+            var tq = this.GetQueryExpression(entity, linguist, police);
+            var where = instance != null ? this.GetIdentityCheck(tq.Select, entity, instance, linguist, police) : null;
             var check = updateCheck.Body.Replace(updateCheck.Parameters[0], tq.Projector);
             where = where != null ? where.And(check) : check;
             return new ExistsSubqueryExpression(
                 new SelectExpression(new TableAlias(), null, tq.Select, where));
         }
 
-        public override Expression GetUpdateExpression(MappingEntity entity, Expression instance, LambdaExpression? updateCheck, LambdaExpression? selector, Expression? @else)
+        public override Expression GetUpdateExpression(
+            MappingEntity entity,
+            Expression instance,
+            LambdaExpression? updateCheck,
+            LambdaExpression? selector,
+            Expression? @else,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             var tableAlias = new TableAlias();
             var table = new TableExpression(tableAlias, entity, _mapping.GetTableName(entity));
 
-            var where = this.GetIdentityCheck(table, entity, instance);
+            var where = this.GetIdentityCheck(table, entity, instance, linguist, police);
             if (updateCheck != null)
             {
-                var typeProjector = this.GetEntityExpression(table, entity);
+                var typeProjector = this.GetEntityExpression(table, entity, linguist, police);
                 var pred = updateCheck.Body.Replace(updateCheck.Parameters[0], typeProjector);
                 where = where.And(pred);
             }
 
-            var assignments = this.GetColumnAssignments(table, instance, entity, (e, m) => _mapping.IsUpdatable(e, m));
+            var assignments = this.GetColumnAssignments(
+                table, 
+                instance, 
+                entity, 
+                (e, m) => _mapping.IsUpdatable(e, m),
+                linguist,
+                police
+                );
 
             Expression update = new UpdateCommand(table, where, assignments);
 
@@ -537,8 +611,8 @@ namespace IQToolkit.Entities.Translation
                 return new BlockCommand(
                     update,
                     new IfCommand(
-                        this.Translator.LanguageRewriter.Language.GetRowsAffectedExpression(update).GreaterThan(Expression.Constant(0)),
-                        this.GetUpdateResult(entity, instance, selector),
+                        linguist.Language.GetRowsAffectedExpression(update).GreaterThan(Expression.Constant(0)),
+                        this.GetUpdateResult(entity, instance, selector, linguist, police),
                         @else
                         )
                     );
@@ -548,7 +622,7 @@ namespace IQToolkit.Entities.Translation
                 return new BlockCommand(
                     update,
                     new IfCommand(
-                        this.Translator.LanguageRewriter.Language.GetRowsAffectedExpression(update).LessThanOrEqual(Expression.Constant(0)),
+                        linguist.Language.GetRowsAffectedExpression(update).LessThanOrEqual(Expression.Constant(0)),
                         @else,
                         null
                         )
@@ -560,13 +634,19 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
-        protected virtual Expression GetUpdateResult(MappingEntity entity, Expression instance, LambdaExpression selector)
+        protected virtual Expression GetUpdateResult(
+            MappingEntity entity, 
+            Expression instance, 
+            LambdaExpression selector,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
-            var tq = this.GetQueryExpression(entity);
-            var where = this.GetIdentityCheck(tq.Select, entity, instance);
+            var tq = this.GetQueryExpression(entity, linguist, police);
+            var where = this.GetIdentityCheck(tq.Select, entity, instance, linguist, police);
             var selection = selector.Body.Replace(selector.Parameters[0], tq.Projector);
             var newAlias = new TableAlias();
-            var pc = ColumnProjector.ProjectColumns(this.Translator.LanguageRewriter.Language, selection, null, newAlias, tq.Select.Alias);
+            var pc = ColumnProjector.ProjectColumns(linguist.Language, selection, null, newAlias, tq.Select.Alias);
+
             return new ClientProjectionExpression(
                 new SelectExpression(newAlias, pc.Columns, tq.Select, where),
                 pc.Projector,
@@ -574,36 +654,47 @@ namespace IQToolkit.Entities.Translation
                 );
         }
 
-        public override Expression GetInsertOrUpdateExpression(MappingEntity entity, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
+        public override Expression GetInsertOrUpdateExpression(
+            MappingEntity entity, 
+            Expression instance, 
+            LambdaExpression? updateCheck, 
+            LambdaExpression? resultSelector,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
             if (updateCheck != null)
             {
-                Expression insert = this.GetInsertExpression(entity, instance, resultSelector);
-                Expression update = this.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null);
-                var check = this.GetEntityExistsTest(entity, instance);
+                Expression insert = this.GetInsertExpression(entity, instance, resultSelector, linguist, police);
+                Expression update = this.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null, linguist, police);
+                var check = this.GetEntityExistsTest(entity, instance, linguist, police);
                 return new IfCommand(check, update, insert);
             }
             else
             {
-                Expression insert = this.GetInsertExpression(entity, instance, resultSelector);
-                Expression update = this.GetUpdateExpression(entity, instance, updateCheck, resultSelector, insert);
+                Expression insert = this.GetInsertExpression(entity, instance, resultSelector, linguist, police);
+                Expression update = this.GetUpdateExpression(entity, instance, updateCheck, resultSelector, insert, linguist, police);
                 return update;
             }
         }
 
-        public override Expression GetDeleteExpression(MappingEntity entity, Expression? instance, LambdaExpression? deleteCheck)
+        public override Expression GetDeleteExpression(
+            MappingEntity entity, 
+            Expression? instance, 
+            LambdaExpression? deleteCheck,
+            QueryLinguist linguist,
+            QueryPolice police)
         {
-            TableExpression table = new TableExpression(new TableAlias(), entity, _mapping.GetTableName(entity));
+            var table = new TableExpression(new TableAlias(), entity, _mapping.GetTableName(entity));
             Expression? where = null;
 
             if (instance != null)
             {
-                where = this.GetIdentityCheck(table, entity, instance);
+                where = this.GetIdentityCheck(table, entity, instance, linguist, police);
             }
 
             if (deleteCheck != null)
             {
-                var row = this.GetEntityExpression(table, entity);
+                var row = this.GetEntityExpression(table, entity, linguist, police);
                 var pred = deleteCheck.Body.Replace(deleteCheck.Parameters[0], row);
                 where = (where != null) ? where.And(pred) : pred;
             }

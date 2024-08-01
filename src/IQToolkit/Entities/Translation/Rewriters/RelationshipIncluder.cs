@@ -8,7 +8,6 @@ using System.Reflection;
 
 namespace IQToolkit.Entities.Translation
 {
-    using Expressions;
     using Expressions.Sql;
 
     /// <summary>
@@ -16,20 +15,26 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class RelationshipIncluder : SqlExpressionVisitor
     {
-        private readonly QueryMappingRewriter _mapper;
-        private readonly QueryPolicy _policy;
+        private readonly QueryLinguist _linguist;
+        private readonly QueryMapper _mapper;
+        private readonly QueryPolice _police;
         private ImmutableDictionary<MemberInfo, bool> _includeScope;
 
-        public RelationshipIncluder(QueryPolicy policy, QueryMappingRewriter mappingRewriter)
+        public RelationshipIncluder(QueryLinguist linguist, QueryMapper mapper, QueryPolice police)
         {
-            _mapper = mappingRewriter;
-            _policy = policy;
+            _linguist = linguist;
+            _mapper = mapper;
+            _police = police;
             _includeScope = ImmutableDictionary<MemberInfo, bool>.Empty;
         }
 
-        public static Expression Include(Expression expression, QueryPolicy policy, QueryMappingRewriter mappingRewriter)
+        public static Expression Include(
+            Expression expression, 
+            QueryLinguist linguist,
+            QueryMapper mapper,
+            QueryPolice police)
         {
-            return new RelationshipIncluder(policy, mappingRewriter).Visit(expression);
+            return new RelationshipIncluder(linguist, mapper, police).Visit(expression);
         }
 
         protected internal override Expression VisitClientProjection(ClientProjectionExpression proj)
@@ -43,7 +48,7 @@ namespace IQToolkit.Entities.Translation
             var oldScope = _includeScope;
             try
             {
-                if (_mapper.HasIncludedMembers(entity))
+                if (_mapper.HasIncludedMembers(entity, _police.Policy))
                 {
                     entity = _mapper.IncludeMembers(
                         entity,
@@ -53,14 +58,18 @@ namespace IQToolkit.Entities.Translation
                             {
                                 return false;
                             }
-                            if (_policy.IsIncluded(m))
+                            
+                            if (_police.Policy.IsIncluded(m))
                             {
                                 _includeScope = _includeScope.SetItem(m, true);
                                 return true;
                             }
 
                             return false;
-                        });
+                        },
+                        _linguist,
+                        _police
+                        );
                 }
 
                 return base.VisitEntity(entity);

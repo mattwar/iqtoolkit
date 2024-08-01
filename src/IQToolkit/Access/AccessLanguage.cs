@@ -7,7 +7,6 @@ using System.Reflection;
 namespace IQToolkit.Access
 {
     using Entities;
-    using Expressions;
     using Expressions.Sql;
     using IQToolkit.Entities.Translation;
     using Utils;
@@ -15,10 +14,13 @@ namespace IQToolkit.Access
     /// <summary>
     /// Microsoft Access SQL <see cref="QueryLanguage"/>
     /// </summary>
-    public sealed class AccessLanguage : QueryLanguage, ICreateLanguageRewriter
+    public sealed class AccessLanguage : QueryLanguage, IHaveLinguist
     {
+        private readonly AccessLinguist _linguist;
+
         private AccessLanguage()
         {
+            _linguist = new AccessLinguist(this);
         }
 
         public static readonly AccessLanguage Singleton =
@@ -30,8 +32,7 @@ namespace IQToolkit.Access
         public override QueryFormatter Formatter =>
             AccessFormatter.Singleton;
 
-        QueryLanguageRewriter ICreateLanguageRewriter.CreateLanguageTranslator(QueryTranslator translator) =>
-            new AccessLanguageRewriter(translator, this);
+        QueryLinguist IHaveLinguist.Linguist => _linguist;
 
         public override string Quote(string name)
         {

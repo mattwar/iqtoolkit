@@ -7,21 +7,24 @@ using System.Linq.Expressions;
 namespace IQToolkit.TSql
 {
     /// <summary>
-    /// Microsoft Transact SQL (TSQL) <see cref="QueryLanguageRewriter"/>
+    /// Microsoft Transact SQL (TSQL) <see cref="QueryLinguist"/>
     /// </summary>
-    internal class TSqlLanguageRewriter : QueryLanguageRewriter
+    internal class TSqlLinguist : QueryLinguist
     {
-        public TSqlLanguageRewriter(QueryTranslator translator, TSqlLanguage language)
-            : base(translator, language)
+        public TSqlLinguist(TSqlLanguage language)
+            : base(language)
         {
         }
 
-        public override Expression Rewrite(Expression expression)
+        public override Expression Apply(
+            Expression expression, 
+            QueryMapper mapper, 
+            QueryPolice police)
         {
             // fix up any order-by's
             expression = expression.MoveOrderByToOuterSelect(this.Language);
 
-            expression = base.Rewrite(expression);
+            expression = base.Apply(expression, mapper, police);
 
             // convert skip/take info into RowNumber pattern
             expression = expression.ConvertSkipTakeToTop(this.Language);

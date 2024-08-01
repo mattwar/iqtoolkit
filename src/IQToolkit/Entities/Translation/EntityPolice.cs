@@ -3,25 +3,27 @@
 
 using System.Linq.Expressions;
 using System.Reflection;
-using IQToolkit.Expressions;
 
 namespace IQToolkit.Entities.Translation
 {
     using Expressions;
     using Expressions.Sql;
-    using Translation;
 
-    public class EntityPolicyRewritter : QueryPolicyRewriter
+    public class EntityPolice : QueryPolice
     {
         private readonly EntityPolicy _policy;
 
-        public EntityPolicyRewritter(QueryTranslator translator, EntityPolicy policy)
-            : base(translator, policy)
+        public EntityPolice(EntityPolicy policy)
+            : base(policy)
         {
             _policy = policy;
         }
 
-        public override Expression ApplyPolicy(Expression expression, MemberInfo member)
+        public override Expression ApplyPolicy(
+            Expression expression, 
+            MemberInfo member,
+            QueryLinguist linguist,
+            QueryMapper mapper)
         {
             var operations = _policy.GetOperations(member);
             if (operations.Count > 0)
@@ -30,8 +32,9 @@ namespace IQToolkit.Entities.Translation
 
                 foreach (var fnOp in operations)
                 {
-                    var pop = PartialEvaluator.Eval(fnOp, this.Translator.MappingRewriter.Mapping.CanBeEvaluatedLocally);
-                    result = this.Translator.MappingRewriter.ApplyMapping(Expression.Invoke(pop, result));
+                    var pop = PartialEvaluator.Eval(fnOp, mapper.Mapping.CanBeEvaluatedLocally);
+                    var invoked = Expression.Invoke(pop, result);
+                    result = invoked.ConvertLinqOperatorToSqlExpressions(linguist, mapper, this, isQueryFragment: true);
                 }
 
                 var projection = (ClientProjectionExpression)result;

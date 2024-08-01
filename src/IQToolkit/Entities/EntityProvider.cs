@@ -272,39 +272,26 @@ namespace IQToolkit.Entities
             }
         }
 
-        /// <summary>
-        /// Create a <see cref="QueryTranslator"/> used to translate a query into
-        /// an execution plan with with parts both executed on the server and client.
-        /// </summary>
-        protected virtual QueryTranslator CreateTranslator()
+        protected virtual QueryLinguist CreateLinguist()
         {
-            return new QueryTranslator(
-                t => CreateLanguageTranslator(t),
-                t => CreateMappingTranslator(t),
-                t => CreatePolicyTranslator(t)
-                );
+            if (this.Language is IHaveLinguist clt)
+                return clt.Linguist;
+
+            return new QueryLinguist(this.Language);
         }
 
-        protected virtual QueryLanguageRewriter CreateLanguageTranslator(QueryTranslator translator)
+        protected virtual QueryMapper CreateMapper()
         {
-            if (this.Language is ICreateLanguageRewriter clt)
-                return clt.CreateLanguageTranslator(translator);
-
-            return new QueryLanguageRewriter(translator, this.Language);
-        }
-
-        protected virtual QueryMappingRewriter CreateMappingTranslator(QueryTranslator translator)
-        {
-            if (this.Mapping is ICreateMappingRewriter cmt)
-                return cmt.CreateMappingTranslator(translator);
+            if (this.Mapping is IHaveMapper cmt)
+                return cmt.Mapper;
 
             if (this.Mapping is AdvancedEntityMapping advMapping)
             {
-                return new AdvancedMappingRewriter(advMapping, translator);
+                return new AdvancedMapper(advMapping);
             }
             else if (this.Mapping is BasicEntityMapping basicMapping)
             {
-                return new BasicMappingRewriter(basicMapping, translator);
+                return new BasicMapper(basicMapping);
             }
             else
             {
@@ -315,18 +302,18 @@ namespace IQToolkit.Entities
             }
         }
 
-        protected virtual QueryPolicyRewriter CreatePolicyTranslator(QueryTranslator translator)
+        protected virtual QueryPolice CreatePolice()
         {
-            if (this.Policy is ICreatePolicyRewriter cpt)
-                return cpt.CreatePolicyTranslator(translator);
+            if (this.Policy is IHavePolice cpt)
+                return cpt.Police;
 
             if (this.Policy is EntityPolicy entityPolicy)
             {
-                return new EntityPolicyRewritter(translator, entityPolicy);
+                return new EntityPolice(entityPolicy);
             }
             else
             {
-                return new QueryPolicyRewriter(translator, this.Policy);
+                return new QueryPolice(this.Policy);
             }
         }
 
@@ -393,10 +380,21 @@ namespace IQToolkit.Entities
             if (lambda != null)
                 query = lambda.Body;
 
-            var translator = this.CreateTranslator();
+            var linguist = this.CreateLinguist();
+            var mapper = this.CreateMapper();
+            var police = this.CreatePolice();
 
             // translate query into client & server parts
-            var translation = translator.Translate(query);
+
+            // pre-evaluate local sub-trees
+            var evaluated = PartialEvaluator.Eval(query, mapper.Mapping.CanBeEvaluatedLocally);
+
+            // convert LINQ operators to SqlExpressions (with initial mapping & policy)
+            var sqlized = evaluated.ConvertLinqOperatorToSqlExpressions(linguist, mapper, police);
+
+            var mapped = mapper.Apply(sqlized, linguist, police);
+            var policed = police.Apply(mapped, linguist, mapper);
+            var translation = linguist.Apply(policed, mapper, police);
 
             var parameters = lambda?.Parameters;
             var provider = this.Find(query, parameters, typeof(EntityProvider));
@@ -413,9 +411,9 @@ namespace IQToolkit.Entities
 
             // build the plan
             return QueryPlanBuilder.Build(
-                translator.LanguageRewriter, 
+                this.Language,
+                this.Policy,
                 this.FormattingOptions,
-                this.Policy, 
                 translation, 
                 provider
                 );

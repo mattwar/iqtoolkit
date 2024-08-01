@@ -7,9 +7,7 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Entities.Translation
 {
-    using Expressions;
     using Expressions.Sql;
-    using Utils;
 
     /// <summary>
     /// Converts all external input expressions into client parameters.
@@ -245,6 +243,5 @@ namespace IQToolkit.Entities.Translation
                 }
             }
         }
-
     }
 }

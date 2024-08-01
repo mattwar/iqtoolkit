@@ -10,8 +10,8 @@ using System.Reflection;
 
 namespace IQToolkit.Entities
 {
-    using Expressions;
     using Expressions.Sql;
+    using IQToolkit.Entities.Translation;
     using Utils;
 
     /// <summary>
@@ -41,6 +41,15 @@ namespace IQToolkit.Entities
         {
             // default: language does not support quoting.
             return name;
+        }
+
+        /// <summary>
+        /// Determine which sub-expressions must be parameters
+        /// </summary>
+        public virtual Expression Parameterize(
+            Expression expression)
+        {
+            return ClientParameterRewriter.Rewrite(this, expression);
         }
 
         /// <summary>
@@ -158,12 +167,13 @@ namespace IQToolkit.Entities
         /// </summary>
         class JoinColumnGatherer
         {
-            HashSet<TableAlias> aliases;
-            HashSet<ColumnExpression> columns = new HashSet<ColumnExpression>();
+            private readonly HashSet<TableAlias> _aliases;
+            private readonly HashSet<ColumnExpression> _columns = 
+                new HashSet<ColumnExpression>();
 
             private JoinColumnGatherer(HashSet<TableAlias> aliases)
             {
-                this.aliases = aliases;
+                _aliases = aliases;
             }
 
             public static IReadOnlyList<ColumnExpression> Gather(HashSet<TableAlias> aliases, SelectExpression select)
@@ -172,7 +182,7 @@ namespace IQToolkit.Entities
                 {
                     var gatherer = new JoinColumnGatherer(aliases);
                     gatherer.Gather(select.Where);
-                    return gatherer.columns.ToReadOnly();
+                    return gatherer._columns.ToReadOnly();
                 }
                 else
                 {
@@ -190,11 +200,11 @@ namespace IQToolkit.Entities
                         case ExpressionType.NotEqual:
                             if (IsExternalColumn(b.Left) && GetColumn(b.Right) is { } rightColumn)
                             {
-                                this.columns.Add(rightColumn);
+                                _columns.Add(rightColumn);
                             }
                             else if (IsExternalColumn(b.Right) && GetColumn(b.Left) is { } leftColumn)
                             {
-                                this.columns.Add(leftColumn);
+                                _columns.Add(leftColumn);
                             }
                             break;
                         case ExpressionType.And:
@@ -211,17 +221,18 @@ namespace IQToolkit.Entities
 
             private ColumnExpression? GetColumn(Expression exp)
             {
-                while (exp.NodeType == ExpressionType.Convert)
-                    exp = ((UnaryExpression)exp).Operand;
+                while (exp is UnaryExpression ux && ux.NodeType == ExpressionType.Convert)
+                {
+                    exp = ux.Operand;
+                }
+
                 return exp as ColumnExpression;
             }
 
             private bool IsExternalColumn(Expression exp)
             {
-                var col = GetColumn(exp);
-                if (col != null && !this.aliases.Contains(col.Alias))
-                    return true;
-                return false;
+                return GetColumn(exp) is { } col
+                    && !_aliases.Contains(col.Alias);
             }
         }
 
@@ -266,19 +277,21 @@ namespace IQToolkit.Entities
                     }
                 }
             }
-            var property = member as PropertyInfo;
-            if (property != null
+
+            if (member is PropertyInfo property
                 && property.Name == "Count"
                 && typeof(IEnumerable).IsAssignableFrom(property.DeclaringType))
             {
                 return true;
             }
+
             return false;
         }
 
         public virtual bool AggregateArgumentIsPredicate(string aggregateName)
         {
-            return aggregateName == "Count" || aggregateName == "LongCount";
+            return aggregateName == "Count" 
+                || aggregateName == "LongCount";
         }
 
         /// <summary>

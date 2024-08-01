@@ -7,7 +7,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using IQToolkit.Expressions;
 
 namespace IQToolkit.Entities
 {
@@ -24,9 +23,9 @@ namespace IQToolkit.Entities
     public class QueryPlanBuilder
     {
         public static QueryPlan Build(
-            QueryLanguageRewriter linguist,
-            FormattingOptions formattingOptions,
+            QueryLanguage language,
             QueryPolicy policy,
+            FormattingOptions formattingOptions,
             Expression query,
             Expression provider)
         {
@@ -40,7 +39,7 @@ namespace IQToolkit.Entities
             var initializer = Expression.Property(Expression.Convert(provider, typeof(IHaveExecutor)), "Executor");
 
             var diagnostics = new List<Diagnostic>();
-            var builder = new Builder(linguist, formattingOptions, policy, executorParam, diagnostics);
+            var builder = new Builder(language, policy, formattingOptions, executorParam, diagnostics);
 
             // add parameters & values for top level lambda
             builder.AddExecutorParameter(executorParam, initializer);
@@ -56,8 +55,8 @@ namespace IQToolkit.Entities
 
         private class Builder : SqlExpressionVisitor
         {
+            private readonly QueryLanguage _language;
             private readonly QueryPolicy _policy;
-            private readonly QueryLanguageRewriter _linguist;
             private readonly FormattingOptions _formattingOptions;
             private readonly ParameterExpression _executor;
             private readonly List<Diagnostic> _diagnostics;
@@ -70,16 +69,16 @@ namespace IQToolkit.Entities
             private Dictionary<string, Expression> _variableMap = new Dictionary<string, Expression>();
 
             public Builder(
-                QueryLanguageRewriter linguist,
-                FormattingOptions formattingOptions,
+                QueryLanguage language,
                 QueryPolicy policy,
+                FormattingOptions formattingOptions,
                 ParameterExpression executor,
                 List<Diagnostic> diagnostics
                 )
             {
-                _linguist = linguist;
-                _formattingOptions = formattingOptions;
+                _language = language;
                 _policy = policy;
+                _formattingOptions = formattingOptions;
                 _executor = executor;
                 _variables = new List<ParameterExpression>();
                 _initializers = new List<Expression>();
@@ -136,7 +135,7 @@ namespace IQToolkit.Entities
 
             private Expression BuildInner(Expression expression)
             {
-                var eb = new Builder(_linguist, _formattingOptions, _policy, _executor, _diagnostics);
+                var eb = new Builder(_language, _policy, _formattingOptions, _executor, _diagnostics);
                 eb._scope = _scope;
                 eb._receivingMember = _receivingMember;
                 eb._nReaders = _nReaders;
@@ -250,7 +249,7 @@ namespace IQToolkit.Entities
                         );
                 }
 
-                return _linguist.Parameterize(expression);
+                return _language.Parameterize(expression);
             }
 
             private Expression GetProjectionExecutor(ClientProjectionExpression projection, bool okayToDefer)
@@ -275,7 +274,7 @@ namespace IQToolkit.Entities
                 out IReadOnlyList<Expression> values)
             {
 
-                var formatted = _linguist.Language.Formatter.Format(expression, _formattingOptions);
+                var formatted = _language.Formatter.Format(expression, _formattingOptions);
                 if (formatted.Diagnostics.Count > 0)
                     _diagnostics.AddRange(formatted.Diagnostics);
 
@@ -339,7 +338,7 @@ namespace IQToolkit.Entities
 
             protected internal override Expression VisitBatch(BatchExpression batch)
             {
-                if (_linguist.Language.AllowsMultipleCommands 
+                if (_language.AllowsMultipleCommands 
                     || !IsMultipleCommands(batch.Operation.Body as CommandExpression))
                 {
                     return this.BuildExecuteBatch(batch);
@@ -462,7 +461,7 @@ namespace IQToolkit.Entities
 
             protected internal override Expression VisitScalarFunctionCall(ScalarFunctionCallExpression func)
             {
-                if (_linguist.Language.IsRowsAffectedExpressions(func))
+                if (_language.IsRowsAffectedExpressions(func))
                 {
                     return Expression.Property(_executor, "RowsAffected");
                 }
@@ -473,7 +472,7 @@ namespace IQToolkit.Entities
             protected internal override Expression VisitExistsSubquery(ExistsSubqueryExpression exists)
             {
                 // how did we get here? Translate exists into count query
-                var colType = _linguist.Language.TypeSystem.GetQueryType(typeof(int));
+                var colType = _language.TypeSystem.GetQueryType(typeof(int));
                 var newSelect = exists.Select.WithColumns(
                     new[] { new ColumnDeclaration("value", new AggregateExpression(typeof(int), "Count", null, false), colType) }
                     );

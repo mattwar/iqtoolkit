@@ -13,9 +13,13 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Add included relationships to entity expressions.
         /// </summary>
-        public static Expression AddIncludedRelationships(this Expression expression, QueryPolicy policy, QueryMappingRewriter mappingRewriter)
+        public static Expression AddIncludedRelationships(
+            this Expression expression, 
+            QueryLinguist lingust,
+            QueryMapper mapper,
+            QueryPolice police)
         {
-            var rewritten = RelationshipIncluder.Include(expression, policy, mappingRewriter);
+            var rewritten = RelationshipIncluder.Include(expression, lingust, mapper, police);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             return rewritten != expression
@@ -71,26 +75,31 @@ namespace IQToolkit.Entities.Translation
         }
 
         /// <summary>
-        /// Converts LINQ <see cref="System.Linq.Queryable"/> query operators to DbExpressions.
+        /// Converts LINQ operator calls to <see cref="SqlExpression"/> nodes.
         /// </summary>
-        public static Expression ConvertQueryOperatorsToDbExpressions(
+        public static Expression ConvertLinqOperatorToSqlExpressions(
             this Expression expression,
-            QueryLanguage language,
-            QueryMappingRewriter mapper, 
+            QueryLinguist linguist,
+            QueryMapper mapper, 
+            QueryPolice police,
             bool isQueryFragment = false)
         {
-            var rewriter = new LinqToDbExpressionRewriter(language, mapper, expression);
+            var rewriter = new LinqToSqlExpressionRewriter(linguist, mapper, police, expression);
             var rewritten = rewriter.Visit(expression);
             Debug.Assert(isQueryFragment || rewritten.HasValidReferences(), "Invalid References or Declarations");
             return rewritten;
         }
 
         /// <summary>
-        /// Converts accesses to relationship members into projections or joins
+        /// Rewrites member accesses of relationship members into projections or joins
         /// </summary>
-        public static Expression ConvertRelationshipAccesses(this Expression expression, QueryMappingRewriter mapper)
+        public static Expression RewriteRelationshipMembers(
+            this Expression expression, 
+            QueryLinguist linguist,
+            QueryMapper mapper, 
+            QueryPolice police)
         {
-            var rewritten = new RelationshipBinder(mapper).Visit(expression);
+            var rewritten = new RelationshipRewriter(linguist, mapper, police).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
 
             return rewritten != expression

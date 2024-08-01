@@ -5,10 +5,9 @@ using System.Data.Common;
 using System.Linq;
 using System.IO;
 
-namespace IQToolkit.Data
+namespace IQToolkit.Entities.Data
 {
-    using Entities;
-    using Entities.Mapping;
+    using Mapping;
     using AnsiSql;
     using Utils;
      

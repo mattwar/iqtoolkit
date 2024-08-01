@@ -8,8 +8,8 @@ using System.IO;
 
 namespace IQToolkit.OleDb
 {
-    using Data;
     using Entities;
+    using Entities.Data;
     using Utils;
 
     public class OleDbQueryExecutor : DbQueryExecutor

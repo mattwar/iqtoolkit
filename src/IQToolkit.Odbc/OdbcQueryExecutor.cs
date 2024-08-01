@@ -10,8 +10,8 @@ using System.IO;
 namespace IQToolkit.Odbc
 {
     using AnsiSql;
-    using Data;
     using Entities;
+    using Entities.Data;
     using Utils;
 
     public class OdbcQueryExecutor : DbQueryExecutor

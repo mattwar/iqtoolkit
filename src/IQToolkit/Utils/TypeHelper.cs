@@ -574,7 +574,8 @@ namespace IQToolkit.Utils
             Func<MethodInfo, bool>? fnMatch = null,
             bool includeNonPublic = false)
         {
-            var typeArgArray = typeArguments.ToArray();
+            if (!(typeArguments is Type[] argsArray))
+                argsArray = typeArguments.ToArray();
 
             return GetDeclaredMethods(
                 type,
@@ -582,12 +583,12 @@ namespace IQToolkit.Utils
                     && m.Name == name
                     && m.GetGenericArguments().Length == typeArguments.Count
                     && m.GetParameters().Length == parameterTypes.Count
-                    && m.MakeGenericMethod(typeArgArray) is { } constructedMethod
+                    && m.MakeGenericMethod(argsArray) is { } constructedMethod
                     && ParametersMatch(constructedMethod.GetParameters(), parameterTypes)
                     && (fnMatch == null || fnMatch(constructedMethod)),
                 includeNonPublic
                 )
-                .Select(m => m.MakeGenericMethod(typeArgArray))
+                .Select(m => m.MakeGenericMethod(argsArray))
                 .ToReadOnly();
         }
 
@@ -602,7 +603,8 @@ namespace IQToolkit.Utils
             Func<MethodInfo, bool>? fnMatch = null,
             bool includeNonPublic = false)
         {
-            var typeArgArray = typeArguments.ToArray();
+            if (!(typeArguments is Type[] argsArray))
+                argsArray = typeArguments.ToArray();
 
             var method = FindDeclaredMethod(
                 type,
@@ -610,14 +612,14 @@ namespace IQToolkit.Utils
                     && m.Name == name
                     && m.GetGenericArguments().Length == typeArguments.Count
                     && m.GetParameters().Length == parameterTypes.Count
-                    && m.MakeGenericMethod(typeArgArray) is { } constructedMethod
+                    && m.MakeGenericMethod(argsArray) is { } constructedMethod
                     && ParametersMatch(constructedMethod.GetParameters(), parameterTypes)
                     && (fnMatch == null || fnMatch(constructedMethod)),
                 includeNonPublic
                 );
 
             return method != null
-                ? method.MakeGenericMethod(typeArgArray)
+                ? method.MakeGenericMethod(argsArray)
                 : null;
         }
 

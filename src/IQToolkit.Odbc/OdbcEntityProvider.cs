@@ -8,8 +8,8 @@ using System.IO;
 
 namespace IQToolkit.Odbc
 {
-    using Data;
     using Entities;
+    using Entities.Data;
 
     /// <summary>
     /// A base <see cref="DbEntityProvider"/> for OLEDB database providers

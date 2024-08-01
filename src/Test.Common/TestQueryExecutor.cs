@@ -6,8 +6,8 @@ using System.IO;
 
 using IQToolkit;
 using IQToolkit.AnsiSql;
-using IQToolkit.Data;
 using IQToolkit.Entities;
+using IQToolkit.Entities.Data;
 using IQToolkit.Entities.Mapping;
 using IQToolkit.Utils;
 

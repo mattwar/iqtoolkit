@@ -4,9 +4,8 @@
 using System;
 using System.Data;
 
-namespace IQToolkit.Data
+namespace IQToolkit.Entities.Data
 {
-    using Entities;
     using Utils;
 
     /// <summary>

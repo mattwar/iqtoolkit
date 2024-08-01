@@ -34,15 +34,17 @@ namespace IQToolkit
         {
             var thisMethod = TypeHelper.FindDeclaredMethod(typeof(Updatable),
                 nameof(Insert), 
-                null, 
-                new[] { typeof(IUpdatable), typeof(object), typeof(LambdaExpression) });
+                new[] { typeof(IUpdatable), typeof(object), typeof(LambdaExpression) }
+                );
 
             var callMyself = Expression.Call(
                 null,
                 thisMethod,
                 collection.Expression,
                 Expression.Constant(instance),
-                resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(LambdaExpression))
+                resultSelector != null 
+                    ? (Expression)Expression.Quote(resultSelector) 
+                    : Expression.Constant(null, typeof(LambdaExpression))
                 );
 
             return collection.Provider.Execute(callMyself);
@@ -100,7 +102,6 @@ namespace IQToolkit
         {
             var thisMethod = TypeHelper.FindDeclaredMethod(typeof(Updatable),
                 nameof(Update),
-                null,
                 new[] { typeof(IUpdatable), typeof(object), typeof(LambdaExpression), typeof(LambdaExpression) });
 
             var callMyself = Expression.Call(
@@ -108,8 +109,12 @@ namespace IQToolkit
                 thisMethod,
                 collection.Expression,
                 Expression.Constant(instance),
-                updateCheck != null ? (Expression)Expression.Quote(updateCheck) : Expression.Constant(null, typeof(LambdaExpression)),
-                resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(LambdaExpression))
+                updateCheck != null 
+                    ? (Expression)Expression.Quote(updateCheck) 
+                    : Expression.Constant(null, typeof(LambdaExpression)),
+                resultSelector != null 
+                    ? (Expression)Expression.Quote(resultSelector) 
+                    : Expression.Constant(null, typeof(LambdaExpression))
                 );
 
             return collection.Provider.Execute(callMyself);
@@ -183,7 +188,6 @@ namespace IQToolkit
         {
             var thisMethod = TypeHelper.FindDeclaredMethod(typeof(Updatable),
                 nameof(InsertOrUpdate), 
-                null, 
                 new[] { typeof(IUpdatable), typeof(object), typeof(LambdaExpression), typeof(LambdaExpression) });
 
             var callMyself = Expression.Call(
@@ -191,8 +195,12 @@ namespace IQToolkit
                 thisMethod,
                 collection.Expression,
                 Expression.Constant(instance),
-                updateCheck != null ? (Expression)Expression.Quote(updateCheck) : Expression.Constant(null, typeof(LambdaExpression)),
-                resultSelector != null ? (Expression)Expression.Quote(resultSelector) : Expression.Constant(null, typeof(LambdaExpression))
+                updateCheck != null 
+                    ? (Expression)Expression.Quote(updateCheck) 
+                    : Expression.Constant(null, typeof(LambdaExpression)),
+                resultSelector != null 
+                    ? (Expression)Expression.Quote(resultSelector) 
+                    : Expression.Constant(null, typeof(LambdaExpression))
                 );
 
             return collection.Provider.Execute(callMyself);
@@ -264,7 +272,6 @@ namespace IQToolkit
         {
             var thisMethod = TypeHelper.FindDeclaredMethod(typeof(Updatable),
                 nameof(Delete),
-                null,
                 new[] { typeof(IUpdatable), typeof(object), typeof(LambdaExpression) });
 
             var callMyself = Expression.Call(
@@ -272,7 +279,9 @@ namespace IQToolkit
                 thisMethod,
                 collection.Expression,
                 Expression.Constant(instance),
-                deleteCheck != null ? (Expression)Expression.Quote(deleteCheck) : Expression.Constant(null, typeof(LambdaExpression))
+                deleteCheck != null 
+                    ? (Expression)Expression.Quote(deleteCheck) 
+                    : Expression.Constant(null, typeof(LambdaExpression))
                 );
 
             return collection.Provider.Execute(callMyself);
@@ -326,7 +335,6 @@ namespace IQToolkit
         {
             var thisMethod = TypeHelper.FindDeclaredMethod(typeof(Updatable),
                 nameof(Delete),
-                null,
                 new[] { typeof(IUpdatable), typeof(LambdaExpression) });
 
             var callMyself = Expression.Call(
@@ -357,7 +365,9 @@ namespace IQToolkit
                 null,
                 thisMethod,
                 collection.Expression,
-                predicate != null ? (Expression)Expression.Quote(predicate) : Expression.Constant(null, typeof(Expression<Func<T, bool>>))
+                predicate != null 
+                    ? (Expression)Expression.Quote(predicate) 
+                    : Expression.Constant(null, typeof(Expression<Func<T, bool>>))
                 );
 
             return (int)collection.Provider.Execute(callMyself);
@@ -376,7 +386,6 @@ namespace IQToolkit
         {
             var thisMethod = TypeHelper.FindDeclaredMethod(typeof(Updatable),
                 nameof(Batch),
-                null,
                 new[] { typeof(IUpdatable), typeof(IEnumerable), typeof(LambdaExpression), typeof(int), typeof(bool) });
 
             var callMyself = Expression.Call(
@@ -384,7 +393,9 @@ namespace IQToolkit
                 thisMethod,
                 collection.Expression,
                 Expression.Constant(instances),
-                fnOperation != null ? (Expression)Expression.Quote(fnOperation) : Expression.Constant(null, typeof(LambdaExpression)),
+                fnOperation != null 
+                    ? (Expression)Expression.Quote(fnOperation) 
+                    : Expression.Constant(null, typeof(LambdaExpression)),
                 Expression.Constant(batchSize),
                 Expression.Constant(stream)
                 );

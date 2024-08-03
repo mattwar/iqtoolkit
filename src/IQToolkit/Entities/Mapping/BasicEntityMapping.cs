@@ -178,7 +178,7 @@ namespace IQToolkit.Entities.Mapping
 
         public override object CloneEntity(MappingEntity entity, object instance)
         {
-            var clone = TypeHelper.GetUninitializedObject(entity.RuntimeType);
+            var clone = System.Runtime.Serialization.FormatterServices.GetSafeUninitializedObject(entity.RuntimeType);
 
             foreach (var mi in this.GetMappedMembers(entity))
             {

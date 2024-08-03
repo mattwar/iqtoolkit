@@ -12,7 +12,7 @@ namespace IQToolkit.Entities.Sessions
     public interface IEntitySession
     {
         /// <summary>
-        /// The underlying <see cref="IEntityProvider"/> for this session.
+        /// The <see cref="IEntityProvider"/> for this session.
         /// </summary>
         IEntityProvider Provider { get; }
 

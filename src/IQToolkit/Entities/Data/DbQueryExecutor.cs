@@ -420,7 +420,7 @@ namespace IQToolkit.Entities.Data
         protected virtual IEnumerable<T> Project<T>(
             IDataReader reader, 
             Func<FieldReader, T> fnProjector, 
-            MappingEntity entity, 
+            MappingEntity? entity, 
             bool closeReader)
         {
             var freader = new DbFieldReader(this.Converter, reader);

@@ -20,7 +20,7 @@ namespace Test
         public string Phone;
         public string City;
         public string Country;
-        public IList<Order> Orders;
+        public IList<Order> Orders = new List<Order>();
     }
 
     public class Order
@@ -29,7 +29,7 @@ namespace Test
         public string CustomerID;
         public DateTime OrderDate;
         public Customer Customer;
-        public List<OrderDetail> Details;
+        public IList<OrderDetail> Details;
     }
 
     public class OrderDetail

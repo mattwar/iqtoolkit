@@ -9,7 +9,7 @@ namespace IQToolkit.Expressions.Sql
     /// <summary>
     /// The base type of all SQL expression nodes.
     /// </summary>
-    [System.Diagnostics.DebuggerDisplay("{this.GetType().Name}: {this.DbNodeType}")]
+    [System.Diagnostics.DebuggerDisplay("{this.GetType().Name}")]
     public abstract class SqlExpression : Expression 
     {
         protected string DebugText =>

@@ -291,7 +291,8 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Execute the <see cref="QueryPlan"/> and return the result.
         /// </summary>
-        public virtual object? ExecutePlan(QueryPlan plan)
+        public virtual object? ExecutePlan(
+            QueryPlan plan)
         {
 #if DEBUG
             var dbgText = plan.ExecutorDebugText;

@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using IQToolkit.Entities;
 using IQToolkit.Entities.Mapping;
+using IQToolkit.Entities.Sessions;
 using IQToolkit;
 
 namespace Test
@@ -19,8 +20,8 @@ namespace Test
         private static IDbConnection? _connection;
 
         protected void TestProvider(
-            Action<EntityProvider> fnTest,
-            EntityMapping mapping)
+            EntityMapping mapping,
+            Action<IEntityProvider> fnTest)
         {
             // force serialization of integration tests
             lock (_dbLock)
@@ -45,8 +46,8 @@ namespace Test
             EntityMapping? mapping = null)
         {
             TestProvider(
-                provider => fnTest(new Northwind(provider)),
-                mapping ?? _defaultNorthwindMapping
+                mapping ?? _defaultNorthwindMapping,
+                provider => fnTest(new Northwind(provider))
                 );
         }
 
@@ -3886,6 +3887,70 @@ namespace Test
                 Assert.IsNotNull(custs[0].Orders);
                 Assert.AreEqual(3, custs[0].Orders.Count);
             });
+        }
+
+        #endregion
+
+
+        #region Sessions
+
+        [TestMethod]
+        public void TestSessions_SubmitAction_Auto_Update()
+        {
+            TestProvider(
+                _defaultNorthwindMapping,
+                provider =>
+            {
+                var session = new EntitySession(provider);
+                var customers = session.GetTable<Customer>();
+
+                var cust = customers.Single(c => c.CustomerID == "ALFKI");
+                // changing customer should lead to update action
+                cust.Country = "USA";
+
+                var action = customers.GetSubmitAction(cust);
+                Assert.AreEqual(SubmitAction.Update, action);
+            });
+        }
+
+        [TestMethod]
+        public void TestSessions_SubmitAction_Delete()
+        {
+            TestProvider(
+                _defaultNorthwindMapping,
+                provider =>
+                {
+                    var session = new EntitySession(provider);
+                    var customers = session.GetTable<Customer>();
+
+                    var cust = customers.Single(c => c.CustomerID == "ALFKI");
+                    customers.DeleteOnSubmit(cust);
+
+                    var action = customers.GetSubmitAction(cust);
+                    Assert.AreEqual(SubmitAction.Delete, action);
+                });
+        }
+
+        [TestMethod]
+        public void TestSessions_SubmitAction_Auto_Insert()
+        {
+            TestProvider(
+                _defaultNorthwindMapping,
+                provider =>
+                {
+                    var session = new EntitySession(provider);
+                    
+                    var customers = session.GetTable<Customer>();
+                    var orders = session.GetTable<Order>();
+
+                    var cust = customers.Single(c => c.CustomerID == "ALFKI");
+                    var order = new Order { CustomerID = "ALFKI", OrderDate = DateTime.Now };
+                    cust.Orders.Add(order);
+                    orders.SetSubmitAction(order, SubmitAction.Insert);
+
+                    var action = orders.GetSubmitAction(order);
+                    Assert.AreEqual(SubmitAction.Insert, action);
+                });
         }
 
         #endregion

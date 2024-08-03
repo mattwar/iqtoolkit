@@ -33,11 +33,7 @@ namespace IQToolkit.Entities.Sessions
             _tables = new Dictionary<MappingEntity, ISessionTable>();
         }
 
-        /// <summary>
-        /// The underlying <see cref="IEntityProvider"/>
-        /// </summary>
         public IEntityProvider Provider => _sessionProvider;
-        IEntityProvider IEntitySession.Provider => _provider;
 
         protected IEnumerable<ISessionTable> GetTables()
         {
@@ -52,7 +48,7 @@ namespace IQToolkit.Entities.Sessions
         /// If unspecified, the provider will infer the id from the element type.</param>
         public ISessionTable GetTable(Type entityType, string? entityId = null)
         {
-            return this.GetTable(_sessionProvider.Provider.Mapping.GetEntity(entityType, entityId));
+            return this.GetTable(_sessionProvider.Mapping.GetEntity(entityType, entityId));
         }
 
         /// <summary>
@@ -153,17 +149,20 @@ namespace IQToolkit.Entities.Sessions
             : QueryProvider, IEntityProvider
         {
             private readonly EntitySession _session;
+            private readonly SessionExecutor _executor;
+
             private readonly IEntityProvider _provider;
 
-            public SessionProvider(EntitySession session, IEntityProvider provider)
+            public SessionProvider(
+                EntitySession session, 
+                IEntityProvider provider)
             {
                 _session = session;
+                _executor = new SessionExecutor(session, provider.Executor);
                 _provider = provider;
             }
 
-            public IEntityProvider Provider => _provider;
-
-            public QueryExecutor Executor => _provider.Executor;
+            public QueryExecutor Executor => _executor;
             public QueryLanguage Language => _provider.Language;
             public EntityMapping Mapping => _provider.Mapping;
             public QueryPolicy Policy => _provider.Policy;
@@ -526,7 +525,8 @@ namespace IQToolkit.Entities.Sessions
                 {
                     if (ti.State == SubmitAction.ConditionalUpdate)
                     {
-                        if (ti.Original != null && this.Mapping.IsModified(ti.Entity, ti.Instance, ti.Original))
+                        if (ti.Original != null 
+                            && this.Mapping.IsModified(ti.Entity, ti.Instance, ti.Original))
                         {
                             return SubmitAction.Update;
                         }
@@ -535,6 +535,7 @@ namespace IQToolkit.Entities.Sessions
                             return SubmitAction.None;
                         }
                     }
+
                     return ti.State;
                 }
 
@@ -607,6 +608,7 @@ namespace IQToolkit.Entities.Sessions
                     case SubmitAction.None:
                         _tracked[instance] = new TrackedItem(this, instance, ti?.Original, action, ti?.HookedEvent ?? false);
                         break;
+
                     case SubmitAction.ConditionalUpdate:
                         if (instance is INotifyPropertyChanging notify)
                         {
@@ -622,6 +624,7 @@ namespace IQToolkit.Entities.Sessions
                             _tracked[instance] = new TrackedItem(this, instance, original, SubmitAction.ConditionalUpdate, false);
                         }
                         break;
+
                     default:
                         throw new InvalidOperationException(string.Format("Unknown SubmitAction: {0}", action));
                 }

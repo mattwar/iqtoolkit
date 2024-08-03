@@ -716,26 +716,5 @@ namespace IQToolkit.Utils
             return method.GetCustomAttribute(typeof(System.Runtime.CompilerServices.ExtensionAttribute))
                 != null;
         }
-
-        // holds a delegate to the runtime implemented API
-        private static Func<Type, object>? _fnGetUninitializedObject;
-
-        /// <summary>
-        /// Gets an unitialized instance of an object of the specified type.
-        /// </summary>
-        public static object GetUninitializedObject(this Type type)
-        {
-            if (_fnGetUninitializedObject == null)
-            {
-                var a = typeof(System.Runtime.CompilerServices.RuntimeHelpers).Assembly;
-                var fs = a.DefinedTypes.FirstOrDefault(t => t.FullName == "System.Runtime.Serialization.FormatterServices");
-                var guo = fs?.DeclaredMethods.FirstOrDefault(m => m.Name == nameof(GetUninitializedObject));
-                if (guo == null)
-                    throw new NotSupportedException($"The runtime does not support the '{nameof(GetUninitializedObject)}' API.");
-                System.Threading.Interlocked.CompareExchange(ref _fnGetUninitializedObject, (Func<Type, object>)guo.CreateDelegate(typeof(Func<Type, object>)), null);
-            }
-
-            return _fnGetUninitializedObject(type);
-        }
     }
 }

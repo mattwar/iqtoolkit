@@ -5,13 +5,13 @@ using IQToolkit.Expressions;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace IQToolkit.Entities
 {
     using IQToolkit.Entities.Mapping;
     using System.Collections.Generic;
     using Translation;
+    using Utils;
 
     /// <summary>
     /// Defines the language rules for a query provider.
@@ -104,16 +104,15 @@ namespace IQToolkit.Entities
             var policed = police.Apply(mapped, linguist, mapper);
             var translation = linguist.Apply(policed, mapper, police);
 
-#if false
-            var parameters = lambda?.Parameters;
-            var provider = this.Find(query, parameters, typeof(EntityProvider));
-            if (provider == null)
-            {
-                var rootQueryable = this.Find(query, parameters, typeof(IQueryable));
-                var providerProperty = typeof(IQueryable).GetProperty("Provider", BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-                provider = Expression.Property(rootQueryable, providerProperty);
-            }
-#endif
+            // look for and use executor found in query itself. (for session executor)
+            var runtimeProvider = Find(evaluated, lambda?.Parameters, typeof(IEntityProvider))
+                ?? (Find(evaluated, lambda?.Parameters, typeof(IQueryable)) is { } rootQueryable
+                        ? Expression.Property(rootQueryable, TypeHelper.FindDeclaredProperty(typeof(IQueryable), "Provider"))
+                        : null);
+
+            var executorValue = runtimeProvider != null
+                ? Expression.Property(Expression.Convert(runtimeProvider, typeof(IEntityProvider)), "Executor")
+                : (Expression)Expression.Constant(provider.Executor);
 
             // add back lambda
             if (lambda != null)
@@ -123,14 +122,15 @@ namespace IQToolkit.Entities
             return QueryPlanBuilder.Build(
                 provider,
                 linguist,
-                translation
+                translation,
+                executorValue
                 );
         }
 
         /// <summary>
         /// Find the expression of the specified type, either in the specified expression or parameters.
         /// </summary>
-        private Expression? Find(Expression expression, IReadOnlyList<ParameterExpression>? parameters, Type type)
+        private static Expression? Find(Expression expression, IReadOnlyList<ParameterExpression>? parameters, Type type)
         {
             if (parameters != null)
             {

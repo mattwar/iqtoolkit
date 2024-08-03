@@ -13,6 +13,7 @@ namespace IQToolkit.Entities.Translation
     using Expressions;
     using Expressions.Sql;
     using Mapping;
+    using System.Security.Cryptography;
     using Utils;
 
     /// <summary>
@@ -24,25 +25,24 @@ namespace IQToolkit.Entities.Translation
         public static QueryPlan Build(
             IEntityProvider provider,
             QueryLinguist linguist,
-            Expression query)
+            Expression translatedQuery,
+            Expression executorValue)
         {
             // remove possible lambda and add back later
-            var lambda = query as LambdaExpression;
+            var lambda = translatedQuery as LambdaExpression;
             if (lambda != null)
-                query = lambda.Body;
+                translatedQuery = lambda.Body;
 
             // add executor parameter
             var executorParam = Expression.Parameter(typeof(QueryExecutor), "executor");
-            var initializer = Expression.Constant(provider.Executor, typeof(QueryExecutor));
-           
 
             var diagnostics = new List<Diagnostic>();
             var builder = new Builder(linguist, provider.Policy, provider.Options, executorParam, diagnostics);
 
             // add parameters & values for top level lambda
-            builder.AddExecutorParameter(executorParam, initializer);
+            builder.AddExecutorParameter(executorParam, executorValue);
             
-            var executor = builder.Build(query);
+            var executor = builder.Build(translatedQuery);
 
             // add back the lambda
             if (lambda != null)
@@ -50,6 +50,7 @@ namespace IQToolkit.Entities.Translation
 
             return new QueryPlan(executor, diagnostics);
         }
+
 
         private class Builder : SqlExpressionVisitor
         {

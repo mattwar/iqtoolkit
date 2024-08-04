@@ -12,6 +12,7 @@ using System.Reflection;
 namespace IQToolkit.Entities.Sessions
 {
     using Mapping;
+    using System.Collections;
     using Utils;
 
     /// <summary>
@@ -21,7 +22,7 @@ namespace IQToolkit.Entities.Sessions
     {
         private readonly IEntityProvider _provider;
         private readonly SessionProvider _sessionProvider;
-        private readonly Dictionary<MappingEntity, ISessionTable> _tables;
+        private readonly Dictionary<MappedEntity, ISessionTable> _tables;
 
         /// <summary>
         /// Construct a <see cref="EntitySession"/>
@@ -30,7 +31,7 @@ namespace IQToolkit.Entities.Sessions
         {
             _provider = provider;
             _sessionProvider = new SessionProvider(this, provider);
-            _tables = new Dictionary<MappingEntity, ISessionTable>();
+            _tables = new Dictionary<MappedEntity, ISessionTable>();
         }
 
         public IEntityProvider Provider => _sessionProvider;
@@ -48,7 +49,9 @@ namespace IQToolkit.Entities.Sessions
         /// If unspecified, the provider will infer the id from the element type.</param>
         public ISessionTable GetTable(Type entityType, string? entityId = null)
         {
-            return this.GetTable(_sessionProvider.Mapping.GetEntity(entityType, entityId));
+            return this.GetTable(
+                _sessionProvider.Mapping.GetEntity(entityType, entityId)
+                );
         }
 
         /// <summary>
@@ -62,7 +65,7 @@ namespace IQToolkit.Entities.Sessions
             return (ISessionTable<TEntity>)this.GetTable(typeof(TEntity), entityId);
         }
 
-        protected ISessionTable GetTable(MappingEntity entity)
+        protected ISessionTable GetTable(MappedEntity entity)
         {
             ISessionTable table;
             if (!_tables.TryGetValue(entity, out table))
@@ -73,7 +76,7 @@ namespace IQToolkit.Entities.Sessions
             return table;
         }
 
-        private object OnEntityMaterialized(MappingEntity entity, object instance)
+        private object OnEntityMaterialized(MappedEntity entity, object instance)
         {
             IEntitySessionTable table = (IEntitySessionTable)this.GetTable(entity);
             return table.OnEntityMaterialized(instance);
@@ -82,7 +85,7 @@ namespace IQToolkit.Entities.Sessions
         interface IEntitySessionTable : ISessionTable
         {
             object OnEntityMaterialized(object instance);
-            MappingEntity Entity { get; }
+            MappedEntity Entity { get; }
         }
 
         private abstract class SessionTable<TEntity> 
@@ -90,10 +93,10 @@ namespace IQToolkit.Entities.Sessions
             where TEntity : class
         {
             public IEntitySession Session { get; }
-            public MappingEntity Entity { get; }
-            public IEntityTable<TEntity> Table { get; }
+            public MappedEntity Entity { get; }
+            public IUpdatableEntityTable<TEntity> Table { get; }
 
-            public SessionTable(EntitySession session, MappingEntity entity)
+            public SessionTable(EntitySession session, MappedEntity entity)
                 : base(session._sessionProvider, typeof(ISessionTable<TEntity>))
             {
                 this.Session = session;
@@ -101,20 +104,11 @@ namespace IQToolkit.Entities.Sessions
                 this.Table = this.Session.Provider.GetTable<TEntity>(entity.EntityId);
             }
 
-            IEntityTable ISessionTable.Table
-            {
-                get { return this.Table; }
-            }
-
-            public TEntity? GetById(object id)
-            {
-                return this.Table.GetById(id);
-            }
-
-            object? ISessionTable.GetById(object id)
-            {
-                return this.GetById(id);
-            }
+            public new IEntityProvider Provider => this.Session.Provider;
+            public Type EntityType => typeof(TEntity);
+            public string EntityId => this.Entity.EntityId;
+            public TEntity? GetById(object id) => this.Table.GetById(id);
+            object? IEntityTable.GetById(object id) => this.GetById(id);
 
             public virtual object OnEntityMaterialized(object instance)
             {
@@ -195,20 +189,20 @@ namespace IQToolkit.Entities.Sessions
                 return _provider.Execute(expression);
             }
 
-            public IEntityTable<TEntity> GetTable<TEntity>(string? tableId)
+            public IUpdatableEntityTable<TEntity> GetTable<TEntity>(string? tableId)
                 where TEntity : class
             {
                 return _provider.GetTable<TEntity>(tableId);
             }
 
-            public IEntityTable GetTable(Type type, string? tableId)
+            public IUpdatableEntityTable GetTable(Type type, string? tableId)
             {
                 return _provider.GetTable(type, tableId);
             }
 
             public bool CanBeEvaluatedLocally(Expression expression)
             {
-                return _provider.Mapping.CanBeEvaluatedLocally(expression);
+                return _provider.CanBeEvaluatedLocally(expression);
             }
 
             public bool CanBeParameter(Expression expression)
@@ -253,7 +247,7 @@ namespace IQToolkit.Entities.Sessions
                     );
             }
 
-            public override IEnumerable<T> Execute<T>(QueryCommand command, Func<FieldReader, T> fnProjector, MappingEntity entity, object[] paramValues)
+            public override IEnumerable<T> Execute<T>(QueryCommand command, Func<FieldReader, T> fnProjector, MappedEntity entity, object[] paramValues)
             {
                 return _executor.Execute<T>(command, Wrap(fnProjector, entity), entity, paramValues);
             }
@@ -263,12 +257,12 @@ namespace IQToolkit.Entities.Sessions
                 return _executor.ExecuteBatch(query, paramSets, batchSize, stream);
             }
 
-            public override IEnumerable<T> ExecuteBatch<T>(QueryCommand query, IEnumerable<object[]> paramSets, Func<FieldReader, T> fnProjector, MappingEntity entity, int batchSize, bool stream)
+            public override IEnumerable<T> ExecuteBatch<T>(QueryCommand query, IEnumerable<object[]> paramSets, Func<FieldReader, T> fnProjector, MappedEntity entity, int batchSize, bool stream)
             {
                 return _executor.ExecuteBatch<T>(query, paramSets, Wrap(fnProjector, entity), entity, batchSize, stream);
             }
 
-            public override IEnumerable<T> ExecuteDeferred<T>(QueryCommand query, Func<FieldReader, T> fnProjector, MappingEntity entity, object[] paramValues)
+            public override IEnumerable<T> ExecuteDeferred<T>(QueryCommand query, Func<FieldReader, T> fnProjector, MappedEntity entity, object[] paramValues)
             {
                 return _executor.ExecuteDeferred<T>(query, Wrap(fnProjector, entity), entity, paramValues);
             }
@@ -278,7 +272,7 @@ namespace IQToolkit.Entities.Sessions
                 return _executor.ExecuteCommand(query, paramValues);
             }
 
-            private Func<FieldReader, T> Wrap<T>(Func<FieldReader, T> fnProjector, MappingEntity entity)
+            private Func<FieldReader, T> Wrap<T>(Func<FieldReader, T> fnProjector, MappedEntity entity)
             {
                 Func<FieldReader, T> fnWrapped = 
                     (fr) => (T)_session.OnEntityMaterialized(entity, fnProjector(fr)!);
@@ -314,9 +308,9 @@ namespace IQToolkit.Entities.Sessions
             );
         }
 
-        protected virtual ISessionTable CreateTable(MappingEntity entity)
+        protected virtual ISessionTable CreateTable(MappedEntity entity)
         {
-            return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.StaticType), new object[] { this, entity });
+            return (ISessionTable)Activator.CreateInstance(typeof(TrackedTable<>).MakeGenericType(entity.Type), new object[] { this, entity });
         }
 
         private interface ITrackedTable : IEntitySessionTable
@@ -334,7 +328,7 @@ namespace IQToolkit.Entities.Sessions
             private readonly Dictionary<TEntity, TrackedItem> _tracked;
             private readonly Dictionary<object, TEntity> _identityCache;
 
-            public TrackedTable(EntitySession session, MappingEntity entity)
+            public TrackedTable(EntitySession session, MappedEntity entity)
                 : base(session, entity)
             {
                 _tracked = new Dictionary<TEntity, TrackedItem>();
@@ -390,7 +384,7 @@ namespace IQToolkit.Entities.Sessions
 
                     case SubmitAction.ConditionalUpdate:
                         if (item.Original != null &&
-                            this.Mapping.IsModified(item.Entity, item.Instance, item.Original))
+                            IsModified(item.Entity, item.Instance, item.Original))
                         {
                             this.Table.Update(item.Instance);
                             return true;
@@ -433,9 +427,9 @@ namespace IQToolkit.Entities.Sessions
             {
                 if (_generatedKeys == null)
                 {
-                    _generatedKeys = this.Mapping
-                        .GetPrimaryKeyMembers(this.Entity)
-                        .Where(k => this.Mapping.IsGenerated(this.Entity, k))
+                    _generatedKeys = this.Entity.PrimaryKeyMembers
+                        .Where(k => k.IsGenerated)
+                        .Select(k => k.Member)
                         .ToArray();
                 }
  
@@ -526,7 +520,7 @@ namespace IQToolkit.Entities.Sessions
                     if (ti.State == SubmitAction.ConditionalUpdate)
                     {
                         if (ti.Original != null 
-                            && this.Mapping.IsModified(ti.Entity, ti.Instance, ti.Original))
+                            && IsModified(ti.Entity, ti.Instance, ti.Original))
                         {
                             return SubmitAction.Update;
                         }
@@ -568,12 +562,10 @@ namespace IQToolkit.Entities.Sessions
 
             private TEntity AddToCache(TEntity instance)
             {
-                var key = this.Mapping.GetPrimaryKey(this.Entity, instance);
+                var key = GetPrimaryKey(this.Entity, instance);
                 if (key != null)
                 {
-                    TEntity cached;
-
-                    if (!_identityCache.TryGetValue(key, out cached))
+                    if (!_identityCache.TryGetValue(key, out var cached))
                     {
                         cached = instance;
                         _identityCache.Add(key, cached);
@@ -587,7 +579,7 @@ namespace IQToolkit.Entities.Sessions
 
             private void RemoveFromCache(TEntity instance)
             {
-                var key = this.Mapping.GetPrimaryKey(this.Entity, instance);
+                var key = GetPrimaryKey(this.Entity, instance);
                 if (key != null)
                 {
                     _identityCache.Remove(key);
@@ -620,7 +612,7 @@ namespace IQToolkit.Entities.Sessions
                         }
                         else
                         {
-                            var original = this.Mapping.CloneEntity(this.Entity, instance);
+                            var original = CloneEntity(this.Entity, instance);
                             _tracked[instance] = new TrackedItem(this, instance, original, SubmitAction.ConditionalUpdate, false);
                         }
                         break;
@@ -635,7 +627,7 @@ namespace IQToolkit.Entities.Sessions
                 TrackedItem ti;
                 if (_tracked.TryGetValue((TEntity)sender, out ti) && ti.State == SubmitAction.ConditionalUpdate)
                 {
-                    object clone = this.Mapping.CloneEntity(ti.Entity, ti.Instance);
+                    object clone = CloneEntity(this.Entity, ti.Instance);
                     _tracked[(TEntity)sender] = new TrackedItem(this, ti.Instance, clone, SubmitAction.Update, true);
                 }
             }
@@ -663,7 +655,7 @@ namespace IQToolkit.Entities.Sessions
                 this.HookedEvent = hookedEvent;
             }
 
-            public MappingEntity Entity => this.Table.Entity;
+            public MappedEntity Entity => this.Table.Entity;
 
             public static readonly IEnumerable<TrackedItem> EmptyList = new TrackedItem[] { };
         }
@@ -690,7 +682,7 @@ namespace IQToolkit.Entities.Sessions
                         var beforeMe = stLookup[item];
 
                         // if another object exists with same key that is being deleted, then the delete must come before the insert
-                        var primaryKey = _provider.Mapping.GetPrimaryKey(item.Entity, item.Instance);
+                        var primaryKey = GetPrimaryKey(item.Entity, item.Instance);
                         if (primaryKey != null)
                         {
                             var cached = item.Table.GetFromCacheById(primaryKey);
@@ -725,7 +717,7 @@ namespace IQToolkit.Entities.Sessions
         {
             foreach (var c in items)
             {
-                foreach (var d in _provider.Mapping.GetDependingEntities(c.Entity, c.Instance))
+                foreach (var d in this.GetDependingEntities(c.Entity, c.Instance))
                 {
                     var dc = this.GetTrackedItem(d);
                     if (dc != null)
@@ -734,7 +726,7 @@ namespace IQToolkit.Entities.Sessions
                     }
                 }
 
-                foreach (var d in _provider.Mapping.GetDependentEntities(c.Entity, c.Instance))
+                foreach (var d in this.GetDependentEntities(c.Entity, c.Instance))
                 {
                     var dc = this.GetTrackedItem(d);
                     if (dc != null)
@@ -772,6 +764,158 @@ namespace IQToolkit.Entities.Sessions
             {
                 return this.hash;
             }
+        }
+
+        private IEnumerable<EntityInfo> GetDependentEntities(
+            MappedEntity entity, object instance)
+        {
+            var mapping = _provider.Mapping;
+
+            foreach (var rm in entity.RelationshipMembers)
+            {
+                if (rm.IsSource)
+                {
+                    var relatedEntity = rm.RelatedEntity;
+                    var value = TypeHelper.GetFieldOrPropertyValue(rm.Member, instance);
+                    if (value != null)
+                    {
+                        var list = value as IList;
+                        if (list != null)
+                        {
+                            foreach (var item in list)
+                            {
+                                if (item != null)
+                                {
+                                    yield return new EntityInfo(item, relatedEntity);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            yield return new EntityInfo(value, relatedEntity);
+                        }
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<EntityInfo> GetDependingEntities(
+            MappedEntity entity, object instance)
+        {
+            var mapping = _provider.Mapping;
+
+            foreach (var rm in entity.RelationshipMembers)
+            {
+                if (rm.IsTarget)
+                {
+                    var relatedEntity = rm.RelatedEntity;
+
+                    var value = TypeHelper.GetFieldOrPropertyValue(rm.Member, instance);
+                    if (value != null)
+                    {
+                        var list = value as IList;
+                        if (list != null)
+                        {
+                            foreach (var item in list)
+                            {
+                                if (item != null)
+                                {
+                                    yield return new EntityInfo(item, relatedEntity);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            yield return new EntityInfo(value, relatedEntity);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static object? GetPrimaryKey(MappedEntity entity, object instance)
+        {
+            object? firstKey = null;
+            List<object>? keys = null;
+
+            foreach (var pkm in entity.PrimaryKeyMembers)
+            {
+                var value = TypeHelper.GetFieldOrPropertyValue(pkm.Member, instance);
+                
+                if (firstKey == null)
+                {
+                    firstKey = value;
+                }
+                else
+                {
+                    if (keys == null)
+                    {
+                        keys = new List<object>();
+                        keys.Add(firstKey);
+                    }
+
+                    keys.Add(value!);
+                }
+            }
+
+            if (keys != null)
+            {
+                return new CompoundKey(keys.ToArray());
+            }
+
+            return firstKey;
+        }
+
+        private static object CloneEntity(MappedEntity entity, object instance)
+        {
+            var clone = System.Runtime.Serialization.FormatterServices.GetSafeUninitializedObject(entity.ConstructedType);
+
+            foreach (var mm in entity.MappedMembers)
+            {
+                if (mm is MappedColumnMember cm)
+                {
+                    TypeHelper.SetFieldOrPropertyValue(
+                        cm.Member,
+                        clone,
+                        TypeHelper.GetFieldOrPropertyValue(cm.Member, instance)
+                        );
+                }
+                else if (mm is MappedNestedEntityMember nm)
+                {
+                    var nestedValue = TypeHelper.GetFieldOrPropertyValue(nm.Member, instance);
+                    if (nestedValue != null)
+                    {
+                        var nestedClone = CloneEntity(nm.RelatedEntity, nestedValue);
+                        TypeHelper.SetFieldOrPropertyValue(nm.Member, nestedClone, clone);
+                    }
+                }
+            }
+
+            return clone;
+        }
+
+        private static bool IsModified(MappedEntity entity, object instance, object original)
+        {
+            foreach (var mm in entity.MappedMembers)
+            {
+                if (mm is MappedColumnMember cm)
+                {
+                    var current_value = TypeHelper.GetFieldOrPropertyValue(cm.Member, instance);
+                    var original_value = TypeHelper.GetFieldOrPropertyValue(cm.Member, original);
+
+                    if (!object.Equals(current_value, original_value))
+                        return true;
+                }
+                else if (mm is MappedNestedEntityMember nm)
+                {
+                    var current_value = TypeHelper.GetFieldOrPropertyValue(nm.Member, instance);
+                    var original_value = TypeHelper.GetFieldOrPropertyValue(nm.Member, original);
+                    if (IsModified(nm.RelatedEntity, current_value!, original_value!))
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }

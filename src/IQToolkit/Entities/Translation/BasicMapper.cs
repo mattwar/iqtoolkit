@@ -14,6 +14,7 @@ namespace IQToolkit.Entities.Translation
     using Mapping;
     using Utils;
 
+#if false
     /// <summary>
     /// A <see cref="QueryMapper"/> that can apply a <see cref="BasicEntityMapping"/> to a query expression.
     /// </summary>
@@ -31,7 +32,7 @@ namespace IQToolkit.Entities.Translation
         /// The query language specific type for the column
         /// </summary>
         public virtual QueryType GetColumnType(
-            MappingEntity entity, 
+            MappedEntity entity, 
             MemberInfo member,
             QueryLanguage language)
         {
@@ -46,7 +47,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public override ClientProjectionExpression GetQueryExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             QueryLinguist linguist,
             QueryPolice police)
         {
@@ -67,7 +68,7 @@ namespace IQToolkit.Entities.Translation
 
         public override EntityExpression GetEntityExpression(
             Expression root, 
-            MappingEntity entity,
+            MappedEntity entity,
             QueryLinguist linguist,
             QueryPolice police)
         {
@@ -105,13 +106,13 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
-        protected virtual Expression BuildEntityExpression(MappingEntity entity, IReadOnlyList<EntityAssignment> assignments)
+        protected virtual Expression BuildEntityExpression(MappedEntity entity, IReadOnlyList<EntityAssignment> assignments)
         {
             NewExpression newExpression;
 
             // handle cases where members are not directly assignable
             var readonlyMembers = assignments.Where(b => TypeHelper.IsReadOnly(b.Member)).ToArray();
-            var cons = entity.RuntimeType.GetDeclaredConstructors();
+            var cons = entity.ConstructedType.GetDeclaredConstructors();
             var hasNoArgConstructor = cons.Any(c => c.GetParameters().Length == 0);
 
             if (readonlyMembers.Length > 0 || !hasNoArgConstructor)
@@ -124,7 +125,7 @@ namespace IQToolkit.Entities.Translation
 
                 if (consThatApply.Count == 0)
                 {
-                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped and included members.", entity.RuntimeType));
+                    throw new InvalidOperationException(string.Format("Cannot construct type '{0}' with all mapped and included members.", entity.ConstructedType));
                 }
 
                 // just use the first one... (Note: need better algorithm?)
@@ -139,7 +140,7 @@ namespace IQToolkit.Entities.Translation
             }
             else
             {
-                newExpression = Expression.New(entity.RuntimeType);
+                newExpression = Expression.New(entity.ConstructedType);
             }
 
             Expression result;
@@ -147,7 +148,7 @@ namespace IQToolkit.Entities.Translation
             {
                 if (entity.StaticType.IsInterface)
                 {
-                    assignments = this.RemapAssignments(assignments, entity.RuntimeType).ToList();
+                    assignments = this.RemapAssignments(assignments, entity.ConstructedType).ToList();
                 }
 
                 result = Expression.MemberInit(newExpression, (MemberBinding[])assignments.Select(a => Expression.Bind(a.Member, a.Expression)).ToArray());
@@ -157,7 +158,7 @@ namespace IQToolkit.Entities.Translation
                 result = newExpression;
             }
 
-            if (entity.StaticType != entity.RuntimeType)
+            if (entity.StaticType != entity.ConstructedType)
             {
                 result = Expression.Convert(result, entity.StaticType);
             }
@@ -291,7 +292,7 @@ namespace IQToolkit.Entities.Translation
             return entity;
         }
 
-        private bool IsNullRelationshipAssignment(MappingEntity entity, EntityAssignment assignment)
+        private bool IsNullRelationshipAssignment(MappedEntity entity, EntityAssignment assignment)
         {
             if (_mapping.IsRelationship(entity, assignment.Member))
             {
@@ -326,7 +327,7 @@ namespace IQToolkit.Entities.Translation
 
         public override Expression GetMemberExpression(
             Expression root, 
-            MappingEntity entity, 
+            MappedEntity entity, 
             MemberInfo member,
             QueryLinguist linguist,
             QueryPolice police)
@@ -380,7 +381,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public override Expression GetInsertExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression? selector,
             QueryLinguist linguist,
@@ -411,8 +412,8 @@ namespace IQToolkit.Entities.Translation
         private IEnumerable<ColumnAssignment> GetColumnAssignments(
             Expression table, 
             Expression instance, 
-            MappingEntity entity, 
-            Func<MappingEntity, MemberInfo, bool> fnIncludeColumn,
+            MappedEntity entity, 
+            Func<MappedEntity, MemberInfo, bool> fnIncludeColumn,
             QueryLinguist linguist,
             QueryPolice police)
         {
@@ -429,7 +430,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         protected virtual Expression GetInsertResult(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression selector, 
             Dictionary<MemberInfo, Expression>? map,
@@ -505,7 +506,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         protected virtual DeclarationCommand GetGeneratedIdCommand(
-            MappingEntity entity, 
+            MappedEntity entity, 
             List<MemberInfo> members, 
             Dictionary<MemberInfo, Expression> map,
             QueryLinguist linguist)
@@ -537,7 +538,7 @@ namespace IQToolkit.Entities.Translation
 
         protected virtual Expression GetIdentityCheck(
             Expression root, 
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance,
             QueryLinguist linguist,
             QueryPolice police)
@@ -550,7 +551,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         protected virtual Expression GetEntityExistsTest(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance,
             QueryLinguist linguist,
             QueryPolice police)
@@ -561,7 +562,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         protected virtual Expression GetEntityStateTest(
-            MappingEntity entity,
+            MappedEntity entity,
             Expression? instance,
             LambdaExpression updateCheck,
             QueryLinguist linguist,
@@ -576,7 +577,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public override Expression GetUpdateExpression(
-            MappingEntity entity,
+            MappedEntity entity,
             Expression instance,
             LambdaExpression? updateCheck,
             LambdaExpression? selector,
@@ -635,7 +636,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         protected virtual Expression GetUpdateResult(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression selector,
             QueryLinguist linguist,
@@ -655,7 +656,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public override Expression GetInsertOrUpdateExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression? updateCheck, 
             LambdaExpression? resultSelector,
@@ -678,7 +679,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public override Expression GetDeleteExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression? instance, 
             LambdaExpression? deleteCheck,
             QueryLinguist linguist,
@@ -702,4 +703,5 @@ namespace IQToolkit.Entities.Translation
             return new DeleteCommand(table, where);
         }
     }
+#endif
 }

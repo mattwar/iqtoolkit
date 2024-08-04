@@ -5,11 +5,11 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.AnsiSql
 {
+    using Expressions.Sql;
     using Entities;
+    using Entities.Mapping;
     using Entities.Translation;
-    using IQToolkit.Expressions.Sql;
-    using IQToolkit.Utils;
-    using System.Reflection;
+    using Utils;
 
     internal class AnsiSqlLinguist : QueryLinguist
     {
@@ -23,9 +23,9 @@ namespace IQToolkit.AnsiSql
             return AnsiSqlFormatter.Default.Format(expression, options);
         }
 
-        public override Expression GetGeneratedIdExpression(MemberInfo member)
+        public override Expression GetGeneratedIdExpression(MappedColumnMember member)
         {
-            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), "@@IDENTITY");
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member.Member), "@@IDENTITY");
         }
     }
 }

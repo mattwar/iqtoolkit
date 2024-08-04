@@ -12,16 +12,16 @@ namespace IQToolkit.Expressions.Sql
     public sealed class TableExpression : AliasedExpression
     {
         /// <summary>
-        /// The associated <see cref="MappingEntity"/> for the table.
+        /// The associated <see cref="MappedEntity"/> for the table.
         /// </summary>
-        public MappingEntity Entity { get; }
+        public MappedEntity Entity { get; }
 
         /// <summary>
         /// The name of the table.
         /// </summary>
         public string Name { get; }
 
-        public TableExpression(TableAlias alias, MappingEntity entity, string name)
+        public TableExpression(TableAlias alias, MappedEntity entity, string name)
             : base(typeof(void), alias)
         {
             this.Entity = entity;
@@ -35,7 +35,7 @@ namespace IQToolkit.Expressions.Sql
 
         public TableExpression Update(
             TableAlias alias,
-            MappingEntity entity,
+            MappedEntity entity,
             string name)
         {
             if (alias != this.Alias

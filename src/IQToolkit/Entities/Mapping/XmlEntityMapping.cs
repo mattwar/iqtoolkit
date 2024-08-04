@@ -11,6 +11,7 @@ namespace IQToolkit.Entities.Mapping
 {
     using Utils;
 
+#if false
     /// <summary>
     /// A <see cref="EntityMapping"/> stored in XML elements.
     /// </summary>
@@ -129,6 +130,7 @@ namespace IQToolkit.Entities.Mapping
         private MappingAttribute GetMappingAttribute(Type attrType, XElement element)
         {
             var ma = (MappingAttribute)Activator.CreateInstance(attrType);
+
             foreach (var prop in attrType.GetDeclaredFieldsAndProperties().OfType<PropertyInfo>())
             {
                 var xa = element.Attribute(prop.Name);
@@ -159,4 +161,5 @@ namespace IQToolkit.Entities.Mapping
             return null;
         }
     }
+#endif
 }

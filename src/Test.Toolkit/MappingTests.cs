@@ -4,28 +4,27 @@ namespace Test.Toolkit
     using IQToolkit.Entities;
     using IQToolkit.Entities.Mapping;
 
-
     [TestClass]
     public class MappingTests
     {
         [TestMethod]
         public void TestAttributesOnEntity()
         {
-            var mapping = new AttributeEntityMapping(typeof(AttributeContextTypes.AttributesOnEntity));
+            var mapping = new AttributeMapping(typeof(AttributeContextTypes.AttributesOnEntity));
             var entityMapping = mapping.GetEntity(typeof(AttributeContextTypes.AttributesOnEntity.Entity));
         }
 
         [TestMethod]
         public void TestAttributesOnContext()
         {
-            var mapping = new AttributeEntityMapping(typeof(AttributeContextTypes.AttributesOnContext));
+            var mapping = new AttributeMapping(typeof(AttributeContextTypes.AttributesOnContext));
             var entityMapping = mapping.GetEntity(typeof(AttributeContextTypes.AttributesOnContext.Entity));
         }
 
-        private void TestAttributeMapping(Type contextType, Action<AttributeEntityMapping> fnCheck)
+        private void TestAttributeMapping(Type contextType, Action<EntityMapping> fnCheck)
         {
-            var mapping = new AttributeEntityMapping(contextType);
-            fnCheck(mapping);
+            var mapping = new AttributeMapping(contextType);
+            TestMapping(mapping);
         }
 
         internal static class AttributeContextTypes
@@ -58,7 +57,65 @@ namespace Test.Toolkit
                 [Column(Member = nameof(Entity.Value))]
                 public abstract IEntityTable<Entity> Entities { get; }
             }
+        }
 
+        [TestMethod]
+        public void TestNorthwindMapping()
+        {
+            TestMapping(new AttributeMapping(typeof(NorthwindWithAttributes)));
+        }
+
+        private void TestMapping(EntityMapping mapping)
+        { 
+            // walk through mapping info to prove that mapping is fully constructed
+            // without throwing exceptions
+
+            foreach (var member in mapping.ContextMembers)
+            {
+                var entity = mapping.GetEntity(member);
+                WalkEntity(entity);
+            }
+
+            void WalkEntity(MappedEntity entity)
+            {
+                foreach (var table in entity.Tables)
+                {
+                    WalkTable(table);
+                }
+
+                foreach (var member in entity.MappedMembers)
+                {
+                    WalkMember(member);
+                }
+            }
+
+            void WalkTable(MappedTable table)
+            {
+                if (table is MappedExtensionTable extensionTable)
+                {
+                    var related = extensionTable.RelatedTable;
+                    var keyColumnNames = extensionTable.KeyColumnNames;
+                    var relatedMembers = extensionTable.RelatedMembers;
+                }
+            }
+
+            void WalkMember(MappedMember member)
+            {
+                switch (member)
+                {
+                    case MappedColumnMember column:
+                        var colTable = column.Table;
+                        break;
+                    case MappedAssociationMember assoc:
+                        var assocRelated = assoc.RelatedEntity;
+                        var keys = assoc.KeyMembers;
+                        var relatedKeys = assoc.RelatedKeyMembers;
+                        break;
+                    case MappedNestedEntityMember nested:
+                        var nestedRelated = nested.RelatedEntity;
+                        break;
+                }
+            }
         }
     }
 }

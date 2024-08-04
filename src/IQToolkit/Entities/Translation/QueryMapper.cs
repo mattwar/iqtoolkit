@@ -24,7 +24,7 @@ namespace IQToolkit.Entities.Translation
         /// Get a query expression that selects all entities from a table
         /// </summary>
         public abstract ClientProjectionExpression GetQueryExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             QueryLinguist linguist,
             QueryPolice police);
 
@@ -35,7 +35,7 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public abstract EntityExpression GetEntityExpression(
             Expression root,
-            MappingEntity entity,
+            MappedEntity entity,
             QueryLinguist linguist,
             QueryPolice police);
 
@@ -45,8 +45,7 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public abstract Expression GetMemberExpression(
             Expression root, 
-            MappingEntity entity, 
-            MemberInfo member,
+            MappedMember member,
             QueryLinguist linguist,
             QueryPolice police);
 
@@ -54,7 +53,7 @@ namespace IQToolkit.Entities.Translation
         /// Get an expression that represents the insert operation for the specified instance.
         /// </summary>
         public abstract Expression GetInsertExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression? selector,
             QueryLinguist linguist,
@@ -64,7 +63,7 @@ namespace IQToolkit.Entities.Translation
         /// Get an expression that represents the update operation for the specified instance.
         /// </summary>
         public abstract Expression GetUpdateExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression? updateCheck, 
             LambdaExpression? selector, 
@@ -76,7 +75,7 @@ namespace IQToolkit.Entities.Translation
         /// Get an expression that represents the insert-or-update operation for the specified instance.
         /// </summary>
         public abstract Expression GetInsertOrUpdateExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression instance, 
             LambdaExpression? updateCheck, 
             LambdaExpression? resultSelector,
@@ -87,7 +86,7 @@ namespace IQToolkit.Entities.Translation
         /// Get an expression that represents the delete operation for the specified instance.
         /// </summary>
         public abstract Expression GetDeleteExpression(
-            MappingEntity entity, 
+            MappedEntity entity, 
             Expression? instance, 
             LambdaExpression? deleteCheck,
             QueryLinguist linguist,

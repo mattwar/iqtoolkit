@@ -63,7 +63,7 @@ namespace Test
         /// <summary>
         /// Executes the command once and and projects the rows of the resulting rowset into a sequence of values.
         /// </summary>
-        public override IEnumerable<T> Execute<T>(QueryCommand command, Func<FieldReader, T> fnProjector, MappingEntity entity, object[] paramValues)
+        public override IEnumerable<T> Execute<T>(QueryCommand command, Func<FieldReader, T> fnProjector, MappedEntity entity, object[] paramValues)
         {
             var dataReader = _results.CreateDataReader();
             var fieldReader = new DbFieldReader(this.Converter, dataReader);
@@ -84,7 +84,7 @@ namespace Test
         /// <summary>
         /// Execute the same command over a series of parameter sets, and produces a sequence of values, once per execution.
         /// </summary>
-        public override IEnumerable<T> ExecuteBatch<T>(QueryCommand query, IEnumerable<object[]> paramSets, Func<FieldReader, T> fnProjector, MappingEntity entity, int batchSize, bool stream)
+        public override IEnumerable<T> ExecuteBatch<T>(QueryCommand query, IEnumerable<object[]> paramSets, Func<FieldReader, T> fnProjector, MappedEntity entity, int batchSize, bool stream)
         {
             throw new NotImplementedException();
         }
@@ -92,7 +92,7 @@ namespace Test
         /// <summary>
         /// Produces an <see cref="IEnumerable{T}"/> that will execute the command when enumerated.
         /// </summary>
-        public override IEnumerable<T> ExecuteDeferred<T>(QueryCommand query, Func<FieldReader, T> fnProjector, MappingEntity entity, object[] paramValues)
+        public override IEnumerable<T> ExecuteDeferred<T>(QueryCommand query, Func<FieldReader, T> fnProjector, MappedEntity entity, object[] paramValues)
         {
             throw new NotImplementedException();
         }

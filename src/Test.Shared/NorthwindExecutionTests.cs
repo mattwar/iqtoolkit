@@ -39,7 +39,7 @@ namespace Test
         }
 
         private static readonly EntityMapping _defaultNorthwindMapping =
-            new AttributeEntityMapping(typeof(NorthwindWithAttributes));
+            new AttributeMapping(typeof(NorthwindWithAttributes));
 
         protected void TestNorthwind(
             Action<Northwind> fnTest,
@@ -3616,7 +3616,7 @@ namespace Test
             // entity created via constructor
             TestNorthwind(db =>
             {
-                var mapping = new AttributeEntityMapping(typeof(NorthwindX));
+                var mapping = new AttributeMapping(typeof(NorthwindX));
                 var policy = EntityPolicy.Default
                     .IncludeWith<CustomerX>(c => c.Orders);
 

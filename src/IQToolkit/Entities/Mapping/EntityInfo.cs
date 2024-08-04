@@ -16,12 +16,12 @@ namespace IQToolkit.Entities.Mapping
         /// <summary>
         /// The mapping used for the entity.
         /// </summary>
-        public MappingEntity Mapping { get; }
+        public MappedEntity Mapping { get; }
 
         /// <summary>
         /// Construct a new <see cref="EntityInfo"/>.
         /// </summary>
-        public EntityInfo(object instance, MappingEntity mapping)
+        public EntityInfo(object instance, MappedEntity mapping)
         {
             this.Instance = instance;
             this.Mapping = mapping;

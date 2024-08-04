@@ -9,7 +9,7 @@ namespace IQToolkit.Entities
     /// <summary>
     /// A table of entities.
     /// </summary>
-    public interface IEntityTable : IQueryable, IUpdatable
+    public interface IEntityTable : IQueryable
     {
         /// <summary>
         /// The <see cref="IEntityProvider"/> underlying the table.
@@ -30,7 +30,13 @@ namespace IQToolkit.Entities
         /// Gets an instance of an entity that corresponds to the specific id.
         /// </summary>
         object? GetById(object id);
+    }
 
+    /// <summary>
+    /// A table of entities that can be directly updated.
+    /// </summary>
+    public interface IUpdatableEntityTable : IEntityTable, IUpdatable
+    {
         /// <summary>
         /// Inserts the entity instance into the table.
         /// </summary>
@@ -58,14 +64,22 @@ namespace IQToolkit.Entities
     /// <summary>
     /// A table of entities.
     /// </summary>
-    public interface IEntityTable<TEntity> : IQueryable<TEntity>, IEntityTable, IUpdatable<TEntity>
+    public interface IEntityTable<TEntity> : IQueryable<TEntity>, IEntityTable
         where TEntity : class
     {
         /// <summary>
         /// Gets an instance of an entity that corresponds to the specific id.
         /// </summary>
         new TEntity? GetById(object id);
+    }
 
+    /// <summary>
+    /// A talbe of entities that can be directly updated.
+    /// </summary>
+    public interface IUpdatableEntityTable<TEntity> 
+        : IEntityTable<TEntity>, IUpdatable<TEntity>, IUpdatableEntityTable
+        where TEntity : class
+    {
         /// <summary>
         /// Inserts the entity instance into the table.
         /// </summary>

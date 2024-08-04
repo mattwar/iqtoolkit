@@ -52,7 +52,7 @@ namespace IQToolkit.Entities
         /// </summary>
         public QueryOptions Options { get; }
 
-        private readonly Dictionary<MappingEntity, IEntityTable> _entityToEntityTableMap;
+        private readonly Dictionary<MappedEntity, IUpdatableEntityTable> _entityToEntityTableMap;
 
         protected EntityProvider(
             QueryExecutor executor,
@@ -64,14 +64,14 @@ namespace IQToolkit.Entities
             QueryOptions? options)
         {
             this.Language = language ?? AnsiSql.AnsiSqlLanguage.Singleton;
-            this.Mapping = mapping ?? new AttributeEntityMapping();
+            this.Mapping = mapping ?? new AttributeMapping();
             this.Policy = policy ?? QueryPolicy.Default;
             this.Executor = executor;
             this.Log = log;
             this.Cache = cache;
             this.Options = options ?? QueryOptions.Default;
 
-            _entityToEntityTableMap = new Dictionary<MappingEntity, IEntityTable>();
+            _entityToEntityTableMap = new Dictionary<MappedEntity, IUpdatableEntityTable>();
         }
 
         /// <summary>
@@ -189,9 +189,9 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Gets the <see cref="IEntityTable"/> for the entity.
         /// </summary>
-        protected IEntityTable GetTable(MappingEntity entity)
+        protected IUpdatableEntityTable GetTable(MappedEntity entity)
         {
-            IEntityTable table;
+            IUpdatableEntityTable table;
 
             if (!_entityToEntityTableMap.TryGetValue(entity, out table))
             {
@@ -205,10 +205,10 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Creates the <see cref="IEntityTable"/> for the entity.
         /// </summary>
-        protected virtual IEntityTable CreateTable(MappingEntity entity)
+        protected virtual IUpdatableEntityTable CreateTable(MappedEntity entity)
         {
-            return (IEntityTable)Activator.CreateInstance(
-                typeof(EntityTable<>).MakeGenericType(entity.StaticType),
+            return (IUpdatableEntityTable)Activator.CreateInstance(
+                typeof(EntityTable<>).MakeGenericType(entity.Type),
                 new object[] { this, entity }
                 );
         }
@@ -216,7 +216,7 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Gets the <see cref="IEntityTable{T}"/> for the database table corresponding to the entity type.
         /// </summary>
-        public virtual IEntityTable<TEntity> GetTable<TEntity>()
+        public virtual IUpdatableEntityTable<TEntity> GetTable<TEntity>()
             where TEntity : class
         {
             return GetTable<TEntity>(null);
@@ -227,10 +227,10 @@ namespace IQToolkit.Entities
         /// </summary>
         /// <param name="entityId">An id used to associate the entity type with its mapping.
         /// If not specified the name of the entity type is used.</param>
-        public virtual IEntityTable<TEntity> GetTable<TEntity>(string? entityId = null)
+        public virtual IUpdatableEntityTable<TEntity> GetTable<TEntity>(string? entityId = null)
             where TEntity : class
         {
-            return (IEntityTable<TEntity>)this.GetTable(typeof(TEntity), entityId);
+            return (IUpdatableEntityTable<TEntity>)this.GetTable(typeof(TEntity), entityId);
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace IQToolkit.Entities
         /// <param name="entityType">The entity type.</param>
         /// <param name="entityId">An id used to associate the entity type with its mapping.
         /// If not specified the name of the entity type is used.</param>
-        public virtual IEntityTable GetTable(Type entityType, string? entityId = null)
+        public virtual IUpdatableEntityTable GetTable(Type entityType, string? entityId = null)
         {
             return this.GetTable(this.Mapping.GetEntity(entityType, entityId));
         }
@@ -249,7 +249,7 @@ namespace IQToolkit.Entities
         /// </summary>
         public bool CanBeEvaluatedLocally(Expression expression)
         {
-            return this.Mapping.CanBeEvaluatedLocally(expression);
+            return this.Language.CanBeEvaluatedLocally(expression);
         }
 
         /// <summary>

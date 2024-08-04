@@ -8,22 +8,12 @@ namespace IQToolkit.Entities.Sessions
     /// <summary>
     /// A table associated with an <see cref="IEntitySession"/>
     /// </summary>
-    public interface ISessionTable : IQueryable
+    public interface ISessionTable : IEntityTable
     {
         /// <summary>
         /// The <see cref="IEntitySession"/> associated with this <see cref="ISessionTable"/>
         /// </summary>
         IEntitySession Session { get; }
-
-        /// <summary>
-        /// The underlying provider's <see cref="IEntityTable"/> corresponding to this <see cref="ISessionTable"/>.
-        /// </summary>
-        IEntityTable Table { get; }
-
-        /// <summary>
-        /// Gets an entity instance given its id (primary key value)
-        /// </summary>
-        object? GetById(object id);
 
         /// <summary>
         /// Set the <see cref="SubmitAction"/> for this entity instance.
@@ -39,19 +29,9 @@ namespace IQToolkit.Entities.Sessions
     /// <summary>
     /// A table associated with an <see cref="IEntitySession"/>
     /// </summary>
-    public interface ISessionTable<TEntity> : IQueryable<TEntity>, ISessionTable
+    public interface ISessionTable<TEntity> : IEntityTable<TEntity>, ISessionTable
         where TEntity : class
     {
-        /// <summary>
-        /// The <see cref="IEntityTable{T}"/> associated with this <see cref="ISessionTable{T}"/>
-        /// </summary>
-        new IEntityTable<TEntity> Table { get; }
-
-        /// <summary>
-        /// Gets an entity instance given its id (primary key value)
-        /// </summary>
-        new TEntity? GetById(object id);
-
         /// <summary>
         /// Set the <see cref="SubmitAction"/> for this entity instance.
         /// </summary>

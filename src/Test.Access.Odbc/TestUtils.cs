@@ -19,7 +19,7 @@ namespace Test.Access
             var connection = new OdbcConnection(connectionString);
             return new OdbcEntityProvider(connection)
                 .WithLanguage(AccessLanguage.Singleton)
-                .WithMapping(new AttributeEntityMapping(typeof(NorthwindWithAttributes)));
+                .WithMapping(new AttributeMapping(typeof(NorthwindWithAttributes)));
         }
     }
 }

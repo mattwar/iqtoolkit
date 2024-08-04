@@ -15,21 +15,21 @@ namespace IQToolkit.Expressions.Sql
         /// <summary>
         /// The entity.
         /// </summary>
-        public MappingEntity Entity { get; }
+        public MappedEntity Entity { get; }
 
         /// <summary>
         /// The expression that constructs the entity instance.
         /// </summary>
         public Expression Expression { get; }
 
-        public EntityExpression(MappingEntity entity, Expression expression)
+        public EntityExpression(MappedEntity entity, Expression expression)
             : base(expression.Type)
         {
             this.Entity = entity;
             this.Expression = expression;
         }
 
-        public EntityExpression Update(MappingEntity entity, Expression expression)
+        public EntityExpression Update(MappedEntity entity, Expression expression)
         {
             if (entity != this.Entity
                 || expression != this.Expression)

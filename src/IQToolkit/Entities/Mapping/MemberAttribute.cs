@@ -4,13 +4,14 @@
 namespace IQToolkit.Entities.Mapping
 {
     /// <summary>
-    /// Defined on types that can describe an <see cref="MappedEntity"/>.
+    /// A base class for member mapping information.
     /// </summary>
-    public interface IHaveMappingEntity
+    public abstract class MemberAttribute : MappingAttribute
     {
         /// <summary>
-        /// The <see cref="MappedEntity"/>.
+        /// The member for the mapping.
+        /// If not specified it is inferred to be the member the attribute is placed on.
         /// </summary>
-        MappedEntity Entity { get; }
+        public string? Member { get; set; }
     }
 }

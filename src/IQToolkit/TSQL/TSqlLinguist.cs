@@ -1,15 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
 // This source code is made available under the terms of the Microsoft Public License (MS-PL)
 
-using IQToolkit.Entities;
-using IQToolkit.Entities.Translation;
-using IQToolkit.Expressions.Sql;
-using IQToolkit.Utils;
 using System.Linq.Expressions;
 using System.Reflection;
 
 namespace IQToolkit.TSql
 {
+    using Entities;
+    using Entities.Mapping;
+    using Entities.Translation;
+    using Expressions.Sql;
+    using Utils;
+
     /// <summary>
     /// Microsoft Transact SQL (TSQL) <see cref="QueryLinguist"/>
     /// </summary>
@@ -59,9 +61,9 @@ namespace IQToolkit.TSql
             return TSqlFormatter.Singleton.Format(expression, options);
         }
 
-        public override Expression GetGeneratedIdExpression(MemberInfo member)
+        public override Expression GetGeneratedIdExpression(MappedColumnMember member)
         {
-            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), "SCOPE_IDENTITY()", null);
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member.Member), "SCOPE_IDENTITY()", null);
         }
     }
 }

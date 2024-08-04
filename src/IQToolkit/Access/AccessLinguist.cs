@@ -5,11 +5,11 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Access
 {
+    using Expressions.Sql;
     using Entities;
+    using Entities.Mapping;
     using Entities.Translation;
-    using IQToolkit.Expressions.Sql;
-    using IQToolkit.Utils;
-    using System.Reflection;
+    using Utils;
 
     internal class AccessLinguist : QueryLinguist
     {
@@ -45,9 +45,9 @@ namespace IQToolkit.Access
             return AccessFormatter.Singleton.Format(expression, options);
         }
 
-        public override Expression GetGeneratedIdExpression(MemberInfo member)
+        public override Expression GetGeneratedIdExpression(MappedColumnMember member)
         {
-            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member), false, "@@IDENTITY", null);
+            return new ScalarFunctionCallExpression(TypeHelper.GetMemberType(member.Member), false, "@@IDENTITY", null);
         }
     }
 }

@@ -32,7 +32,7 @@ namespace IQToolkit.Entities.Translation
 
                 foreach (var fnOp in operations)
                 {
-                    var pop = PartialEvaluator.Eval(fnOp, mapper.Mapping.CanBeEvaluatedLocally);
+                    var pop = PartialEvaluator.Eval(fnOp, linguist.Language.CanBeEvaluatedLocally);
                     var invoked = Expression.Invoke(pop, result);
                     result = invoked.ConvertLinqOperatorToSqlExpressions(linguist, mapper, this, isQueryFragment: true);
                 }

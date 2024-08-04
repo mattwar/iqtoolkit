@@ -11,6 +11,7 @@ using System.Reflection;
 namespace IQToolkit.Entities.Translation
 {
     using Expressions.Sql;
+    using Entities.Mapping;
     using Utils;
 
     /// <summary>
@@ -56,7 +57,7 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Get an expression that selects and entity's generated ID.
         /// </summary>
-        public abstract Expression GetGeneratedIdExpression(MemberInfo member);
+        public abstract Expression GetGeneratedIdExpression(MappedColumnMember member);
 
         /// <summary>
         /// Determine which sub-expressions must be parameters

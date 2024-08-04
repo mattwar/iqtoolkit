@@ -33,7 +33,7 @@ namespace IQToolkit.Entities.Sessions
         ISessionTable GetTable(Type entityType, string? entityId = null);
 
         /// <summary>
-        /// Submit all changes to the database as a single transaction.
+        /// Submit all changed entities to the database as a single transaction.
         /// </summary>
         void SubmitChanges();
     }

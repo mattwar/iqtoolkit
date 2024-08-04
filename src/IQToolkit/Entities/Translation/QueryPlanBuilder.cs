@@ -323,7 +323,7 @@ namespace IQToolkit.Entities.Translation
                 Expression result = Expression.Call(_executorParameter, methExecute, new Type[] { projector.Body.Type },
                     command,
                     projector,
-                    Expression.Constant(entity, typeof(MappingEntity)),
+                    Expression.Constant(entity, typeof(MappedEntity)),
                     Expression.NewArrayInit(typeof(object), values)
                     );
 
@@ -387,7 +387,7 @@ namespace IQToolkit.Entities.Translation
                         command,
                         paramSets,
                         projector,
-                        Expression.Constant(entity, typeof(MappingEntity)),
+                        Expression.Constant(entity, typeof(MappedEntity)),
                         batch.BatchSize,
                         batch.Stream
                         );

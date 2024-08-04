@@ -361,9 +361,9 @@ namespace IQToolkit.Entities.Translation
             MemberExpression mex)
         {
             if (mex.Expression is EntityExpression ex 
-                && _mapper.Mapping.IsRelationship(ex.Entity, mex.Member))
+                && ex.Entity.RelationshipMembers.TryGetMemberByName(mex.Member.Name, out var rm))
             {
-                return _mapper.GetMemberExpression(mex.Expression, ex.Entity, mex.Member, _linguist, _police);
+                return _mapper.GetMemberExpression(mex.Expression, rm, _linguist, _police);
             }
 
             return mex;
@@ -1064,25 +1064,25 @@ namespace IQToolkit.Entities.Translation
 
         private Expression BindInsert(IEntityTable upd, Expression instance, LambdaExpression? selector)
         {
-            MappingEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
+            MappedEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(_mapper.GetInsertExpression(entity, instance, selector, _linguist, _police));
         }
 
         private Expression BindUpdate(IEntityTable upd, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
         {
-            MappingEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
+            MappedEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(_mapper.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null, _linguist, _police));
         }
 
         private Expression BindInsertOrUpdate(IEntityTable upd, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
         {
-            MappingEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
+            MappedEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
             return this.Visit(_mapper.GetInsertOrUpdateExpression(entity, instance, updateCheck, resultSelector, _linguist, _police));
         }
 
         private Expression BindDelete(IEntityTable upd, Expression? instance, LambdaExpression? deleteCheck)
         {
-            MappingEntity entity = _mapper.Mapping.GetEntity(upd);
+            MappedEntity entity = _mapper.Mapping.GetEntity(upd);
             return this.Visit(_mapper.GetDeleteExpression(entity, instance, deleteCheck, _linguist, _police));
         }
 
@@ -1126,7 +1126,7 @@ namespace IQToolkit.Entities.Translation
                     }
                     else
                     {
-                        var pev = PartialEvaluator.Eval(query.Expression, _mapper.Mapping.CanBeEvaluatedLocally);
+                        var pev = PartialEvaluator.Eval(query.Expression, _linguist.Language.CanBeEvaluatedLocally);
                         return this.Visit(pev);
                     }
                 }

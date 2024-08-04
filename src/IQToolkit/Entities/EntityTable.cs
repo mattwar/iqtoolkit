@@ -8,21 +8,24 @@ using System.Linq.Expressions;
 
 namespace IQToolkit.Entities
 {
+    using IQToolkit.Expressions;
+    using IQToolkit.Utils;
     using Mapping;
 
     /// <summary>
     /// An implementation of <see cref="IEntityTable{T}"/> for an <see cref="EntityProvider"/>.
     /// </summary>
-    public class EntityTable<TEntity> : Query<TEntity>, IEntityTable<TEntity>, IHaveMappingEntity
+    public class EntityTable<TEntity> 
+        : Query<TEntity>, IUpdatableEntityTable<TEntity>, IHaveMappingEntity
         where TEntity : class
     {
-        private readonly MappingEntity _entity;
+        private readonly MappedEntity _entity;
         private readonly EntityProvider _provider;
 
         /// <summary>
         /// Construct an <see cref="EntityTable{T}"/>
         /// </summary>
-        public EntityTable(EntityProvider provider, MappingEntity entity)
+        public EntityTable(EntityProvider provider, MappedEntity entity)
             : base(provider, typeof(IEntityTable<TEntity>))
         {
             _provider = provider;
@@ -30,9 +33,9 @@ namespace IQToolkit.Entities
         }
 
         /// <summary>
-        /// The <see cref="MappingEntity"/> corresponding to this table.
+        /// The <see cref="MappedEntity"/> corresponding to this table.
         /// </summary>
-        public MappingEntity Entity => _entity;
+        public MappedEntity Entity => _entity;
 
         /// <summary>
         /// The <see cref="IEntityProvider"/> associated with this table.
@@ -60,7 +63,7 @@ namespace IQToolkit.Entities
                 var keys = id as IEnumerable<object>;
                 if (keys == null)
                     keys = new object[] { id };
-                var query = ((EntityProvider)dbProvider).Mapping.GetPrimaryKeyQuery(_entity, this.Expression, keys.Select(v => Expression.Constant(v)).ToArray());
+                var query = this.GetPrimaryKeyQuery(_entity, this.Expression, keys.Select(v => Expression.Constant(v)).ToArray());
                 return this.Provider.Execute<TEntity>(query);
             }
             return null;
@@ -71,6 +74,38 @@ namespace IQToolkit.Entities
             return this.GetById(id);
         }
 
+        private Expression GetPrimaryKeyQuery(MappedEntity entity, Expression source, Expression[] keys)
+        {
+            // make predicate
+            var p = Expression.Parameter(entity.Type, "p");
+            Expression? pred = null;
+
+            var idMembers = entity.PrimaryKeyMembers;
+            if (idMembers.Count != keys.Length)
+            {
+                throw new InvalidOperationException("Incorrect number of primary key values");
+            }
+
+            for (int i = 0, n = keys.Length; i < n; i++)
+            {
+                var mem = idMembers[i];
+                var memberType = TypeHelper.GetMemberType(mem.Member);
+
+                if (keys[i] != null 
+                    && TypeHelper.GetNonNullableType(keys[i].Type) != TypeHelper.GetNonNullableType(memberType))
+                {
+                    throw new InvalidOperationException("Primary key value is wrong type");
+                }
+
+                var eq = Expression.MakeMemberAccess(p, mem.Member).Equal(keys[i]);
+                pred = (pred == null) ? eq : pred.And(eq);
+            }
+
+            var predLambda = Expression.Lambda(pred, p);
+
+            return Expression.Call(typeof(Queryable), "SingleOrDefault", new Type[] { entity.Type }, source, predLambda);
+        }
+
         /// <summary>
         /// Inserts the entity instance into the database.
         /// </summary>
@@ -79,7 +114,7 @@ namespace IQToolkit.Entities
             return Updatable.Insert(this, instance);
         }
 
-        int IEntityTable.Insert(object instance)
+        int IUpdatableEntityTable.Insert(object instance)
         {
             return this.Insert((TEntity)instance);
         }
@@ -92,7 +127,7 @@ namespace IQToolkit.Entities
             return Updatable.Delete(this, instance);
         }
 
-        int IEntityTable.Delete(object instance)
+        int IUpdatableEntityTable.Delete(object instance)
         {
             return this.Delete((TEntity)instance);
         }
@@ -105,7 +140,7 @@ namespace IQToolkit.Entities
             return Updatable.Update(this, instance);
         }
 
-        int IEntityTable.Update(object instance)
+        int IUpdatableEntityTable.Update(object instance)
         {
             return this.Update((TEntity)instance);
         }
@@ -118,7 +153,7 @@ namespace IQToolkit.Entities
             return Updatable.InsertOrUpdate(this, instance);
         }
 
-        int IEntityTable.InsertOrUpdate(object instance)
+        int IUpdatableEntityTable.InsertOrUpdate(object instance)
         {
             return this.InsertOrUpdate((TEntity)instance);
         }

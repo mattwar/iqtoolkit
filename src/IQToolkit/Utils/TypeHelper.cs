@@ -177,6 +177,12 @@ namespace IQToolkit.Utils
             : typeof(object);
 
         /// <summary>
+        /// Gets the type of the member of type of the member's collection.
+        /// </summary>
+        public static Type GetEntityType(MemberInfo mi) =>
+            GetSequenceElementType(GetMemberType(mi));
+
+        /// <summary>
         /// Gets the default value of the specified type.
         /// </summary>
         public static object? GetDefault(Type type)
@@ -288,6 +294,28 @@ namespace IQToolkit.Utils
         {
             return GetDeclaredFieldsAndProperties(type, name, fnMatch, includeNonPublic)
                 .FirstOrDefault();
+        }
+
+        private static readonly char[] dotSeparator = new char[] { '.' };
+
+        /// <summary>
+        /// Returns the matching field or property identified by the dotted path, or null if not found.
+        /// </summary>
+        public static MemberInfo? FindDeclaredFieldOrPropertyFromPath(this Type type, string path)
+        {
+            MemberInfo? member = null;
+            string[] names = path.Split(dotSeparator);
+
+            foreach (string name in names)
+            {
+                member = FindDeclaredFieldOrProperty(type, name, includeNonPublic: true);
+                if (member == null)
+                    return null;
+
+                type = GetEntityType(member);
+            }
+
+            return member;
         }
 
         /// <summary>

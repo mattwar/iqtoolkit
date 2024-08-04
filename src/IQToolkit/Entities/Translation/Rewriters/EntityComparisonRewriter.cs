@@ -93,11 +93,11 @@ namespace IQToolkit.Entities.Translation
             // if either side is an entity construction expression then compare using its primary key members
             if (entity1 != null)
             {
-                return this.MakePredicate(e1, e2, _mapping.GetPrimaryKeyMembers(entity1.Entity), negate);
+                return this.MakePredicate(e1, e2, entity1.Entity.PrimaryKeyMembers.Select(pk => pk.Member), negate);
             }
             else if (entity2 != null)
             {
-                return this.MakePredicate(e1, e2, _mapping.GetPrimaryKeyMembers(entity2.Entity), negate);
+                return this.MakePredicate(e1, e2, entity2.Entity.PrimaryKeyMembers.Select(pk => pk.Member), negate);
             }
 
             // check for comparison of user constructed type projections

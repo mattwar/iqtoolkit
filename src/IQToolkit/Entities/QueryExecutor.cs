@@ -76,7 +76,7 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Executes the command once and and projects the rows of the resulting rowset into a sequence of values.
         /// </summary>
-        public abstract IEnumerable<T> Execute<T>(QueryCommand command, Func<FieldReader, T> fnProjector, MappingEntity entity, object[] paramValues);
+        public abstract IEnumerable<T> Execute<T>(QueryCommand command, Func<FieldReader, T> fnProjector, MappedEntity entity, object[] paramValues);
 
         /// <summary>
         /// Executes the command over a series of parameter sets, and returns the total number of rows affected.
@@ -86,12 +86,12 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Execute the same command over a series of parameter sets, and produces a sequence of values, once per execution.
         /// </summary>
-        public abstract IEnumerable<T> ExecuteBatch<T>(QueryCommand query, IEnumerable<object[]> paramSets, Func<FieldReader, T> fnProjector, MappingEntity entity, int batchSize, bool stream);
+        public abstract IEnumerable<T> ExecuteBatch<T>(QueryCommand query, IEnumerable<object[]> paramSets, Func<FieldReader, T> fnProjector, MappedEntity entity, int batchSize, bool stream);
 
         /// <summary>
         /// Produces an <see cref="IEnumerable{T}"/> that will execute the command when enumerated.
         /// </summary>
-        public abstract IEnumerable<T> ExecuteDeferred<T>(QueryCommand query, Func<FieldReader, T> fnProjector, MappingEntity entity, object[] paramValues);
+        public abstract IEnumerable<T> ExecuteDeferred<T>(QueryCommand query, Func<FieldReader, T> fnProjector, MappedEntity entity, object[] paramValues);
 
         /// <summary>
         /// Execute a single command with the specified parameter values and return the number of rows affected.

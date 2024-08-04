@@ -12,6 +12,7 @@ namespace IQToolkit.Entities.Mapping
 {
     using Utils;
 
+#if false
     /// <summary>
     /// A simple query mapping that attempts to infer mapping from naming conventions
     /// </summary>
@@ -26,7 +27,7 @@ namespace IQToolkit.Entities.Mapping
             return this.InferTableName(type);
         }
 
-        public override bool IsPrimaryKey(MappingEntity entity, MemberInfo member)
+        public override bool IsPrimaryKey(MappedEntity entity, MemberInfo member)
         {
             // Customers has CustomerID, Orders has OrderID, etc
             if (this.IsColumn(entity, member)) 
@@ -51,7 +52,7 @@ namespace IQToolkit.Entities.Mapping
             return name;
         }
 
-        public override bool IsColumn(MappingEntity entity, MemberInfo member)
+        public override bool IsColumn(MappedEntity entity, MemberInfo member)
         {
             return IsScalar(TypeHelper.GetMemberType(member));
         }
@@ -74,7 +75,7 @@ namespace IQToolkit.Entities.Mapping
             }
         }
 
-        public override bool IsAssociationRelationship(MappingEntity entity, MemberInfo member)
+        public override bool IsAssociationRelationship(MappedEntity entity, MemberInfo member)
         {
             if (IsMapped(entity, member) && !IsColumn(entity, member))
             {
@@ -84,7 +85,7 @@ namespace IQToolkit.Entities.Mapping
             return false;
         }
 
-        public override bool IsRelationshipSource(MappingEntity entity, MemberInfo member)
+        public override bool IsRelationshipSource(MappedEntity entity, MemberInfo member)
         {
             if (IsAssociationRelationship(entity, member))
             {
@@ -92,7 +93,7 @@ namespace IQToolkit.Entities.Mapping
                     return false;
 
                 // is source of relationship if relatedKeyMembers are the related entity's primary keys
-                MappingEntity entity2 = GetRelatedEntity(entity, member);
+                MappedEntity entity2 = GetRelatedEntity(entity, member);
                 var relatedPKs = new HashSet<string>(this.GetPrimaryKeyMembers(entity2).Select(m => m.Name));
                 var relatedKeyMembers = new HashSet<string>(this.GetAssociationRelatedKeyMembers(entity, member).Select(m => m.Name));
                 return relatedPKs.IsSubsetOf(relatedKeyMembers) && relatedKeyMembers.IsSubsetOf(relatedPKs);
@@ -100,7 +101,7 @@ namespace IQToolkit.Entities.Mapping
             return false;
         }
 
-        public override bool IsRelationshipTarget(MappingEntity entity, MemberInfo member)
+        public override bool IsRelationshipTarget(MappedEntity entity, MemberInfo member)
         {
             if (IsAssociationRelationship(entity, member))
             {
@@ -115,7 +116,7 @@ namespace IQToolkit.Entities.Mapping
             return false;
         }
 
-        public override IReadOnlyList<MemberInfo> GetAssociationKeyMembers(MappingEntity entity, MemberInfo member)
+        public override IReadOnlyList<MemberInfo> GetAssociationKeyMembers(MappedEntity entity, MemberInfo member)
         {
             List<MemberInfo> keyMembers;
             List<MemberInfo> relatedKeyMembers;
@@ -123,7 +124,7 @@ namespace IQToolkit.Entities.Mapping
             return keyMembers;
         }
 
-        public override IReadOnlyList<MemberInfo> GetAssociationRelatedKeyMembers(MappingEntity entity, MemberInfo member)
+        public override IReadOnlyList<MemberInfo> GetAssociationRelatedKeyMembers(MappedEntity entity, MemberInfo member)
         {
             List<MemberInfo> keyMembers;
             List<MemberInfo> relatedKeyMembers;
@@ -131,9 +132,9 @@ namespace IQToolkit.Entities.Mapping
             return relatedKeyMembers;
         }
 
-        private void GetAssociationKeys(MappingEntity entity, MemberInfo member, out List<MemberInfo> keyMembers, out List<MemberInfo> relatedKeyMembers)
+        private void GetAssociationKeys(MappedEntity entity, MemberInfo member, out List<MemberInfo> keyMembers, out List<MemberInfo> relatedKeyMembers)
         {
-            MappingEntity entity2 = GetRelatedEntity(entity, member);
+            MappedEntity entity2 = GetRelatedEntity(entity, member);
 
             // find all members in common (same name)
             var map1 = this.GetMappedMembers(entity).Where(m => this.IsColumn(entity, m)).ToDictionary(m => m.Name);
@@ -148,7 +149,7 @@ namespace IQToolkit.Entities.Mapping
             }
         }
 
-        public override string GetTableName(MappingEntity entity)
+        public override string GetTableName(MappedEntity entity)
         {
             return !string.IsNullOrEmpty(entity.EntityId) ? entity.EntityId : this.InferTableName(entity.StaticType);
         }
@@ -231,4 +232,6 @@ namespace IQToolkit.Entities.Mapping
             return name;
         }
     }
+#endif
+
 }

@@ -28,14 +28,9 @@ namespace IQToolkit.Entities
                 return true;
             }
 
-            if (mapping is AdvancedEntityMapping advMapping)
+            if (mapping is StandardMapping stdMapping)
             {
-                mapper = new AdvancedMapper(advMapping);
-                return true;
-            }
-            else if (mapping is BasicEntityMapping basicMapping)
-            {
-                mapper = new BasicMapper(basicMapping);
+                mapper = new StandardMapper(stdMapping);
                 return true;
             }
             else
@@ -95,7 +90,7 @@ namespace IQToolkit.Entities
             // translate query into client & server parts
 
             // pre-evaluate local sub-trees
-            var evaluated = PartialEvaluator.Eval(query, mapper.Mapping.CanBeEvaluatedLocally);
+            var evaluated = PartialEvaluator.Eval(query, this.CanBeEvaluatedLocally);
 
             // convert LINQ operators to SqlExpressions (with initial mapping & policy)
             var sqlized = evaluated.ConvertLinqOperatorToSqlExpressions(linguist, mapper, police);

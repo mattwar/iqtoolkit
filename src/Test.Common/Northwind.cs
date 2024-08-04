@@ -290,7 +290,7 @@ namespace Test
         [Column(Member = nameof(CustomerX.City), DbType = "NVARCHAR(20)")]
         [Column(Member = nameof(CustomerX.Country))]
         [Association(Member = nameof(CustomerX.Orders), KeyMembers = nameof(CustomerX.CustomerID), RelatedKeyMembers = nameof(OrderX.CustomerID))]
-        public IQueryable<CustomerX> Customers
+        public IEntityTable<CustomerX> Customers
         {
             get { return _provider.GetTable<CustomerX>(); }
         }

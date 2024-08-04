@@ -218,7 +218,7 @@ namespace IQToolkit.Entities.Data
         public override IEnumerable<T> Execute<T>(
             QueryCommand command, 
             Func<FieldReader, T> fnProjector, 
-            MappingEntity entity, 
+            MappedEntity entity, 
             object[] parameterValues)
         {
             this.LogCommand(command, parameterValues);
@@ -302,7 +302,7 @@ namespace IQToolkit.Entities.Data
             QueryCommand query, 
             IEnumerable<object[]> paramSets, 
             Func<FieldReader, T> fnProjector, 
-            MappingEntity entity, 
+            MappedEntity entity, 
             int batchSize, 
             bool stream)
         {
@@ -329,7 +329,7 @@ namespace IQToolkit.Entities.Data
             QueryCommand query, 
             IEnumerable<object[]> parameterValueSets, 
             Func<FieldReader, T> fnProjector, 
-            MappingEntity entity)
+            MappedEntity entity)
         {
             this.LogCommand(query, null);
             var cap = this.GetCommandAndParameters(query);
@@ -360,7 +360,7 @@ namespace IQToolkit.Entities.Data
         public override IEnumerable<T> ExecuteDeferred<T>(
             QueryCommand query, 
             Func<FieldReader, T> fnProjector, 
-            MappingEntity entity, 
+            MappedEntity entity, 
             object[] parameterValues)
         {
             this.LogCommand(query, parameterValues);
@@ -420,7 +420,7 @@ namespace IQToolkit.Entities.Data
         protected virtual IEnumerable<T> Project<T>(
             IDataReader reader, 
             Func<FieldReader, T> fnProjector, 
-            MappingEntity? entity, 
+            MappedEntity? entity, 
             bool closeReader)
         {
             var freader = new DbFieldReader(this.Converter, reader);

@@ -18,7 +18,7 @@ namespace IQToolkit.Entities
         /// </summary>
         /// <param name="entityId">An id used to associate the entity type with its mapping.
         /// If not specified the name of the entity type is used.</param>
-        IEntityTable<TEntity> GetTable<TEntity>(string? entityId = null)
+        IUpdatableEntityTable<TEntity> GetTable<TEntity>(string? entityId = null)
             where TEntity : class;
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace IQToolkit.Entities
         /// <param name="entityType">The entity type.</param>
         /// <param name="entityId">An id used to associate the entity type with its mapping.
         /// If not specified the name of the entity type is used.</param>
-        IEntityTable GetTable(Type entityType, string? entityId = null);
+        IUpdatableEntityTable GetTable(Type entityType, string? entityId = null);
 
         /// <summary>
         /// The <see cref="QueryLanguage"/>.

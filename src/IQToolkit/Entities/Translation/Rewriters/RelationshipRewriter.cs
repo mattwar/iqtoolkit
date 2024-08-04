@@ -9,6 +9,7 @@ namespace IQToolkit.Entities.Translation
 {
     using Expressions;
     using Expressions.Sql;
+    using Entities.Mapping;
     using Utils;
 
     /// <summary>
@@ -112,13 +113,13 @@ namespace IQToolkit.Entities.Translation
             var source = this.Visit(memberAccess.Expression);
 
             if (FindEntityExpression(memberAccess.Expression) is { } entity 
-                && _mapping.IsRelationship(entity.Entity, memberAccess.Member))
+                && entity.Entity.RelationshipMembers.TryGetMemberByName(memberAccess.Member.Name, out var rm))
             {
                 var projection = (ClientProjectionExpression)this.Visit(
-                    _mapper.GetMemberExpression(source, entity.Entity, memberAccess.Member, _linguist, _police)
+                    _mapper.GetMemberExpression(source, rm, _linguist, _police)
                     );
 
-                if (_currentFrom != null && _mapping.IsSingletonRelationship(entity.Entity, memberAccess.Member))
+                if (_currentFrom != null && rm.IsSingleton)
                 {
                     // convert singleton associations directly to OUTER APPLY
                     // by adding join to relavent FROM clause

@@ -7,13 +7,12 @@ using System.Reflection;
 
 namespace IQToolkit.Entities.Translation
 {
-    using Expressions.Sql;
     using Mapping;
 
     /// <summary>
-    /// Applies mapping rules to queries.
+    /// Applies mapping translations to queries.
     /// </summary>
-    public abstract class QueryMapper
+    public abstract class MappingTranslator
     {
         /// <summary>
         /// The mapping to apply.
@@ -21,23 +20,31 @@ namespace IQToolkit.Entities.Translation
         public abstract EntityMapping Mapping { get; }
 
         /// <summary>
+        /// Applies additional mapping related rewrites to the entire query.
+        /// </summary>
+        public abstract Expression ApplyMappingRewrites(
+            Expression query,
+            LanguageTranslator linguist,
+            PolicyTranslator police);
+
+        /// <summary>
         /// Get a query expression that selects all entities from a table
         /// </summary>
-        public abstract ClientProjectionExpression GetQueryExpression(
+        public abstract Expression GetQueryExpression(
             MappedEntity entity, 
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Gets an expression that constructs an entity instance relative to a root.
         /// The root is most often a TableExpression, but may be any other experssion such as
         /// a ConstantExpression.
         /// </summary>
-        public abstract EntityExpression GetEntityExpression(
+        public abstract Expression GetEntityExpression(
             Expression root,
             MappedEntity entity,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Get an expression for a mapped property relative to a root expression. 
@@ -46,8 +53,8 @@ namespace IQToolkit.Entities.Translation
         public abstract Expression GetMemberExpression(
             Expression root, 
             MappedMember member,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Get an expression that represents the insert operation for the specified instance.
@@ -56,8 +63,8 @@ namespace IQToolkit.Entities.Translation
             MappedEntity entity, 
             Expression instance, 
             LambdaExpression? selector,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Get an expression that represents the update operation for the specified instance.
@@ -68,8 +75,8 @@ namespace IQToolkit.Entities.Translation
             LambdaExpression? updateCheck, 
             LambdaExpression? selector, 
             Expression? @else,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Get an expression that represents the insert-or-update operation for the specified instance.
@@ -79,8 +86,8 @@ namespace IQToolkit.Entities.Translation
             Expression instance, 
             LambdaExpression? updateCheck, 
             LambdaExpression? resultSelector,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Get an expression that represents the delete operation for the specified instance.
@@ -89,40 +96,23 @@ namespace IQToolkit.Entities.Translation
             MappedEntity entity, 
             Expression? instance, 
             LambdaExpression? deleteCheck,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Recreate the type projection with the additional members included
         /// </summary>
-        public abstract EntityExpression IncludeMembers(
-            EntityExpression entity, 
+        public abstract Expression IncludeMembers(
+            Expression entity, 
             Func<MemberInfo, bool> fnIsIncluded,
-            QueryLinguist linguist,
-            QueryPolice police);
+            LanguageTranslator linguist,
+            PolicyTranslator police);
 
         /// <summary>
         /// Return true if the entity expression has included members.
         /// </summary>
         public abstract bool HasIncludedMembers(
-            EntityExpression entity, 
+            Expression entity, 
             QueryPolicy policy);
-
-        /// <summary>
-        /// Applies additional mapping related rewrites to the entire query.
-        /// </summary>
-        public virtual Expression Apply(
-            Expression expression, 
-            QueryLinguist linguist, 
-            QueryPolice police)
-        {
-            // convert references to association properties into correlated queries
-            var related = expression.RewriteRelationshipMembers(linguist, this, police);
-
-            // rewrite comparision checks between entities and multi-valued constructs
-            var result = related.ConvertEntityComparisons(this.Mapping);
-
-            return result;
-        }
     }
 }

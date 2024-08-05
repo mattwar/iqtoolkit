@@ -18,7 +18,7 @@ namespace IQToolkit.AnsiSql
     /// </summary>
     public sealed class AnsiSqlLanguage : SqlQueryLanguage
     {
-        protected override QueryLinguist Linguist { get; }
+        protected override LanguageTranslator Linguist { get; }
 
         public AnsiSqlLanguage()
         {

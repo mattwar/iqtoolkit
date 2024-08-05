@@ -15,27 +15,27 @@ namespace IQToolkit.Entities.Translation
     using Utils;
 
     /// <summary>
-    /// Applies language specific rules to a query.
+    /// Applies language specific rules to a <see cref="SqlExpression"/> query.
     /// </summary>
-    public abstract class QueryLinguist
+    public abstract class SqlTranslator : LanguageTranslator
     {
-        public QueryLanguage Language { get; }
+        public override QueryLanguage Language { get; }
 
         /// <summary>
-        /// Construct a <see cref="QueryLinguist"/>
+        /// Construct a <see cref="LanguageTranslator"/>
         /// </summary>
-        public QueryLinguist(QueryLanguage language)
+        public SqlTranslator(QueryLanguage language)
         {
             this.Language = language;
         }
 
         /// <summary>
-        /// Apply additional language rewrites.
+        /// Apply additional language related rewrites to the entire query.
         /// </summary>
-        public virtual Expression Apply(
+        public override Expression ApplyLanguageRewrites(
             Expression expression,
-            QueryMapper mapper,
-            QueryPolice police)
+            MappingTranslator mapper,
+            PolicyTranslator police)
         {
             // pre-simplify to help 
             var simplified = expression.SimplifyQueries();
@@ -49,94 +49,54 @@ namespace IQToolkit.Entities.Translation
             return crossJoined;
         }
 
-        /// <summary>
-        /// Format the <see cref="SqlExpression"/> as query language text.
-        /// </summary>
-        public abstract FormattedQuery Format(SqlExpression expression, QueryOptions? options = null);
-
-        /// <summary>
-        /// Get an expression that selects and entity's generated ID.
-        /// </summary>
-        public abstract Expression GetGeneratedIdExpression(MappedColumnMember member);
-
-        /// <summary>
-        /// Determine which sub-expressions must be parameters
-        /// </summary>
-        public virtual Expression Parameterize(
-            Expression expression)
+        public override Expression Parameterize(Expression expression)
         {
             return ClientParameterRewriter.Rewrite(this.Language, expression);
         }
 
-        /// <summary>
-        /// True if the language allows multiple commands to be executed in one query.
-        /// </summary>
-        public virtual bool AllowsMultipleCommands
-        {
-            get { return false; }
-        }
+        public override bool AllowsMultipleCommands => false;
+        public override bool AllowSubqueryInSelectWithoutFrom => false;
+        public override bool AllowDistinctInAggregates => false;
 
-        /// <summary>
-        /// True if it is legal to represent a subquery in a SELECT statement that has no FROM clause.
-        /// </summary>
-        public virtual bool AllowSubqueryInSelectWithoutFrom
-        {
-            get { return false; }
-        }
-
-        /// <summary>
-        /// True if DISTINCT is allows in an aggregate expression.
-        /// </summary>
-        public virtual bool AllowDistinctInAggregates
-        {
-            get { return false; }
-        }
-
-        /// <summary>
-        /// Gets an expression that evaluates to the number of rows affected by the last command.
-        /// </summary>
-        public virtual Expression GetRowsAffectedExpression(Expression command)
+        public override Expression GetRowsAffectedExpression(Expression command)
         {
             return new ScalarFunctionCallExpression(typeof(int), "@@ROWCOUNT", null);
         }
 
-        /// <summary>
-        /// True if the expression is a rows-affected expression.
-        /// </summary>
-        public virtual bool IsRowsAffectedExpressions(Expression expression)
+        public override bool IsRowsAffectedExpressions(Expression expression)
         {
-            return expression is ScalarFunctionCallExpression fex && fex.Name == "@@ROWCOUNT";
+            return expression is ScalarFunctionCallExpression fex 
+                && fex.Name == "@@ROWCOUNT";
         }
 
-        /// <summary>
-        /// Gets an expression that be used by a query to determines if an outer join had a successful match
-        /// (as opposed to null columns when no match occurs).
-        /// </summary>
-        public virtual Expression GetOuterJoinTest(SelectExpression select)
+        public override Expression GetOuterJoinTest(Expression expression)
         {
-            // if the column is used in the join condition (equality test)
-            // if it is null in the database then the join test won't match (null != null) so the row won't appear
-            // we can safely use this existing column as our test to determine if the outer join produced a row
-
-            // find a column that is used in equality test
-            var aliases = DeclaredAliasGatherer.Gather(select.From);
-            var joinColumns = JoinColumnGatherer.Gather(aliases, select);
-
-            if (joinColumns.Count > 0)
+            if (expression is SelectExpression select)
             {
-                // prefer one that is already in the projection list.
-                foreach (var jc in joinColumns)
+                // if the column is used in the join condition (equality test)
+                // if it is null in the database then the join test won't match (null != null) so the row won't appear
+                // we can safely use this existing column as our test to determine if the outer join produced a row
+
+                // find a column that is used in equality test
+                var aliases = DeclaredAliasGatherer.Gather(select.From);
+                var joinColumns = JoinColumnGatherer.Gather(aliases, select);
+
+                if (joinColumns.Count > 0)
                 {
-                    foreach (var col in select.Columns)
+                    // prefer one that is already in the projection list.
+                    foreach (var jc in joinColumns)
                     {
-                        if (jc.Equals(col.Expression))
+                        foreach (var col in select.Columns)
                         {
-                            return jc;
+                            if (jc.Equals(col.Expression))
+                            {
+                                return jc;
+                            }
                         }
                     }
-                }
 
-                return joinColumns[0];
+                    return joinColumns[0];
+                }
             }
 
             // fall back to introducing a constant
@@ -144,38 +104,43 @@ namespace IQToolkit.Entities.Translation
         }
 
         /// <summary>
-        /// Adds an outer join test to a projection expression.. 
+        /// Adds an outer join test to a projection expression.
         /// </summary>
-        public virtual ClientProjectionExpression AddOuterJoinTest(ClientProjectionExpression proj)
+        public override Expression AddOuterJoinTest(Expression expression)
         {
-            var test = this.GetOuterJoinTest(proj.Select);
-            var select = proj.Select;
-            ColumnExpression? testCol = null;
-
-            // look to see if test expression exists in columns already
-            foreach (var col in select.Columns)
+            if (expression is ClientProjectionExpression proj)
             {
-                if (test.Equals(col.Expression)
-                    && this.Language.TypeSystem.GetQueryType(test.Type) is { } colType)
+                var test = this.GetOuterJoinTest(proj.Select);
+                var select = proj.Select;
+                ColumnExpression? testCol = null;
+
+                // look to see if test expression exists in columns already
+                foreach (var col in select.Columns)
                 {
-                    testCol = new ColumnExpression(test.Type, colType, select.Alias, col.Name);
-                    break;
+                    if (test.Equals(col.Expression)
+                        && this.Language.TypeSystem.GetQueryType(test.Type) is { } colType)
+                    {
+                        testCol = new ColumnExpression(test.Type, colType, select.Alias, col.Name);
+                        break;
+                    }
                 }
+
+                if (testCol == null)
+                {
+                    // add expression to projection
+                    testCol = test as ColumnExpression;
+                    string colName = (testCol != null) ? testCol.Name : "Test";
+                    colName = proj.Select.Columns.GetAvailableColumnName(colName);
+                    var colType = this.Language.TypeSystem.GetQueryType(test.Type);
+                    select = select.AddColumn(new ColumnDeclaration(colName, test, colType));
+                    testCol = new ColumnExpression(test.Type, colType, select.Alias, colName);
+                }
+
+                var newProjector = new OuterJoinedExpression(testCol, proj.Projector);
+                return new ClientProjectionExpression(select, newProjector, proj.Aggregator);
             }
 
-            if (testCol == null)
-            {
-                // add expression to projection
-                testCol = test as ColumnExpression;
-                string colName = (testCol != null) ? testCol.Name : "Test";
-                colName = proj.Select.Columns.GetAvailableColumnName(colName);
-                var colType = this.Language.TypeSystem.GetQueryType(test.Type);
-                select = select.AddColumn(new ColumnDeclaration(colName, test, colType));
-                testCol = new ColumnExpression(test.Type, colType, select.Alias, colName);
-            }
-
-            var newProjector = new OuterJoinedExpression(testCol, proj.Projector);
-            return new ClientProjectionExpression(select, newProjector, proj.Aggregator);
+            return expression;
         }
 
         /// <summary>
@@ -255,7 +220,7 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Determines whether the CLR type corresponds to a scalar data type in the query language
         /// </summary>
-        public virtual bool IsScalar(Type type)
+        public override bool IsScalar(Type type)
         {
             type = TypeHelper.GetNonNullableType(type);
             switch (Type.GetTypeCode(type))
@@ -273,7 +238,7 @@ namespace IQToolkit.Entities.Translation
             }
         }
 
-        public virtual bool IsAggregate(MemberInfo member)
+        public override bool IsAggregate(MemberInfo member)
         {
             var method = member as MethodInfo;
             if (method != null)
@@ -304,7 +269,7 @@ namespace IQToolkit.Entities.Translation
             return false;
         }
 
-        public virtual bool AggregateArgumentIsPredicate(string aggregateName)
+        public override bool AggregateArgumentIsPredicate(string aggregateName)
         {
             return aggregateName == "Count"
                 || aggregateName == "LongCount";
@@ -313,7 +278,7 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Determines whether the given expression can be represented as a column in a select expressionss
         /// </summary>
-        public virtual bool CanBeColumn(Expression expression)
+        public override bool CanBeColumn(Expression expression)
         {
             return this.MustBeColumn(expression)
                 || this.IsScalar(expression.Type);
@@ -322,7 +287,7 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Determines whether the given expression must be represented as a column in a SELECT column list
         /// </summary>
-        public virtual bool MustBeColumn(Expression expression)
+        public override bool MustBeColumn(Expression expression)
         {
             switch (expression)
             {

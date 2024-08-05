@@ -17,16 +17,16 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class RelationshipRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
-        private readonly QueryMapper _mapper;
-        private readonly QueryPolice _police;
+        private readonly LanguageTranslator _linguist;
+        private readonly MappingTranslator _mapper;
+        private readonly PolicyTranslator _police;
         private readonly EntityMapping _mapping;
         private Expression? _currentFrom;
 
         public RelationshipRewriter(
-            QueryLinguist linguist,
-            QueryMapper mapper,
-            QueryPolice police)
+            LanguageTranslator linguist,
+            MappingTranslator mapper,
+            PolicyTranslator police)
         {
             _linguist = linguist;
             _mapper = mapper;
@@ -124,7 +124,7 @@ namespace IQToolkit.Entities.Translation
                     // convert singleton associations directly to OUTER APPLY
                     // by adding join to relavent FROM clause
                     // and placing an OuterJoinedExpression in the projection to remember the outer-join test-for-null condition
-                    projection = _linguist.AddOuterJoinTest(projection);
+                    projection = (ClientProjectionExpression)_linguist.AddOuterJoinTest(projection);
                     var newFrom = new JoinExpression(JoinType.OuterApply, _currentFrom, projection.Select, null);
                     _currentFrom = newFrom;
                     return projection.Projector;

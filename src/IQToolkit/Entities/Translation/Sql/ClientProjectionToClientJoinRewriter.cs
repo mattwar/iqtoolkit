@@ -17,14 +17,14 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class ClientProjectionToClientJoinRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
+        private readonly LanguageTranslator _linguist;
         private readonly QueryPolicy _policy;
         private bool _isTopLevel = true;
         private SelectExpression? _currentSelect;
         private MemberInfo? _currentMember;
         private bool _canJoinOnClient = true;
 
-        public ClientProjectionToClientJoinRewriter(QueryLinguist linguist, QueryPolicy policy)
+        public ClientProjectionToClientJoinRewriter(LanguageTranslator linguist, QueryPolicy policy)
         {
             _linguist = linguist;
             _policy = policy;
@@ -89,7 +89,7 @@ namespace IQToolkit.Entities.Translation
                         var newInnerSelect = proj.Select.RemapTableAliases(newOuterSelect.Alias, previousSelect.Alias);
                         
                         // add outer-join test
-                        var newInnerProjection = _linguist.AddOuterJoinTest(new ClientProjectionExpression(newInnerSelect, proj.Projector));
+                        var newInnerProjection = (ClientProjectionExpression)_linguist.AddOuterJoinTest(new ClientProjectionExpression(newInnerSelect, proj.Projector));
                         newInnerSelect = newInnerProjection.Select;
 
                         var newProjector = newInnerProjection.Projector;

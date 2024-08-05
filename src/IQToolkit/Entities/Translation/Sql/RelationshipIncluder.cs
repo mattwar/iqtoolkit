@@ -15,12 +15,12 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class RelationshipIncluder : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
-        private readonly QueryMapper _mapper;
-        private readonly QueryPolice _police;
+        private readonly LanguageTranslator _linguist;
+        private readonly MappingTranslator _mapper;
+        private readonly PolicyTranslator _police;
         private ImmutableDictionary<MemberInfo, bool> _includeScope;
 
-        public RelationshipIncluder(QueryLinguist linguist, QueryMapper mapper, QueryPolice police)
+        public RelationshipIncluder(LanguageTranslator linguist, MappingTranslator mapper, PolicyTranslator police)
         {
             _linguist = linguist;
             _mapper = mapper;
@@ -30,9 +30,9 @@ namespace IQToolkit.Entities.Translation
 
         public static Expression Include(
             Expression expression, 
-            QueryLinguist linguist,
-            QueryMapper mapper,
-            QueryPolice police)
+            LanguageTranslator linguist,
+            MappingTranslator mapper,
+            PolicyTranslator police)
         {
             return new RelationshipIncluder(linguist, mapper, police).Visit(expression);
         }
@@ -50,7 +50,7 @@ namespace IQToolkit.Entities.Translation
             {
                 if (_mapper.HasIncludedMembers(entity, _police.Policy))
                 {
-                    entity = _mapper.IncludeMembers(
+                    entity = (EntityExpression)_mapper.IncludeMembers(
                         entity,
                         m =>
                         {

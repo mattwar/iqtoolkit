@@ -9,21 +9,25 @@ namespace IQToolkit.Entities.Translation
     using Expressions;
     using Expressions.Sql;
 
-    public class EntityPolice : QueryPolice
+    /// <summary>
+    /// A <see cref="PolicyTranslator"/> that applies policy rules to <see cref="SqlExpression"/> based queries.
+    /// </summary>
+    public class SqlPolicyTranslator : PolicyTranslator
     {
         private readonly EntityPolicy _policy;
 
-        public EntityPolice(EntityPolicy policy)
-            : base(policy)
+        public override QueryPolicy Policy => _policy;
+
+        public SqlPolicyTranslator(EntityPolicy policy)
         {
             _policy = policy;
         }
 
-        public override Expression ApplyPolicy(
+        public override Expression ApplyEntityPolicy(
             Expression expression, 
             MemberInfo member,
-            QueryLinguist linguist,
-            QueryMapper mapper)
+            LanguageTranslator linguist,
+            MappingTranslator mapper)
         {
             var operations = _policy.GetOperations(member);
             if (operations.Count > 0)
@@ -48,6 +52,23 @@ namespace IQToolkit.Entities.Translation
             }
 
             return expression;
+        }
+
+        public override Expression ApplyPolicyRewrites(
+            Expression expression,
+            LanguageTranslator linguist,
+            MappingTranslator mapper)
+        {
+            // add included relationships to client projection
+            var included = expression.AddIncludedRelationships(linguist, mapper, this);
+
+            // convert any singleton (1:1 or n:1) projections into server-side joins
+            var singletonsConverted = included.ConvertSingletonProjections(linguist, mapper.Mapping);
+
+            // convert projections into client-side joins
+            var nestedConverted = singletonsConverted.ConvertNestedProjectionsToClientJoins(linguist, this);
+
+            return nestedConverted;
         }
     }
 }

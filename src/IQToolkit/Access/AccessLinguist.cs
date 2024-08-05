@@ -11,14 +11,14 @@ namespace IQToolkit.Access
     using Entities.Translation;
     using Utils;
 
-    internal class AccessLinguist : QueryLinguist
+    internal class AccessLinguist : SqlTranslator
     {
         public AccessLinguist(QueryLanguage language)
             : base(language)
         {
         }
 
-        public override Expression Apply(Expression expression, QueryMapper mapper, QueryPolice police)
+        public override Expression ApplyLanguageRewrites(Expression expression, MappingTranslator mapper, PolicyTranslator police)
         {
             var simplified = expression.SimplifyQueries();
 
@@ -26,7 +26,7 @@ namespace IQToolkit.Access
             var moved = simplified.MoveOrderByToOuterSelect(this.Language);
 
             // do default language rewrites
-            var rewritten = base.Apply(moved, mapper, police);
+            var rewritten = base.ApplyLanguageRewrites(moved, mapper, police);
 
             var isolated = rewritten.IsolateCrossJoins();
 

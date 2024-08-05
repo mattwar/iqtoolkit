@@ -3,66 +3,24 @@
 
 using IQToolkit.Expressions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
 namespace IQToolkit.Entities
 {
-    using IQToolkit.Entities.Mapping;
-    using System.Collections.Generic;
+    using Expressions.Sql;
+    using Mapping;
     using Translation;
     using Utils;
 
     /// <summary>
-    /// Defines the language rules for a query provider.
+    /// Defines the language rules for a query provider
+    /// that uses <see cref="SqlExpression"/> for translation.
     /// </summary>
     public abstract class SqlQueryLanguage : QueryLanguage
     {
-        protected abstract QueryLinguist Linguist { get; }
-
-        protected virtual bool TryGetMapper(EntityMapping mapping, out QueryMapper mapper)
-        {
-            if (mapping is IHaveMapper cmt)
-            {
-                mapper = cmt.Mapper;
-                return true;
-            }
-
-            if (mapping is StandardMapping stdMapping)
-            {
-                mapper = new StandardMapper(stdMapping);
-                return true;
-            }
-            else
-            {
-                mapper = null!;
-                return false;
-                //// TODO: create unknown mapping translator...
-                //throw new InvalidOperationException(
-                //    string.Format("Unhandled mapping kind: {0}", this.Mapping.GetType().Name)
-                //    );
-            }
-        }
-
-        protected virtual bool TryGetPolice(QueryPolicy policy, out QueryPolice police)
-        {
-            if (policy is IHavePolice cpt)
-            {
-                police = cpt.Police;
-                return true;
-            }
-
-            if (policy is EntityPolicy entityPolicy)
-            {
-                police = new EntityPolice(entityPolicy);
-                return true;
-            }
-            else
-            {
-                police = new QueryPolice(policy);
-                return true;
-            }
-        }
+        protected abstract LanguageTranslator Linguist { get; }
 
         public override QueryPlan GetQueryPlan(
             Expression query,
@@ -95,9 +53,9 @@ namespace IQToolkit.Entities
             // convert LINQ operators to SqlExpressions (with initial mapping & policy)
             var sqlized = evaluated.ConvertLinqOperatorToSqlExpressions(linguist, mapper, police);
 
-            var mapped = mapper.Apply(sqlized, linguist, police);
-            var policed = police.Apply(mapped, linguist, mapper);
-            var translation = linguist.Apply(policed, mapper, police);
+            var mapped = mapper.ApplyMappingRewrites(sqlized, linguist, police);
+            var policed = police.ApplyPolicyRewrites(mapped, linguist, mapper);
+            var translation = linguist.ApplyLanguageRewrites(policed, mapper, police);
 
             // look for and use executor found in query itself. (for session executor)
             var runtimeProvider = Find(evaluated, lambda?.Parameters, typeof(IEntityProvider))
@@ -114,12 +72,52 @@ namespace IQToolkit.Entities
                 translation = lambda.Update(lambda.Type, translation, lambda.Parameters);
 
             // build the plan
-            return QueryPlanBuilder.Build(
+            return SqlQueryPlanBuilder.Build(
                 provider,
                 linguist,
                 translation,
                 executorValue
                 );
+        }
+
+        protected virtual bool TryGetMapper(EntityMapping mapping, out MappingTranslator mapper)
+        {
+            if (mapping is IHaveMapper cmt)
+            {
+                mapper = cmt.Mapper;
+                return true;
+            }
+
+            if (mapping is StandardMapping stdMapping)
+            {
+                mapper = new SqlEntityMapper(stdMapping);
+                return true;
+            }
+            else
+            {
+                mapper = null!;
+                return false;
+            }
+        }
+
+        protected virtual bool TryGetPolice(QueryPolicy policy, out PolicyTranslator police)
+        {
+            if (policy is IHavePolice cpt)
+            {
+                police = cpt.Police;
+                return true;
+            }
+
+            if (policy is EntityPolicy entityPolicy)
+            {
+                police = new SqlPolicyTranslator(entityPolicy);
+                return true;
+            }
+            else
+            {
+                police = default!;
+                return false;
+            }
         }
 
         /// <summary>

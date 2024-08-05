@@ -21,18 +21,18 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class LinqToSqlExpressionRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
-        private readonly QueryMapper _mapper;
-        private readonly QueryPolice _police;
+        private readonly LanguageTranslator _linguist;
+        private readonly MappingTranslator _mapper;
+        private readonly PolicyTranslator _police;
         private readonly Dictionary<ParameterExpression, Expression> _map;
         private readonly Dictionary<Expression, GroupByInfo> _groupByMap;
         private Expression _root;
         private IEntityTable? _batchUpd;
 
         public LinqToSqlExpressionRewriter(
-            QueryLinguist linguist,
-            QueryMapper mapper,
-            QueryPolice police,
+            LanguageTranslator linguist,
+            MappingTranslator mapper,
+            PolicyTranslator police,
             Expression root)
         {
             _mapper = mapper;
@@ -433,12 +433,18 @@ namespace IQToolkit.Entities.Translation
 
             var collectionProjection = this.RewriteSequence(collection);
             bool isTable = collectionProjection.Select.From is TableExpression;
-            JoinType joinType = isTable ? JoinType.CrossJoin : defaultIfEmpty ? JoinType.OuterApply : JoinType.CrossApply;
+
+            var joinType = 
+                isTable ? JoinType.CrossJoin 
+                : defaultIfEmpty ? JoinType.OuterApply 
+                : JoinType.CrossApply;
+            
             if (joinType == JoinType.OuterApply)
             {
-                collectionProjection = _linguist.AddOuterJoinTest(collectionProjection);
+                collectionProjection = (ClientProjectionExpression)_linguist.AddOuterJoinTest(collectionProjection);
             }
-            JoinExpression join = new JoinExpression(joinType, projection.Select, collectionProjection.Select, null);
+
+            var join = new JoinExpression(joinType, projection.Select, collectionProjection.Select, null);
 
             var alias = this.GetNextAlias();
             ProjectedColumns pc;

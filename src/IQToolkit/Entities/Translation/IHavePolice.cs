@@ -2,6 +2,6 @@
 {
     public interface IHavePolice
     {
-        QueryPolice Police { get; }
+        PolicyTranslator Police { get; }
     }
 }

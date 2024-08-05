@@ -14,7 +14,7 @@ namespace IQToolkit.Access
     /// </summary>
     public sealed class AccessLanguage : SqlQueryLanguage
     {
-        protected override QueryLinguist Linguist { get; }
+        protected override LanguageTranslator Linguist { get; }
 
         private AccessLanguage()
         {

@@ -9,36 +9,17 @@ namespace IQToolkit.Entities
     /// <summary>
     /// Defines query execution and materialization policies. 
     /// </summary>
-    public class QueryPolicy
+    public abstract class QueryPolicy
     {
-        /// <summary>
-        /// Constructs a <see cref="QueryPolicy"/>
-        /// </summary>
-        protected QueryPolicy()
-        {
-        }
-
-        /// <summary>
-        /// A default <see cref="QueryPolicy"/> with no policy.
-        /// </summary>
-        public static QueryPolicy Default =
-            new QueryPolicy();
-
         /// <summary>
         /// Determines if a relationship property is to be included in the results of the query
         /// </summary>
-        public virtual bool IsIncluded(MemberInfo member)
-        {
-            return false;
-        }
+        public abstract bool IsIncluded(MemberInfo member);
 
         /// <summary>
         /// Determines if a relationship property is included, but the query for the related data is 
         /// deferred until the property is first accessed.
         /// </summary>
-        public virtual bool IsDeferLoaded(MemberInfo member)
-        {
-            return false;
-        }
+        public abstract bool IsDeferLoaded(MemberInfo member);
     }
 }

@@ -65,7 +65,7 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class ColumnProjector : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
+        private readonly LanguageTranslator _linguist;
         private readonly Dictionary<ColumnExpression, ColumnExpression> _map;
         private readonly List<ColumnDeclaration> _columns;
         private readonly HashSet<string> _columnNames;
@@ -75,7 +75,7 @@ namespace IQToolkit.Entities.Translation
         private int _iColumn;
 
         private ColumnProjector(
-            QueryLinguist linguist, 
+            LanguageTranslator linguist, 
             ProjectionAffinity affinity, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
@@ -102,7 +102,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLinguist linguist, 
+            LanguageTranslator linguist, 
             ProjectionAffinity affinity, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
@@ -115,7 +115,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLinguist linguist, 
+            LanguageTranslator linguist, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
@@ -125,7 +125,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLinguist linguist, 
+            LanguageTranslator linguist, 
             ProjectionAffinity affinity, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
@@ -136,7 +136,7 @@ namespace IQToolkit.Entities.Translation
         }
 
         public static ProjectedColumns ProjectColumns(
-            QueryLinguist linguist, 
+            LanguageTranslator linguist, 
             Expression expression, 
             IEnumerable<ColumnDeclaration>? existingColumns, 
             TableAlias newAlias, 
@@ -227,7 +227,7 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         private class Nominator : SqlExpressionVisitor
         {
-            private readonly QueryLinguist _linguist;
+            private readonly LanguageTranslator _linguist;
             private readonly HashSet<Expression> _candidates;
             private readonly ProjectionAffinity _affinity;
             private readonly ImmutableHashSet<TableAlias> _validAliases;
@@ -243,7 +243,7 @@ namespace IQToolkit.Entities.Translation
             }
 
             private Nominator(
-                QueryLinguist linguist, 
+                LanguageTranslator linguist, 
                 ProjectionAffinity affinity,
                 ImmutableHashSet<TableAlias> validAliases)
             {
@@ -255,7 +255,7 @@ namespace IQToolkit.Entities.Translation
             }
 
             internal static HashSet<Expression> Nominate(
-                QueryLinguist linguist, 
+                LanguageTranslator linguist, 
                 ProjectionAffinity affinity, 
                 ImmutableHashSet<TableAlias> validAliases,
                 Expression expression)

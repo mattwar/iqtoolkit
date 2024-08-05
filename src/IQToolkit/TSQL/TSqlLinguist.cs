@@ -13,24 +13,24 @@ namespace IQToolkit.TSql
     using Utils;
 
     /// <summary>
-    /// Microsoft Transact SQL (TSQL) <see cref="QueryLinguist"/>
+    /// Microsoft Transact SQL (TSQL) <see cref="LanguageTranslator"/>
     /// </summary>
-    internal class TSqlLinguist : QueryLinguist
+    internal class TSqlLinguist : SqlTranslator
     {
         public TSqlLinguist(TSqlLanguage language)
             : base(language)
         {
         }
 
-        public override Expression Apply(
+        public override Expression ApplyLanguageRewrites(
             Expression expression, 
-            QueryMapper mapper, 
-            QueryPolice police)
+            MappingTranslator mapper, 
+            PolicyTranslator police)
         {
             // fix up any order-by's
             expression = expression.MoveOrderByToOuterSelect(this.Language);
 
-            expression = base.Apply(expression, mapper, police);
+            expression = base.ApplyLanguageRewrites(expression, mapper, police);
 
             // convert skip/take info into RowNumber pattern
             expression = expression.ConvertSkipTakeToTop(this.Language);

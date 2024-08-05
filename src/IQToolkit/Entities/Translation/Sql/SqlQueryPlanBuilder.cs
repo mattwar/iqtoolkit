@@ -13,18 +13,16 @@ namespace IQToolkit.Entities.Translation
     using Expressions;
     using Expressions.Sql;
     using Mapping;
-    using System.Security.Cryptography;
     using Utils;
 
     /// <summary>
-    /// Transforms a translated query expression into an executable expression that 
-    /// will query the database and convert the tabular results into objects.
+    /// Builds a <see cref="QueryPlan"/> for <see cref="SqlExpression"/> queries.
     /// </summary>
-    public class QueryPlanBuilder
+    public class SqlQueryPlanBuilder
     {
         public static QueryPlan Build(
             IEntityProvider provider,
-            QueryLinguist linguist,
+            LanguageTranslator linguist,
             Expression translatedQuery,
             Expression executorValue)
         {
@@ -54,7 +52,7 @@ namespace IQToolkit.Entities.Translation
 
         private class Builder : SqlExpressionVisitor
         {
-            private readonly QueryLinguist _linguist;
+            private readonly LanguageTranslator _linguist;
             private readonly QueryPolicy _policy;
             private readonly QueryOptions _options;
             private readonly ParameterExpression _executorParameter;
@@ -68,7 +66,7 @@ namespace IQToolkit.Entities.Translation
             private Dictionary<string, Expression> _variableMap = new Dictionary<string, Expression>();
 
             public Builder(
-                QueryLinguist linguist,
+                LanguageTranslator linguist,
                 QueryPolicy policy,
                 QueryOptions options,
                 ParameterExpression executor,

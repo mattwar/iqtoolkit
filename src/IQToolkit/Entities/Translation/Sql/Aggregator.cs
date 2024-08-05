@@ -9,6 +9,7 @@ using System.Reflection;
 
 namespace IQToolkit.Entities.Translation
 {
+    using Collections;
     using Utils;
 
     public static class Aggregator

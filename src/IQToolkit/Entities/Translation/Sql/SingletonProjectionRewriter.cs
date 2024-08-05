@@ -14,9 +14,9 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class SingletonProjectionRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
+        private readonly LanguageTranslator _linguist;
 
-        public SingletonProjectionRewriter(QueryLinguist linguist)
+        public SingletonProjectionRewriter(LanguageTranslator linguist)
         {
             _linguist = linguist;
         }
@@ -52,7 +52,7 @@ namespace IQToolkit.Entities.Translation
                 foreach (var cp in nestedClientProjections)
                 {
                     var cpDuped = new ClientProjectionExpression(cp.Select, cp.Projector.Duplicate());
-                    var cpWithTest = _linguist.AddOuterJoinTest(cpDuped);
+                    var cpWithTest = (ClientProjectionExpression)_linguist.AddOuterJoinTest(cpDuped);
                     var newSelect = cpWithTest.Select;
                     newFrom = new JoinExpression(JoinType.OuterApply, newFrom!, newSelect, null);
                     altExpressions.Add(cpWithTest.Projector);
@@ -97,7 +97,7 @@ namespace IQToolkit.Entities.Translation
                     var source = cp.Select.RemapTableAliases(newAlias, extraSelect.Alias);
 
                     // add outer-join test
-                    var pex = _linguist.AddOuterJoinTest(new ClientProjectionExpression(source, cp.Projector));
+                    var pex = (ClientProjectionExpression)_linguist.AddOuterJoinTest(new ClientProjectionExpression(source, cp.Projector));
                     var pc = ColumnProjector.ProjectColumns(_linguist, pex.Projector, extraSelect.Columns, extraSelect.Alias, newAlias, cp.Select.Alias);
                     var join = new JoinExpression(JoinType.OuterApply, extraSelect.From!, pex.Select, null);
                     var newSelect = new SelectExpression(extraSelect.Alias, pc.Columns, join, null);

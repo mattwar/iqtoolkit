@@ -65,7 +65,7 @@ namespace IQToolkit.Entities
         {
             this.Language = language ?? AnsiSql.AnsiSqlLanguage.Singleton;
             this.Mapping = mapping ?? new AttributeMapping();
-            this.Policy = policy ?? QueryPolicy.Default;
+            this.Policy = policy ?? EntityPolicy.Default;
             this.Executor = executor;
             this.Log = log;
             this.Cache = cache;

@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
-using IQToolkit.Expressions;
 
 namespace IQToolkit.Entities
 {
@@ -19,27 +18,33 @@ namespace IQToolkit.Entities
     /// </summary>
     public class EntityPolicy : QueryPolicy
     {
-        private readonly ImmutableHashSet<MemberInfo> _included;
-        private readonly ImmutableHashSet<MemberInfo> _deferred;
+        private readonly ImmutableDictionary<MemberInfo, IncludeFacts> _included;
         private readonly ImmutableDictionary<MemberInfo, ImmutableList<LambdaExpression>> _operations;
 
         private EntityPolicy(
-            ImmutableHashSet<MemberInfo> included,
-            ImmutableHashSet<MemberInfo> deferred,
+            ImmutableDictionary<MemberInfo, IncludeFacts> included,
             ImmutableDictionary<MemberInfo, ImmutableList<LambdaExpression>> operations)
         {
             _included = included;
-            _deferred = deferred;
             _operations = operations;
+        }
+
+        private class IncludeFacts
+        {
+            public bool IsDeferred { get; }
+
+            public IncludeFacts(bool isDeferred)
+            {
+                this.IsDeferred = isDeferred;
+            }
         }
 
         /// <summary>
         /// The default <see cref="EntityPolicy"/>.
         /// </summary>
-        public static new readonly EntityPolicy Default =
+        public static readonly EntityPolicy Default =
             new EntityPolicy(
-                ImmutableHashSet<MemberInfo>.Empty,
-                ImmutableHashSet<MemberInfo>.Empty,
+                ImmutableDictionary<MemberInfo, IncludeFacts>.Empty,
                 ImmutableDictionary<MemberInfo, ImmutableList<LambdaExpression>>.Empty
                 );
 
@@ -84,16 +89,10 @@ namespace IQToolkit.Entities
         /// <param name="deferLoad">If true, the member's elements will be defer loaded if possible.</param>
         public EntityPolicy Include(MemberInfo member, bool deferLoad)
         {
-            var included = new EntityPolicy(
-                _included.Add(member),
-                _deferred,
+            return new EntityPolicy(
+                _included.SetItem(member, new IncludeFacts(deferLoad)),
                 _operations
                 );
-
-            if (deferLoad)
-                included = included.Defer(member);
-
-            return included;
         }
 
         /// <summary>
@@ -156,28 +155,6 @@ namespace IQToolkit.Entities
             return IncludeWith((LambdaExpression)fnMember, deferLoad);
         }
 
-        private EntityPolicy Defer(MemberInfo member)
-        {
-            Type mType = TypeHelper.GetMemberType(member);
-
-            if (mType.IsGenericType)
-            {
-                var gType = mType.GetGenericTypeDefinition();
-                if (gType != typeof(IEnumerable<>)
-                    && gType != typeof(IList<>)
-                    && !typeof(IDeferLoadable).IsAssignableFrom(mType))
-                {
-                    throw new InvalidOperationException(string.Format("The member '{0}' cannot be deferred due to its type.", member));
-                }
-            }
-
-            return new EntityPolicy(
-                _included,
-                _deferred.Add(member),
-                _operations
-                );
-        }
-
         /// <summary>
         /// Add a constraint or filter to an association member that is always applied whenever the member is
         /// referenced in a query, by specifing an operation on that member in a lambda expression.
@@ -224,7 +201,6 @@ namespace IQToolkit.Entities
 
             return new EntityPolicy(
                 _included,
-                _deferred,
                 _operations.SetItem(member, newOps)
                 );
         }
@@ -245,19 +221,20 @@ namespace IQToolkit.Entities
         }
 
         /// <summary>
-        /// True if the association member <see cref="P:member"/>'s elements are included in the output of the query. 
+        /// True if the member's elements are included in the output of the query. 
         /// </summary>
         public override bool IsIncluded(MemberInfo member)
         {
-            return _included.Contains(member);
+            return _included.ContainsKey(member);
         }
 
         /// <summary>
-        /// True if the association member <see cref="P:member"/>'s are defer loaded.
+        /// True if the member's elements are defer loaded.
         /// </summary>
         public override bool IsDeferLoaded(MemberInfo member)
         {
-            return _deferred.Contains(member);
+            return _included.TryGetValue(member, out var info)
+                && info.IsDeferred;
         }
     }
 }

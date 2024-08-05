@@ -6,16 +6,19 @@ namespace IQToolkit.Entities.Translation
 {
     using Expressions.Sql;
 
-    public static class TranslationExtensions
+    /// <summary>
+    /// Extension methods for manipulating <see cref="SqlExpression"/> queries.
+    /// </summary>
+    public static class SqlTranslationExtensions
     {
         /// <summary>
         /// Add included relationships to entity expressions.
         /// </summary>
         public static Expression AddIncludedRelationships(
             this Expression expression, 
-            QueryLinguist lingust,
-            QueryMapper mapper,
-            QueryPolice police)
+            LanguageTranslator lingust,
+            MappingTranslator mapper,
+            PolicyTranslator police)
         {
             var rewritten = RelationshipIncluder.Include(expression, lingust, mapper, police);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
@@ -40,7 +43,7 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public static Expression ConvertCrossApplyToInnerJoin(
             this Expression expression, 
-            QueryLinguist linguist)
+            LanguageTranslator linguist)
         {
             // simplify before attempting to convert cross applies.
             var rewritten = new CrossApplyToLeftJoinRewriter(linguist).Visit(expression);
@@ -66,8 +69,8 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public static Expression ConvertNestedProjectionsToClientJoins(
             this Expression expression, 
-            QueryLinguist linguist,
-            QueryPolice police)
+            LanguageTranslator linguist,
+            PolicyTranslator police)
         {
             var rewritten = new ClientProjectionToClientJoinRewriter(linguist, police.Policy).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
@@ -82,9 +85,9 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public static Expression ConvertLinqOperatorToSqlExpressions(
             this Expression expression,
-            QueryLinguist linguist,
-            QueryMapper mapper, 
-            QueryPolice police,
+            LanguageTranslator linguist,
+            MappingTranslator mapper, 
+            PolicyTranslator police,
             bool isQueryFragment = false)
         {
             var rewriter = new LinqToSqlExpressionRewriter(linguist, mapper, police, expression);
@@ -98,9 +101,9 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public static Expression RewriteRelationshipMembers(
             this Expression expression, 
-            QueryLinguist linguist,
-            QueryMapper mapper, 
-            QueryPolice police)
+            LanguageTranslator linguist,
+            MappingTranslator mapper, 
+            PolicyTranslator police)
         {
             var rewritten = new RelationshipRewriter(linguist, mapper, police).Visit(expression);
             Debug.Assert(rewritten.HasValidReferences(), "Invalid References or Declarations");
@@ -115,7 +118,7 @@ namespace IQToolkit.Entities.Translation
         /// </summary>
         public static Expression ConvertSingletonProjections(
             this Expression expression, 
-            QueryLinguist linguist, 
+            LanguageTranslator linguist, 
             EntityMapping mapping)
         {
             var rewritten = new SingletonProjectionRewriter(linguist).Visit(expression);

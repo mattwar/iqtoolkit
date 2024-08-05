@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace IQToolkit
+namespace IQToolkit.Collections
 {
     /// <summary>
     /// A defer loaded value.

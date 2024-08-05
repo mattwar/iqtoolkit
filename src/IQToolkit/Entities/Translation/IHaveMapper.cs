@@ -2,6 +2,6 @@
 {
     public interface IHaveMapper
     {
-        QueryMapper Mapper { get; }
+        MappingTranslator Mapper { get; }
     }
 }

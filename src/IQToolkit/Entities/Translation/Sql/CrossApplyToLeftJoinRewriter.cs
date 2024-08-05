@@ -14,9 +14,9 @@ namespace IQToolkit.Entities.Translation
     /// </summary>
     public class CrossApplyToLeftJoinRewriter : SqlExpressionVisitor
     {
-        private readonly QueryLinguist _linguist;
+        private readonly LanguageTranslator _linguist;
 
-        public CrossApplyToLeftJoinRewriter(QueryLinguist linguist)
+        public CrossApplyToLeftJoinRewriter(LanguageTranslator linguist)
         {
             _linguist = linguist;
         }

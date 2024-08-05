@@ -11,7 +11,7 @@ namespace IQToolkit.AnsiSql
     using Entities.Translation;
     using Utils;
 
-    internal class AnsiSqlLinguist : QueryLinguist
+    internal class AnsiSqlLinguist : SqlTranslator
     {
         public AnsiSqlLinguist(QueryLanguage language)
             : base(language)

@@ -13,7 +13,7 @@ namespace IQToolkit.TSql
     /// </summary>
     public sealed class TSqlLanguage : SqlQueryLanguage
     {
-        protected override QueryLinguist Linguist { get; }
+        protected override LanguageTranslator Linguist { get; }
 
         public TSqlLanguage()
         {

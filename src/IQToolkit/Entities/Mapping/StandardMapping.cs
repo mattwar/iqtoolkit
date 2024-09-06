@@ -15,56 +15,51 @@ namespace IQToolkit.Entities.Mapping
     public abstract class StandardMapping : EntityMapping
     {
         private ImmutableDictionary<string, MappedEntity> _idToEntityMap;
-        private ImmutableDictionary<string, MappedTable> _nameToTableMap;
 
-        public override Type? ContextType { get; }
+        protected StandardMapping()
+        {
+            _idToEntityMap = ImmutableDictionary<string, MappedEntity>.Empty;
+        }
+
+        public override IEnumerable<MappedEntity> GetEntities() =>
+            _idToEntityMap.Values.SelectManyRecursive(e => 
+                e.Members.OfType<AssociationMember>().Select(m => m.RelatedEntity));
 
         /// <summary>
-        /// The set of members that refer to entity tables on the context type.
+        /// Gets or creates the <see cref="MappedEntity"/> for the entity id.
         /// </summary>
-        public override IReadOnlyList<MemberInfo> ContextMembers =>
-            _contextMembers.Value;
-        private readonly Lazy<IReadOnlyList<MemberInfo>> _contextMembers;
-
-        public StandardMapping(Type? contextType)
+        protected virtual MappedEntity GetOrCreateEntity(
+            Type entityType, 
+            string entityId)
         {
-            this.ContextType = contextType;
-            _idToEntityMap = ImmutableDictionary<string, MappedEntity>.Empty;
-            _nameToTableMap = ImmutableDictionary<string, MappedTable>.Empty;
-
-            _contextMembers = new Lazy<IReadOnlyList<MemberInfo>>(() =>
-                contextType != null
-                    ? TypeHelper.GetDeclaredFieldsAndProperties(
-                        contextType,
-                        m => TypeHelper.IsAssignableToGeneric(TypeHelper.GetMemberType(m), typeof(IQueryable<>))
-                        )
-                    : ReadOnlyList<MemberInfo>.Empty
-            );
-        }
-
-        protected virtual void InitializeContextMembers()
-        {
-            // pre-load entities for context members
-            foreach (var m in this.ContextMembers)
+            if (!_idToEntityMap.TryGetValue(entityId, out var mappedEntity))
             {
-                InitializeEntity(GetEntity(m));
+                var tmp = CreateEntity(entityType, entityId)!;
+                mappedEntity = ImmutableInterlocked.GetOrAdd(ref _idToEntityMap, entityId, tmp);
+
+                RealizeEntity(mappedEntity);
             }
+
+            return mappedEntity;
         }
 
-        protected virtual void InitializeEntity(MappedEntity entity)
+        /// <summary>
+        /// Access all entity lazy members to force failures early.
+        /// </summary>
+        private void RealizeEntity(MappedEntity entity)
         {
             foreach (var table in entity.Tables)
             {
-                InitializeTable(table);
+                RealizeTable(table);
             }
 
             foreach (var member in entity.Members)
             {
-                InitializeMember(member);
+                RealizeMember(member);
             }
         }
 
-        protected virtual void InitializeTable(MappedTable table)
+        private void RealizeTable(MappedTable table)
         {
             var columns = table.Columns;
             if (columns.Count > 0)
@@ -79,7 +74,7 @@ namespace IQToolkit.Entities.Mapping
             }
         }
 
-        protected virtual void InitializeMember(MappedMember member)
+        private void RealizeMember(MappedMember member)
         {
             if (member is ColumnMember mcm)
             {
@@ -89,7 +84,7 @@ namespace IQToolkit.Entities.Mapping
             {
                 foreach (var cm in compound.Members)
                 {
-                    InitializeMember(cm);
+                    RealizeMember(cm);
                 }
             }
             else if (member is AssociationMember assoc)
@@ -98,95 +93,6 @@ namespace IQToolkit.Entities.Mapping
                 var relatedEntity = assoc.RelatedEntity;
                 var relatedColumns = assoc.RelatedKeyColumns;
             }
-        }
-
-        public override IReadOnlyList<MappedEntity> GetEntities()
-        {
-            return _idToEntityMap.Values.ToReadOnly();
-        }
-
-        /// <summary>
-        /// Gets the entity id for the context member.
-        /// </summary>
-        protected virtual string GetEntityId(
-            MemberInfo contextMember)
-        {
-            return contextMember.Name;
-        }
-
-        /// <summary>
-        /// Gets the entity id for the entity type.
-        /// </summary>
-        protected virtual string GetEntityId(
-            Type entityType)
-        {
-            if (TryGetContextMember(entityType, out var member))
-            {
-                return GetEntityId(member);
-            }
-
-            return entityType.Name;
-        }
-
-        /// <summary>
-        /// Get the <see cref="MappedEntity"/> represented by the IQueryable context member
-        /// </summary>
-        public override MappedEntity GetEntity(
-            MemberInfo contextMember)
-        {
-            var entityType = TypeHelper.GetEntityType(contextMember);
-            return GetEntity(entityType, GetEntityId(contextMember));
-        }
-
-        /// <summary>
-        /// Gets the context member associated with the entity id.
-        /// </summary>
-        public virtual bool TryGetContextMember(
-            string entityId, 
-            [NotNullWhen(true)] out MemberInfo member)
-        {
-            member = this.ContextMembers.FirstOrDefault(m => GetEntityId(m) == entityId);
-            return member != null;
-        }
-
-        /// <summary>
-        /// Gets the context member associated with the entity type.
-        /// </summary>
-        public virtual bool TryGetContextMember(
-            Type entityType, 
-            [NotNullWhen(true)] out MemberInfo member)
-        {
-            member = this.ContextMembers
-                .FirstOrDefault(m => TypeHelper.GetEntityType(m) == entityType);
-            return member != null;
-        }
-
-        /// <summary>
-        /// Gets the <see cref="MappedEntity"/> for the entity id.
-        /// </summary>
-        public override MappedEntity GetEntity(
-            Type entityType, string? entityId)
-        {
-            return GetOrCreateEntity(
-                entityType,
-                entityId ?? GetEntityId(entityType)
-                );
-        }
-
-        /// <summary>
-        /// Gets or creates the <see cref="MappedEntity"/> for the entity id.
-        /// </summary>
-        protected virtual MappedEntity GetOrCreateEntity(
-            Type entityType, 
-            string entityId)
-        {
-            if (!_idToEntityMap.TryGetValue(entityId, out var mappedEntity))
-            {
-                var tmp = CreateEntity(entityType, entityId)!;
-                mappedEntity = ImmutableInterlocked.GetOrAdd(ref _idToEntityMap, entityId, tmp);
-            }
-
-            return mappedEntity;
         }
 
         /// <summary>
@@ -280,8 +186,201 @@ namespace IQToolkit.Entities.Mapping
 
         protected virtual bool IsKnownEntityType(Type type)
         {
-            return this.ContextMembers.Any(m => TypeHelper.GetEntityType(m) == type);
+            return this.GetEntities().Any(e => e.Type == type);
         }
+
+        protected virtual IReadOnlyList<Diagnostic> GetEntityDiagnostics(MappedEntity entity)
+        {
+            // borrow from pool since likely not to have any diagnostics
+            var diagnostics = _diagnosticPool.AllocateFromPool();
+            try
+            {
+                foreach (var table in entity.Tables)
+                {
+                    GatherTableDiagnostics(table, diagnostics);
+                }
+
+                foreach (var column in entity.Columns)
+                {
+                    GatherColumnDiagnostics(column, diagnostics);
+                }
+
+                foreach (var member in entity.Members)
+                {
+                    GatherMemberDiagnostics(member, diagnostics);
+                }
+
+                return (diagnostics.Count > 0)
+                    ? diagnostics.ToReadOnly()
+                    : ReadOnlyList<Diagnostic>.Empty;
+            }
+            finally
+            {
+                _diagnosticPool.ReturnToPool(diagnostics);
+            }
+        }
+
+        private static readonly ObjectPool<List<Diagnostic>> _diagnosticPool = 
+            new ObjectPool<List<Diagnostic>>(
+                () => new List<Diagnostic>(), 
+                list => list.Clear()
+                );
+
+        private void GatherTableDiagnostics(MappedTable table, List<Diagnostic> diagnostics)
+        {
+            if (table is UnknownTable ut)
+                diagnostics.AddRange(ut.Diagnostics);
+
+            if (table is ExtensionTable extTable)
+            {
+                GatherTableDiagnostics(extTable.RelatedTable, diagnostics);
+            }
+        }
+
+        private void GatherColumnDiagnostics(MappedColumn column, List<Diagnostic> diagnostics)
+        {
+            if (column is UnknownColumn uc)
+                diagnostics.AddRange(uc.Diagnostics);
+        }
+
+        private void GatherReferencedEntityDiagnostics(MappedEntity entity, List<Diagnostic> diagnostics)
+        {
+            if (entity is UnknownEntity ue)
+                diagnostics.AddRange(ue.Diagnostics);
+        }
+
+        protected virtual void GatherMemberDiagnostics(MappedMember member, List<Diagnostic> diagnostics)
+        {
+            if (member is AssociationMember assoc)
+            {
+                foreach (var column in assoc.KeyColumns)
+                {
+                    GatherColumnDiagnostics(column, diagnostics);
+                }
+
+                GatherReferencedEntityDiagnostics(assoc.RelatedEntity, diagnostics);
+
+                foreach (var relatedColumn in assoc.RelatedKeyColumns)
+                {
+                    GatherColumnDiagnostics(relatedColumn, diagnostics);
+                }
+            }
+            else if (member is CompoundMember compound)
+            {
+                foreach (var cm in compound.Members)
+                {
+                    GatherMemberDiagnostics(cm, diagnostics);
+                }
+            }
+        }
+
+        protected virtual MappedColumn GetMemberColumn(ColumnMember member, string? columnName, string? tableName)
+        {
+            return this.GetReferencedColumn(member.Entity, columnName ?? member.Member.Name, tableName, "Column Member", GetMemberPath(member));
+        }
+
+        protected virtual IReadOnlyList<MappedColumn> GetAssociationKeyColumns(
+            AssociationMember association, string? keyColumns, string? tableName)
+        {
+            return this.GetNames(keyColumns ?? "")
+                .Select(name => GetReferencedColumn(association.Entity, name, tableName, "Association Member", GetMemberPath(association)))
+                .ToReadOnly();
+        }
+
+        protected virtual IReadOnlyList<MappedColumn> GetAssociationRelatedKeyColumns(
+            AssociationMember association, string? relatedKeyColumns, string? keyColumns, string? tableName)
+        {
+            return this.GetNames(relatedKeyColumns ?? keyColumns ?? "")
+                .Select(name => GetReferencedColumn(association.Entity, name, tableName, "Association Member", GetMemberPath(association)))
+                .ToReadOnly();
+        }
+
+        protected virtual MappedEntity GetAssociationRelatedEntity(
+            AssociationMember association, string? relatedEntityId)
+        {
+            var relatedEntityType = TypeHelper.GetSequenceElementType(association.Type);
+
+            if (this.TryGetEntity(relatedEntityType, relatedEntityId, out var relatedEntity))
+                return relatedEntity;
+
+            return new UnknownEntity(
+                relatedEntityType,
+                relatedEntityId ?? "Unknown",
+                new Diagnostic($"Member '{GetMemberPath(association)}': Unknown entity '{relatedEntityId}'.")
+                );
+        }
+
+        protected virtual MappedTable GetRelatedTable(MappedTable table, string? relatedTableName)
+        {
+            if (relatedTableName != null)
+            {
+                if (table.Entity.TryGetTable(relatedTableName, out var relatedTable))
+                    return relatedTable;
+
+                return new UnknownTable(
+                    relatedTableName,
+                    new Diagnostic($"Extension table '{table.Name}': Unknown related table '{relatedTableName}'.")
+                    );
+            }
+            else
+            {
+                return table.Entity.PrimaryTable;
+            }
+        }
+
+        protected virtual IReadOnlyList<MappedColumn> GetTableKeyColumns(
+            MappedTable table, string? keyColumns)
+        {
+            return this.GetNames(keyColumns ?? "")
+                .Select(name => GetReferencedColumn(table.Entity, name, table.Name, "Extension Table", table.Name))
+                .ToReadOnly();
+        }
+
+        protected virtual IReadOnlyList<MappedColumn> GetRelatedTableKeyColumns(
+            MappedTable table, string? relatedKeyColumns, string? keyColumns, string? relatedTableName)
+        {
+            return this.GetNames(relatedKeyColumns ?? keyColumns ?? "")
+                .Select(name => GetReferencedColumn(table.Entity, name, relatedTableName, "Extension Table", table.Name))
+
+                .ToReadOnly();
+        }
+
+        protected virtual MappedColumn GetReferencedColumn(
+            MappedEntity entity, string columnName, string? tableName, string sourceKind, string sourceName)
+        {
+            if (entity.TryGetColumn(columnName, tableName, out var column))
+                return column;
+
+            if (tableName != null && !entity.TryGetTable(tableName, out _))
+                return new UnknownColumn(columnName, new Diagnostic($"{sourceKind} '{sourceName}': Unknown table '{tableName}'."));
+
+            return new UnknownColumn(columnName, new Diagnostic($"{sourceKind} '{sourceName}': Unknown column '{columnName}'."));
+        }
+
+        protected virtual string GetMemberPath(MappedMember member)
+        {
+            if (member.Parent == null)
+                return member.Member.Name;
+            return GetMemberPath(member.Parent) + "." + member.Member.Name;
+        }
+
+        protected virtual MappedColumn CreateInferredColumn(
+            MappedTable table,
+            string name)
+        {
+            return new StandardColumn(
+                table,
+                name,
+                columnType: null,
+                isPrimaryKey: false,
+                isReadOnly: false,
+                isComputed: false,
+                isGenerated: false,
+                me => table.Entity.Members.OfType<ColumnMember>().FirstOrDefault(cm => cm.Column == me)
+                );
+        }
+
+
 
         protected class StandardEntity : MappedEntity
         {
@@ -289,6 +388,7 @@ namespace IQToolkit.Entities.Mapping
             public override string Id { get; }
             public override Type Type { get; }
             public override Type ConstructedType { get; }
+            public override string? Context { get; }
 
             public override IReadOnlyList<MappedMember> Members => _mappedMembers.Value;
             private readonly Lazy<IReadOnlyList<MappedMember>> _mappedMembers;
@@ -308,6 +408,9 @@ namespace IQToolkit.Entities.Mapping
             public override IReadOnlyList<MappedColumn> Columns => _columns.Value;
             private readonly Lazy<IReadOnlyList<MappedColumn>> _columns;
 
+            public override IReadOnlyList<Diagnostic> Diagnostics => _diagnostics.Value;
+            private readonly Lazy<IReadOnlyList<Diagnostic>> _diagnostics;
+
             public override bool TryGetMember(string name, [NotNullWhen(true)] out MappedMember? member) =>
                 _memberMap.Value.TryGetValue(name, out member);
             private readonly Lazy<Dictionary<string, MappedMember>> _memberMap;
@@ -321,16 +424,20 @@ namespace IQToolkit.Entities.Mapping
                 string entityId,
                 Type type,
                 Type constructedType,
+                string? context,
                 Func<MappedEntity, IReadOnlyList<MappedTable>> fnTables,
-                Func<MappedEntity, IReadOnlyList<MappedMember>> fnMembers)
+                Func<MappedEntity, IReadOnlyList<MappedMember>> fnMembers,
+                Func<MappedEntity, IReadOnlyList<Diagnostic>> fnDiagnostics)
             {
                 this.Mapping = mapping;
                 this.Id = entityId;
                 this.Type = type;
                 this.ConstructedType = constructedType;
+                this.Context = context;
 
                 _mappedMembers = new Lazy<IReadOnlyList<MappedMember>>(
-                    () => fnMembers(this), ReadOnlyList<MappedMember>.Empty
+                    () => fnMembers(this), 
+                    ReadOnlyList<MappedMember>.Empty
                     );
 
                 _primaryKeyMembers = new Lazy<IReadOnlyList<ColumnMember>>(
@@ -339,7 +446,8 @@ namespace IQToolkit.Entities.Mapping
                     );
 
                 _mappedTables = new Lazy<IReadOnlyList<MappedTable>>(
-                    () => fnTables(this), ReadOnlyList<MappedTable>.Empty
+                    () => fnTables(this), 
+                    ReadOnlyList<MappedTable>.Empty
                     );
 
                 _primaryTable = new Lazy<MappedTable>(() =>
@@ -361,6 +469,11 @@ namespace IQToolkit.Entities.Mapping
 
                 _memberMap = new Lazy<Dictionary<string, MappedMember>>(
                     () => _mappedMembers.Value.ToDictionary(m => m.Member.Name)
+                    );
+
+                _diagnostics = new Lazy<IReadOnlyList<Diagnostic>>(
+                    () => fnDiagnostics(this), 
+                    ReadOnlyList<Diagnostic>.Empty
                     );
             }
         }
@@ -425,7 +538,7 @@ namespace IQToolkit.Entities.Mapping
                 string tableName,
                 Func<MappedTable, IReadOnlyList<MappedColumn>> fnColumns,
                 Func<ExtensionTable, IReadOnlyList<MappedColumn>> fnKeyColumns,
-                Func<MappedTable> fnRelatedTable,
+                Func<ExtensionTable, MappedTable> fnRelatedTable,
                 Func<ExtensionTable, IReadOnlyList<MappedColumn>> fnRelatedKeyColumns)
             {
                 this.Entity = entity;
@@ -445,7 +558,7 @@ namespace IQToolkit.Entities.Mapping
                     );
 
                 _relatedTable = new Lazy<MappedTable>(
-                    fnRelatedTable
+                    () => fnRelatedTable(this)
                     );
 
                 _relatedKeyColumns = new Lazy<IReadOnlyList<MappedColumn>>(
@@ -597,16 +710,10 @@ namespace IQToolkit.Entities.Mapping
             }
         }
 
-        protected bool TryGetType(string name, out Type type)
+        protected virtual bool TryGetType(string name, out Type type)
         {
             type = Type.GetType(name);
             
-            if (type == null
-                && this.ContextType != null)
-            {
-                type = this.ContextType.Assembly.GetType(name);
-            }
-
             if (type == null)
             {
                 // look for type in assemblies that reference the toolkit
@@ -619,6 +726,98 @@ namespace IQToolkit.Entities.Mapping
             }
 
             return type != null;
+        }
+
+        protected class UnknownEntity : MappedEntity
+        {
+            public override Type Type { get; }
+            public override string Id { get; }
+            public override IReadOnlyList<Diagnostic> Diagnostics { get; }
+
+            private UnknownEntity(Type type, string id, IReadOnlyList<Diagnostic> diagnostics)
+            {
+                this.Type = type;
+                this.Id = id;
+                this.Diagnostics = diagnostics.ToReadOnly();
+            }
+
+            public UnknownEntity(Type type, string id, Diagnostic diagnostics)
+                : this(type, id, new[] { diagnostics })
+            {
+            }
+
+            public override string? Context => null;
+            public override Type ConstructedType => typeof(object);
+            public override IReadOnlyList<MappedMember> Members => ReadOnlyList<MappedMember>.Empty;
+            public override IReadOnlyList<ColumnMember> PrimaryKeyMembers => ReadOnlyList<ColumnMember>.Empty;
+            public override IReadOnlyList<MappedTable> Tables => ReadOnlyList<MappedTable>.Empty;
+            public override MappedTable PrimaryTable => throw new NotImplementedException();
+            public override IReadOnlyList<ExtensionTable> ExtensionTables => ReadOnlyList<ExtensionTable>.Empty;
+            public override IReadOnlyList<MappedColumn> Columns => ReadOnlyList<MappedColumn>.Empty;
+
+            public override bool TryGetMember(string name, [NotNullWhen(true)] out MappedMember? member)
+            {
+                member = null;
+                return false;
+            }
+
+            public override bool TryGetTable(string name, [NotNullWhen(true)] out MappedTable? table)
+            {
+                table = null;
+                return false;
+            }
+
+            public static readonly UnknownEntity Default = 
+                new UnknownEntity(typeof(object), "Unknown", ReadOnlyList<Diagnostic>.Empty);
+        }
+
+        public class UnknownTable : MappedTable
+        {
+            public override string Name { get; }
+            public IReadOnlyList<Diagnostic> Diagnostics { get; }
+
+            private UnknownTable(string tableName, IReadOnlyList<Diagnostic> diagnostics)
+            {
+                this.Name = tableName;
+                this.Diagnostics = diagnostics.ToReadOnly();
+            }
+
+            public UnknownTable(string tableName, Diagnostic diagnostic)
+                : this(tableName, new[] { diagnostic })
+            {
+            }
+
+            public override MappedEntity Entity => UnknownEntity.Default;
+            public override IReadOnlyList<MappedColumn> Columns => ReadOnlyList<MappedColumn>.Empty;
+
+            public override bool TryGetColumn(string name, [NotNullWhen(true)] out MappedColumn? column)
+            {
+                column = null;
+                return false;
+            }
+
+            public static readonly UnknownTable Default =
+                new UnknownTable("Unknown", ReadOnlyList<Diagnostic>.Empty);
+        }
+
+        public class UnknownColumn : MappedColumn
+        {
+            public override string Name { get; }
+            public IReadOnlyList<Diagnostic> Diagnostics { get; }
+
+            public UnknownColumn(string columnName, Diagnostic diagnostic)
+            {
+                this.Name = columnName;
+                this.Diagnostics = new[] { diagnostic }.ToReadOnly();
+            }
+
+            public override MappedTable Table => UnknownTable.Default;
+            public override ColumnMember? Member => null;
+            public override string? Type => null;
+            public override bool IsPrimaryKey => false;
+            public override bool IsReadOnly => false;
+            public override bool IsComputed => false;
+            public override bool IsGenerated => false;
         }
     }
 }

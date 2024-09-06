@@ -15,7 +15,7 @@ namespace IQToolkit.Entities.Mapping
 
 #if false
     <Mapping>
-        <Entity Id="EC" Type="Customer" ConstructedType="Customer" >
+        <Entity Id="EC" Type="Customer" ConstructedType="Customer" Context="Customers" >
             <ColumnMember Name="CustomerID" Column="CustomerID" Table="Customers" />
             <CompoundMember Name="Address" Type="IAddress" ConstructedType="Address">
                 <Member Name="Street" Column="Address" Table="..." />
@@ -30,15 +30,15 @@ namespace IQToolkit.Entities.Mapping
                 IsForeignKey="false"
                 />
             <Table Name="Customers">
-                <Column Name="CustomerID" DbType="NVARCHAR" IsPrimaryKey="true" />
-                <Column Name="ContactName" DbType="NVARCHAR" />              
+                <Column Name="CustomerID" Type="NVARCHAR" IsPrimaryKey="true" />
+                <Column Name="ContactName" Type="NVARCHAR" />              
                 <Column Name="City" />
             </Table>
             <ExtensionTable Name="..." KeyColumns="" RelatedTable="" RelatedKeyColumns="">
                 <Column Name=".." />
             </ExtensionTable>
         </Entity>
-        <Entity Id="EO" Type="Order" RuntimeType="Order>
+        <Entity Id="EO" Type="Order" ConstructedType="Order Context="Orders">
             <ColumnMember Name="OrderID" Column="OrderID" Table="Orders" />
             <AssociationMember Name="Customer"
                 KeyColumns="CustomerID" 
@@ -48,8 +48,8 @@ namespace IQToolkit.Entities.Mapping
                 RelatedKeyColumns="CustomerID"
                 />
             <Table Name="Orders">
-                <Column Name="OrderID" DbType="INT" IsPrimaryKey="true" />
-                <Column Name="CustomerID" DbType="NVARCHAR" />
+                <Column Name="OrderID" Type="INT" IsPrimaryKey="true" />
+                <Column Name="CustomerID" Type="NVARCHAR" />
             </Table>
         </Entity>
     </Mapping>
@@ -57,84 +57,86 @@ namespace IQToolkit.Entities.Mapping
 #endif
 
     /// <summary>
-    /// A <see cref="EntityMapping"/> stored in XML elements.
+    /// An <see cref="EntityMapping"/> for mapping stored in an XML document.
     /// </summary>
     public class XmlMapping : StandardMapping
     {
+        private readonly IReadOnlyList<XElement> _entityElements;
         private readonly Dictionary<string, XElement> _entityIdToElementsMap;
-        private ImmutableDictionary<MemberInfo, string> _contextMembertoEntityIdMap;
-        private ImmutableDictionary<string, MemberInfo> _entityIdToContextMemberMap;
+        private readonly Dictionary<string, XElement> _entityTypeNameToElementsMap;
+        private readonly Dictionary<string, XElement> _contextMemberNameToElementsMap;
 
         /// <summary>
         /// Constructs a new instance of <see cref="XmlMapping"/>
         /// </summary>
-        public XmlMapping(string xml, Type? contextType = null)
-            : base(contextType)
+        public XmlMapping(string xml)
         {
-            _entityIdToElementsMap = Deserialize(xml);
-            _contextMembertoEntityIdMap = ImmutableDictionary<MemberInfo, string>.Empty;
-            _entityIdToContextMemberMap = ImmutableDictionary<string, MemberInfo>.Empty;
-
-            if (contextType != null)
-                this.InitializeContextMembers();
-        }
-
-        private Dictionary<string, XElement> Deserialize(string xml)
-        {
-            return XElement.Parse(xml)
+            _entityElements = XElement.Parse(xml)
                 .Elements(EntityName)
                 .Where(e => GetId(e) != null)
-                .ToDictionary(GetId)!;
-        }
+                .ToReadOnly();
 
-        protected override string GetEntityId(Type entityType)
-        {
-            if (this.ContextType != null
-                && this.TryGetContextMember(entityType, out var contextMember))
+            _entityIdToElementsMap = _entityElements
+                .ToDictionary_FirstWins(GetId)!;
+
+            _contextMemberNameToElementsMap = _entityElements
+                .Where(e => GetContext(e) != null)
+                .ToDictionary_FirstWins(GetContext)!;
+
+            _entityTypeNameToElementsMap = _entityElements
+                .Where(e => GetEntityType(e) != null)
+                .ToDictionary_FirstWins(GetEntityType)!;
+
+            // pre-create all declared entities w/ types
+            foreach (var kvp in _entityTypeNameToElementsMap)
             {
-                return GetEntityId(contextMember);
-            }
-
-            // use the entity type name as the entity id
-            return entityType.Name;
-        }
-
-        protected override string GetEntityId(MemberInfo contextMember)
-        {
-            if (contextMember is Type type)
-                return GetEntityId(type);
-
-            if (!_contextMembertoEntityIdMap.TryGetValue(contextMember, out var id))
-            {
-                var contextMemberType = TypeHelper.GetEntityType(contextMember);
-                if (!TryGetEntityIdFromContextMemberEntityType(contextMemberType, out id))
+                if (this.TryGetType(kvp.Key, out var entityType))
                 {
-                    id = contextMember.Name;
+                    var id = GetId(kvp.Value);
+                    this.TryGetEntity(entityType, id, out var entity);
                 }
-
-                id = ImmutableInterlocked.GetOrAdd(ref _contextMembertoEntityIdMap, contextMember, id);
             }
-
-            return id;
         }
 
-        private bool TryGetEntityIdFromContextMemberEntityType(
+        public override bool TryGetEntity(
             Type entityType, 
-            [NotNullWhen(true)] out string? entityId)
+            string? entityId, 
+            [NotNullWhen(true)] out MappedEntity? entity)
         {
-            foreach (var kvp in _entityIdToElementsMap)
+            if (entityId == null)
             {
-                var typeInElement = GetEntityType(kvp.Value);
-                if (typeInElement == entityType.Name 
-                    || typeInElement == entityType.FullName)
+                // get entity id of entity associated with the entity type
+                if ((_entityTypeNameToElementsMap.TryGetValue(entityType.FullName, out var element)
+                    || _entityTypeNameToElementsMap.TryGetValue(entityType.Name, out element)))
                 {
-                    entityId = kvp.Key;
-                    return true;
+                    entityId = GetId(element);
                 }
             }
 
-            entityId = null;
-            return false;
+            if (entityId == null)
+                entityId = entityType.Name;
+
+            entity = this.GetOrCreateEntity(entityType, entityId);
+            return entity != null;
+        }
+
+        public override bool TryGetEntity(
+            MemberInfo contextMember,
+            [NotNullWhen(true)] out MappedEntity? entity)
+        {
+            // type can be passed in as memberinfo by mistake
+            if (contextMember is Type type)
+                return TryGetEntity(type, null, out entity);
+
+            var contextMemberEntityType = TypeHelper.GetEntityType(contextMember);
+
+            // get id of entity from element associated with the member
+            if (!_contextMemberNameToElementsMap.TryGetValue(contextMember.Name, out var element))
+            {
+                return TryGetEntity(contextMemberEntityType, GetId(element)!, out entity);
+            }
+
+            return TryGetEntity(contextMemberEntityType, null, out entity);
         }
 
         protected override MappedEntity CreateEntity(
@@ -151,6 +153,8 @@ namespace IQToolkit.Entities.Mapping
                 ? typeFromElement
                 : entityType;
 
+            var context = GetContext(entityElement);
+
             // build map of all members to their mapping elements
             Dictionary<MemberInfo, XElement>? memberToElementMap = null;
             if (entityElement != null)
@@ -158,14 +162,16 @@ namespace IQToolkit.Entities.Mapping
                 memberToElementMap = new Dictionary<MemberInfo, XElement>();
                 GetMemberElements(entityType, entityElement, memberToElementMap);
             }
-                
+
             return new StandardEntity(
                 this,
                 entityId,
                 entityType,
                 constructedType,
+                context,
                 me => CreateEntityTables(me, entityElement, memberToElementMap),
-                me => CreateMembers(me, null, memberToElementMap)
+                me => CreateMembers(me, null, memberToElementMap),
+                me => GetEntityDiagnostics(me)
                 );
         }
 
@@ -259,26 +265,12 @@ namespace IQToolkit.Entities.Mapping
                         parent,
                         member,
                         isForeignKey,
-                        fnKeyColumns: me =>
-                            this.GetEntityColumns(
-                                entity,
-                                keyColumns,
-                                GetTableName(memberElement)
-                                ),
-                        fnRelatedEntity: me =>
-                        {
-                            var relatedEntityType = TypeHelper.GetSequenceElementType(TypeHelper.GetMemberType(member));
-                            var relatedEntityId = GetRelatedEntityId(memberElement) is { } relatedEntityIdElement
-                                ? (string)relatedEntityIdElement
-                                : this.GetEntityId(relatedEntityType);
-                            return this.GetEntity(relatedEntityType, relatedEntityId);
-                        },
-                        fnRelatedKeyColumns: me =>
-                            this.GetEntityColumns(
-                                entity,
-                                GetRelatedKeyColumns(memberElement) ?? keyColumns,
-                                GetRelatedTableName(memberElement)
-                                )
+                        fnKeyColumns: 
+                            me => this.GetAssociationKeyColumns(me, GetKeyColumns(memberElement), GetTableName(memberElement)),
+                        fnRelatedEntity: 
+                            me => this.GetAssociationRelatedEntity(me, GetRelatedEntityId(memberElement)),
+                        fnRelatedKeyColumns: 
+                            me => this.GetAssociationRelatedKeyColumns(me, GetRelatedKeyColumns(memberElement), GetKeyColumns(memberElement), GetTableName(memberElement))
                         );
 
                     return true;
@@ -310,16 +302,9 @@ namespace IQToolkit.Entities.Mapping
                         entity,
                         parent,
                         member,
-                        me =>
-                        {
-                            me.Entity.TryGetColumn(
-                                GetColumnName(memberElement) ?? member.Name,
-                                GetTableName(memberElement),
-                                out var column
-                                );
-                            System.Diagnostics.Debug.Assert(column != null);
-                            return column!;
-                        });
+                        fnColumn:
+                            me => this.GetMemberColumn(me, GetColumnName(memberElement), GetTableName(memberElement))
+                        );
 
                     return true;
                 }
@@ -332,16 +317,9 @@ namespace IQToolkit.Entities.Mapping
                     entity,
                     parent,
                     member,
-                    me =>
-                    {
-                        me.Entity.TryGetColumn(
-                            member.Name,
-                            entity.PrimaryTable.Name,
-                            out var column
-                            );
-                        System.Diagnostics.Debug.Assert(column != null);
-                        return column!;
-                    });
+                    fnColumn:
+                        me => this.GetMemberColumn(me, null, me.Entity.PrimaryTable.Name)
+                    );
 
                 return true;
             }
@@ -363,7 +341,6 @@ namespace IQToolkit.Entities.Mapping
             return false;
         }
 
-        private static readonly char[] _nameListSeparators = new char[] { ' ', ',', '|' };
 
         private MappedTable CreateTable(
             MappedEntity entity, 
@@ -371,10 +348,7 @@ namespace IQToolkit.Entities.Mapping
             XElement? tableElement,
             Dictionary<MemberInfo, XElement>? memberToElementMap)
         {
-            _entityIdToContextMemberMap.TryGetValue(entity.Id, out var contextMember);
-
             var tableName = GetName(tableElement) 
-                ?? contextMember?.Name 
                 ?? entity.Type.Name;
 
             if (tableElement?.Name == ExtendedTableName)
@@ -382,16 +356,14 @@ namespace IQToolkit.Entities.Mapping
                 return new StandardExtensionTable(
                     entity,
                     tableName,
-                    me => CreateTableColumns(me, entityElement, tableElement, memberToElementMap),
-                    me => this.GetTableColumns(me, GetKeyColumns(tableElement) ?? ""),
-                    () => GetRelatedTableName(tableElement) is { } relatedTableName 
-                        && entity.TryGetTable(relatedTableName, out var relatedTable)
-                            ? relatedTable
-                            : entity.PrimaryTable,
-                    me => this.GetTableColumns(
-                            me.RelatedTable, 
-                            GetRelatedKeyColumns(tableElement) ?? GetKeyColumns(tableElement) ?? ""
-                            )
+                    fnColumns: 
+                        me => CreateTableColumns(me, entityElement, tableElement, memberToElementMap),
+                    fnKeyColumns: 
+                        me => this.GetTableKeyColumns(me, GetKeyColumns(tableElement)),
+                    fnRelatedTable: 
+                        me => this.GetRelatedTable(me, GetRelatedTableName(tableElement)),
+                    fnRelatedKeyColumns: 
+                        me => this.GetRelatedTableKeyColumns(me, GetRelatedKeyColumns(tableElement), GetKeyColumns(tableElement), GetRelatedTableName(tableElement))
                     );
             }
             else
@@ -399,7 +371,8 @@ namespace IQToolkit.Entities.Mapping
                 return new StandardPrimaryTable(
                     entity,
                     tableName,
-                    me => CreateTableColumns(me, entityElement, tableElement, memberToElementMap)
+                    fnColumns:
+                        me => CreateTableColumns(me, entityElement, tableElement, memberToElementMap)
                     );
             }
         }
@@ -412,7 +385,6 @@ namespace IQToolkit.Entities.Mapping
         {
             // all the columns declared as part of the table
             // + any additional columns referenced in a property
-            // + any additional columns referenced in an extension table
             // + all the unmapped members (if primary table)
 
             var columns = new List<MappedColumn>();
@@ -470,7 +442,7 @@ namespace IQToolkit.Entities.Mapping
                     if (columnName != null
                         && declared.Add(columnName))
                     {
-                        columns.Add(CreateColumn(table, columnName));
+                        columns.Add(CreateInferredColumn(table, columnName));
                     }
                 }
                 else if (IsCompoundMember(member))
@@ -479,6 +451,7 @@ namespace IQToolkit.Entities.Mapping
                 }
                 else if (IsAssociationMember(member))
                 {
+#if false
                     if (tableName == table.Name
                         && GetKeyColumns(member) is { } keyColumns)
                     {
@@ -486,22 +459,22 @@ namespace IQToolkit.Entities.Mapping
                         {
                             if (declared.Add(keyColumnName))
                             {
-                                columns.Add(CreateColumn(table, keyColumnName));
+                                columns.Add(CreateInferredColumn(table, keyColumnName));
                             }
                         }
                     }
-                    else if (
-                        GetRelatedTableName(member) == table.Name
+                    else if (GetRelatedTableName(member) == table.Name
                         && GetRelatedKeyColumns(member) is { } relatedKeyColumns)
                     {
                         foreach (var relatedKeyColumnName in this.GetNames(relatedKeyColumns))
                         {
                             if (declared.Add(relatedKeyColumnName))
                             {
-                                columns.Add(CreateColumn(table, relatedKeyColumnName));
+                                columns.Add(CreateInferredColumn(table, relatedKeyColumnName));
                             }
                         }
                     }
+#endif
                 }
             }
         }
@@ -537,7 +510,7 @@ namespace IQToolkit.Entities.Mapping
                 {
                     if (declared.Add(member.Name))
                     {
-                        columns.Add(CreateColumn(table, member.Name));
+                        columns.Add(CreateInferredColumn(table, member.Name));
                     }
                 }
                 else if (IsPossibleCompoundMember(member))
@@ -580,38 +553,39 @@ namespace IQToolkit.Entities.Mapping
             return false;
         }
 
-        private MappedColumn CreateColumn(
-            MappedTable table, 
-            string name)
-        {
-            return new StandardColumn(
-                table,
-                name,
-                columnType: null,
-                isPrimaryKey: false,
-                isReadOnly: false,
-                isComputed: false,
-                isGenerated: false,
-                me => table.Entity.Members.OfType<ColumnMember>().FirstOrDefault(cm => cm.Column == me)
-                );
-        }
-
         /// <summary>
         /// Converts the XML mapping text to an <see cref="EntityMapping"/>.
         /// </summary>
-        public static EntityMapping FromXml(string xml, Type? contextType = null)
+        public static EntityMapping FromXml(string xml)
         {
-            return new XmlMapping(xml, contextType);
+            return new XmlMapping(xml);
         }
 
         /// <summary>
         /// Converts <see cref="EntityMapping"/> to serialized XML text.
         /// </summary>
-        public static string ToXml(EntityMapping mapping, bool minimal=true)
+        public static string ToXml(
+            EntityMapping mapping, 
+            bool minimal=true)
+        {
+            return ToXml(mapping.GetEntities(), minimal);
+        }
+
+        /// <summary>
+        /// Converts the set of <see cref="MappedEntity"/> and all entities reachable by those entities
+        /// to serialized XML text.
+        /// </summary>
+        public static string ToXml(
+            IEnumerable<MappedEntity> entities, 
+            bool minimal=true)
         {
             var mappingElement = new XElement("Mapping");
 
-            foreach (var entity in mapping.GetEntities().OrderBy(e => e.Id))
+            var allEntities = entities.SelectManyRecursive(
+                e => e.Members.OfType<AssociationMember>().Select(a => a.RelatedEntity)
+                );
+
+            foreach (var entity in allEntities.OrderBy(e => e.Id))
             {
                 var entityElement = ToEntityElement(entity, minimal);
                 mappingElement.Add(entityElement);
@@ -629,6 +603,9 @@ namespace IQToolkit.Entities.Mapping
 
             if (!minimal || entity.ConstructedType != entity.Type)
                 element.Add(new XAttribute(ConstructedTypeName, entity.ConstructedType.FullName));
+
+            if (entity.Context != null)
+                element.Add(new XAttribute(ContextName, entity.Context));
 
             foreach (var member in entity.Members.OrderBy(m => m.Member.Name))
             {
@@ -777,12 +754,6 @@ namespace IQToolkit.Entities.Mapping
             return string.Join(", ", columns.Select(c => c.Name));
         }
 
-        private Type? GetType(string? typeName) =>
-            typeName != null
-                && this.TryGetType(typeName, out var type)
-                ? type
-                : null;
-
         private bool IsMember(XElement element) =>
             IsColumnMember(element)
             || IsCompoundMember(element)
@@ -799,6 +770,9 @@ namespace IQToolkit.Entities.Mapping
 
         private string? GetId(XElement? element) =>
             element?.Attribute(IdName)?.Value;
+
+        private string? GetContext(XElement? element) =>
+            element?.Attribute(ContextName)?.Value;
 
         private string? GetEntityType(XElement? element) =>
             element?.Attribute(TypeName)?.Value;
@@ -854,11 +828,11 @@ namespace IQToolkit.Entities.Mapping
         private IEnumerable<XElement> GetColumns(XElement element) =>
             element?.Elements(ColumnName) ?? ReadOnlyList<XElement>.Empty;
 
-
         private static readonly XName EntityName = XName.Get("Entity");
         private static readonly XName TypeName = XName.Get("Type");
         private static readonly XName ConstructedTypeName = XName.Get("ConstructedType");
         private static readonly XName IdName = XName.Get("Id");
+        private static readonly XName ContextName = XName.Get("Context");
 
         private static readonly XName TableName = XName.Get("Table");
         private static readonly XName NameName = XName.Get("Name");

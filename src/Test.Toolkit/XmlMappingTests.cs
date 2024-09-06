@@ -16,7 +16,7 @@ namespace Test.Toolkit
             // to XML text and back to XmlMapping
             var attrMapped = new AttributeMapping(typeof(NorthwindWithAttributes));
             var xml = XmlMapping.ToXml(attrMapped);
-            var xmlMapped = XmlMapping.FromXml(xml, typeof(Northwind));
+            var xmlMapped = XmlMapping.FromXml(xml);
             var xml2 = XmlMapping.ToXml(xmlMapped);
             AssertLargeTextEqual(xml, xml2);
             var full = XmlMapping.ToXml(xmlMapped, minimal: false);
@@ -443,13 +443,42 @@ namespace Test.Toolkit
                 );
         }
 
+        [TestMethod]
+        public void TestAssociationMember_UnknownKeyColumn()
+        {
+            TestAssociationMember(
+                """
+                <Mapping>
+                    <Entity Id='C'>
+                        <AssociationMember Name='Orders' KeyColumns='Huh?' RelatedEntityId='O' RelatedKeyColumns='CustomerID'/>
+                    </Entity>
+                    <Entity Id='O'>
+                    </Entity>
+                </Mapping>
+                """,
+                entityType: typeof(Customer),
+                entityId: "C",
+                memberName: "Orders",
+                relatedEntityType: typeof(Order),
+                hasDiagnostics: true
+                );
+        }
+
         public void TestMapping(
             string xml,
             Type? contextType,
             Action<EntityMapping> fnCheck)
         {
-            var mapping = XmlMapping.FromXml(xml, contextType);
+            var mapping = XmlMapping.FromXml(xml);
             fnCheck(mapping);
+        }
+
+        public void AssertDiagnostics(bool expectedDiagnostics, MappedEntity entity)
+        {
+            if (expectedDiagnostics != entity.Diagnostics.Count > 0)
+            {
+                Assert.Fail($"Mapping Diagnostics (Entity '{entity.Id}'):\n{string.Join("\n", entity.Diagnostics.Select(d => d.Message))}");
+            }
         }
 
         /// <summary>
@@ -461,6 +490,7 @@ namespace Test.Toolkit
             string memberNames,
             string tableNames,
             string columnNames,
+            bool hasDiagnostics = false,
             Type? contextType = null,
             string? entityId = null,
             Action<EntityMapping>? fnCheck = null
@@ -471,8 +501,9 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
+
+                    AssertDiagnostics(hasDiagnostics, entity);
 
                     var memNames = SplitNames(memberNames);
                     Assert.AreEqual(memNames.Length, entity.Members.Count, "members count");
@@ -515,6 +546,7 @@ namespace Test.Toolkit
             bool? isReadOnly = false,
             bool? isComputed = false,
             bool? isGenerated = false,
+            bool hasDiagnostics = false,
             Action<EntityMapping>? fnCheck = null
             )
         {
@@ -523,8 +555,8 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
+                    AssertDiagnostics(hasDiagnostics, entity);
 
                     Assert.IsTrue(entity.TryGetColumn(columnName, tableName, out var column), "column");
                     if (columnType != null)
@@ -552,6 +584,7 @@ namespace Test.Toolkit
             string? keyColumnNames = null,
             string? relatedTableName = null,
             string? relatedKeyColumnNames = null,
+            bool hasDiagnostics = false,
             Action<EntityMapping>? fnCheck = null
             )
         {
@@ -560,8 +593,9 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
+
+                    AssertDiagnostics(hasDiagnostics, entity);
 
                     Assert.IsTrue(entity.TryGetTable(tableName, out var table), "table");
 
@@ -622,6 +656,7 @@ namespace Test.Toolkit
             string? tableName = null,
             Type? contextType = null,
             string? entityId = null,
+            bool hasDiagnostics = false,
             Action<EntityMapping>? fnCheck = null
             )
         {
@@ -629,10 +664,11 @@ namespace Test.Toolkit
                 xml, contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
-                    Assert.IsTrue(entity.TryGetMember(memberName, out var member));
+                    AssertDiagnostics(hasDiagnostics, entity);
+
+                    Assert.IsTrue(entity.TryGetMember(memberName, out var member), "member");
                     var columnMember = member as ColumnMember;
                     Assert.IsNotNull(columnMember, "column member");
 
@@ -652,19 +688,22 @@ namespace Test.Toolkit
             string memberName,
             string columnNames,
             string? tableName = null,
+            bool hasDiagnostics = false,
             Type? contextType = null,
             string? entityId = null,
             Action<EntityMapping>? fnCheck = null
             )
         {
             TestMapping(
-                xml, contextType,
+                xml, 
+                contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
-                    Assert.IsTrue(entity.TryGetMember(memberName, out var member));
+                    AssertDiagnostics(hasDiagnostics, entity);
+
+                    Assert.IsTrue(entity.TryGetMember(memberName, out var member), "member");
                     var compoundMember = member as CompoundMember;
                     Assert.IsNotNull(compoundMember, "compound member");
 
@@ -689,46 +728,55 @@ namespace Test.Toolkit
             Type entityType,
             string memberName,
             Type relatedEntityType,
-            string keyColumnNames,
-            string relatedKeyColumnNames,
+            string? keyColumnNames = null,
+            string? relatedKeyColumnNames = null,
             string? relatedEntityId = null,
+            bool hasDiagnostics = false,
             Type? contextType = null,
             string? entityId = null,
             Action<EntityMapping>? fnCheck = null
             )
         {
             TestMapping(
-                xml, contextType,
+                xml, 
+                contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
-                    Assert.IsTrue(entity.TryGetMember(memberName, out var member));
+                    AssertDiagnostics(hasDiagnostics, entity);
+
+                    Assert.IsTrue(entity.TryGetMember(memberName, out var member), "member");
                     var associationMember = member as AssociationMember;
                     Assert.IsNotNull(associationMember, "association member");
 
                     Assert.AreEqual(relatedEntityType, associationMember.RelatedEntity.Type, "related entity type");
 
                     if (relatedEntityId != null)
-                        Assert.AreEqual(relatedEntityId, associationMember.RelatedEntity.Id, "related entity id");
-
-                    Assert.AreEqual(relatedEntityId, associationMember.RelatedEntity.Id, "related entity");
-
-                    var kcNames = SplitNames(keyColumnNames);
-                    Assert.AreEqual(kcNames.Length, associationMember.KeyColumns.Count, "key columns count");
-
-                    for (int i = 0; i < kcNames.Length; i++)
                     {
-                        Assert.AreEqual(kcNames[i], associationMember.KeyColumns[i].Name, "key column");
+                        Assert.AreEqual(relatedEntityId, associationMember.RelatedEntity.Id, "related entity id");
                     }
 
-                    var rkcNames = SplitNames(relatedKeyColumnNames);
-                    Assert.AreEqual(rkcNames.Length, associationMember.RelatedKeyColumns.Count, "related key columns length");
-
-                    for (int i = 0; i < rkcNames.Length; i++)
+                    if (keyColumnNames != null)
                     {
-                        Assert.AreEqual(rkcNames[i], associationMember.RelatedKeyColumns[i].Name, "key column");
+                        var kcNames = SplitNames(keyColumnNames);
+                        Assert.AreEqual(kcNames.Length, associationMember.KeyColumns.Count, "key columns count");
+
+                        for (int i = 0; i < kcNames.Length; i++)
+                        {
+                            Assert.AreEqual(kcNames[i], associationMember.KeyColumns[i].Name, "key column");
+                        }
+                    }
+
+                    if (relatedKeyColumnNames != null)
+                    {
+                        var rkcNames = SplitNames(relatedKeyColumnNames);
+                        Assert.AreEqual(rkcNames.Length, associationMember.RelatedKeyColumns.Count, "related key columns length");
+
+                        for (int i = 0; i < rkcNames.Length; i++)
+                        {
+                            Assert.AreEqual(rkcNames[i], associationMember.RelatedKeyColumns[i].Name, "key column");
+                        }
                     }
 
                     fnCheck?.Invoke(mapping);

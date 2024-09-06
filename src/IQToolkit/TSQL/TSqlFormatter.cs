@@ -24,7 +24,7 @@ namespace IQToolkit.TSql
         public static readonly TSqlFormatter Singleton =
             new TSqlFormatter();
 
-        public FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        public FormattedQuery Format(SqlExpression expression, Options? options = null)
         {
             var writer = new StringWriter();
             var parameters = new List<Expression>();
@@ -43,7 +43,7 @@ namespace IQToolkit.TSql
         public class TSqlFormatterVisitor : AnsiSql.AnsiSqlFormatter.SqlFormatterVisitor
         {
             public TSqlFormatterVisitor(
-                QueryOptions? options,
+                Options? options,
                 StringWriter writer,
                 List<Expression> parameters,
                 List<Diagnostic> diagnostics)

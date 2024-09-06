@@ -24,7 +24,7 @@ namespace IQToolkit.Entities.Translation
         private readonly LanguageTranslator _linguist;
         private readonly MappingTranslator _mapper;
         private readonly PolicyTranslator _police;
-        private readonly Dictionary<ParameterExpression, Expression> _map;
+        private readonly Dictionary<ParameterExpression, Expression> _parameterToExpressionMap;
         private readonly Dictionary<Expression, GroupByInfo> _groupByMap;
         private Expression _root;
         private IEntityTable? _batchUpd;
@@ -38,7 +38,7 @@ namespace IQToolkit.Entities.Translation
             _mapper = mapper;
             _linguist = linguist;
             _police = police;
-            _map = new Dictionary<ParameterExpression, Expression>();
+            _parameterToExpressionMap = new Dictionary<ParameterExpression, Expression>();
             _groupByMap = new Dictionary<Expression, GroupByInfo>();
             _root = root;
         }
@@ -374,7 +374,7 @@ namespace IQToolkit.Entities.Translation
         {
             var projection = this.RewriteSequence(source);
             
-            _map[predicate.Parameters[0]] = projection.Projector;
+            _parameterToExpressionMap[predicate.Parameters[0]] = projection.Projector;
             var where = this.Visit(predicate.Body);
 
             var alias = this.GetNextAlias();
@@ -402,7 +402,7 @@ namespace IQToolkit.Entities.Translation
         {
             var sourceProjection = this.RewriteSequence(source);
 
-            _map[selector.Parameters[0]] = sourceProjection.Projector;
+            _parameterToExpressionMap[selector.Parameters[0]] = sourceProjection.Projector;
             var selectorBody = this.Visit(selector.Body);
 
             var alias = this.GetNextAlias();
@@ -418,7 +418,7 @@ namespace IQToolkit.Entities.Translation
         protected virtual Expression BindSelectMany(Type resultType, Expression source, LambdaExpression collectionSelector, LambdaExpression? resultSelector)
         {
             ClientProjectionExpression projection = this.RewriteSequence(source);
-            _map[collectionSelector.Parameters[0]] = projection.Projector;
+            _parameterToExpressionMap[collectionSelector.Parameters[0]] = projection.Projector;
 
             Expression collection = collectionSelector.Body;
 
@@ -455,8 +455,8 @@ namespace IQToolkit.Entities.Translation
             }
             else
             {
-                _map[resultSelector.Parameters[0]] = projection.Projector;
-                _map[resultSelector.Parameters[1]] = collectionProjection.Projector;
+                _parameterToExpressionMap[resultSelector.Parameters[0]] = projection.Projector;
+                _parameterToExpressionMap[resultSelector.Parameters[1]] = collectionProjection.Projector;
                 Expression result = this.Visit(resultSelector.Body);
                 pc = this.ProjectColumns(result, alias, projection.Select.Alias, collectionProjection.Select.Alias);
             }
@@ -470,12 +470,12 @@ namespace IQToolkit.Entities.Translation
         {
             var outerProjection = this.RewriteSequence(outerSource);
             var innerProjection = this.RewriteSequence(innerSource);
-            _map[outerKey.Parameters[0]] = outerProjection.Projector;
+            _parameterToExpressionMap[outerKey.Parameters[0]] = outerProjection.Projector;
             var outerKeyExpr = this.Visit(outerKey.Body);
-            _map[innerKey.Parameters[0]] = innerProjection.Projector;
+            _parameterToExpressionMap[innerKey.Parameters[0]] = innerProjection.Projector;
             var innerKeyExpr = this.Visit(innerKey.Body);
-            _map[resultSelector.Parameters[0]] = outerProjection.Projector;
-            _map[resultSelector.Parameters[1]] = innerProjection.Projector;
+            _parameterToExpressionMap[resultSelector.Parameters[0]] = outerProjection.Projector;
+            _parameterToExpressionMap[resultSelector.Parameters[1]] = innerProjection.Projector;
             var resultExpr = this.Visit(resultSelector.Body);
             var join = new JoinExpression(JoinType.InnerJoin, outerProjection.Select, innerProjection.Select, outerKeyExpr.Equal(innerKeyExpr));
             var alias = this.GetNextAlias();
@@ -512,13 +512,13 @@ namespace IQToolkit.Entities.Translation
 
             ClientProjectionExpression outerProjection = this.RewriteSequence(outerSource);
 
-            _map[outerKey.Parameters[0]] = outerProjection.Projector;
+            _parameterToExpressionMap[outerKey.Parameters[0]] = outerProjection.Projector;
             var predicateLambda = Expression.Lambda(innerKey.Body.Equal(outerKey.Body), innerKey.Parameters[0]);
             var callToWhere = Expression.Call(typeof(Enumerable), "Where", new Type[] { args[1] }, innerSource, predicateLambda);
             Expression group = this.Visit(callToWhere);
 
-            _map[resultSelector.Parameters[0]] = outerProjection.Projector;
-            _map[resultSelector.Parameters[1]] = group;
+            _parameterToExpressionMap[resultSelector.Parameters[0]] = outerProjection.Projector;
+            _parameterToExpressionMap[resultSelector.Parameters[1]] = group;
             Expression resultExpr = this.Visit(resultSelector.Body);
 
             var alias = this.GetNextAlias();
@@ -537,7 +537,7 @@ namespace IQToolkit.Entities.Translation
             _thenBys = null;
             var projection = this.RewriteSequence(source);
 
-            _map[orderSelector.Parameters[0]] = projection.Projector;
+            _parameterToExpressionMap[orderSelector.Parameters[0]] = projection.Projector;
             var orderings = new List<OrderExpression>();
             orderings.Add(new OrderExpression(orderType, this.Visit(orderSelector.Body)));
 
@@ -547,7 +547,7 @@ namespace IQToolkit.Entities.Translation
                 {
                     var tb = myThenBys[i];
                     var lambda = (LambdaExpression)tb.Expression;
-                    _map[lambda.Parameters[0]] = projection.Projector;
+                    _parameterToExpressionMap[lambda.Parameters[0]] = projection.Projector;
                     orderings.Add(new OrderExpression(tb.OrderType, this.Visit(lambda.Body)));
                 }
             }
@@ -576,13 +576,13 @@ namespace IQToolkit.Entities.Translation
         {
             var projection = this.RewriteSequence(source);
 
-            _map[keySelector.Parameters[0]] = projection.Projector;
+            _parameterToExpressionMap[keySelector.Parameters[0]] = projection.Projector;
             var keyExpr = this.Visit(keySelector.Body);
 
             var elemExpr = projection.Projector;
             if (elementSelector != null)
             {
-                _map[elementSelector.Parameters[0]] = projection.Projector;
+                _parameterToExpressionMap[elementSelector.Parameters[0]] = projection.Projector;
                 elemExpr = this.Visit(elementSelector.Body);
             }
 
@@ -595,7 +595,7 @@ namespace IQToolkit.Entities.Translation
             var subqueryBasis = this.RewriteSequence(duplicateSource);
 
             // recompute key columns for group expressions relative to subquery (need these for doing the correlation predicate)
-            _map[keySelector.Parameters[0]] = subqueryBasis.Projector;
+            _parameterToExpressionMap[keySelector.Parameters[0]] = subqueryBasis.Projector;
             var subqueryKey = this.Visit(keySelector.Body);
 
             // use same projection trick to get group-by expressions based on subquery
@@ -607,7 +607,7 @@ namespace IQToolkit.Entities.Translation
             var subqueryElemExpr = subqueryBasis.Projector;
             if (elementSelector != null)
             {
-                _map[elementSelector.Parameters[0]] = subqueryBasis.Projector;
+                _parameterToExpressionMap[elementSelector.Parameters[0]] = subqueryBasis.Projector;
                 subqueryElemExpr = this.Visit(elementSelector.Body);
             }
 
@@ -632,8 +632,8 @@ namespace IQToolkit.Entities.Translation
                 var saveGroupElement = _currentGroupElement;
                 _currentGroupElement = elementSubquery;
                 // compute result expression based on key & element-subquery
-                _map[resultSelector.Parameters[0]] = keyProjection.Projector;
-                _map[resultSelector.Parameters[1]] = elementSubquery;
+                _parameterToExpressionMap[resultSelector.Parameters[0]] = keyProjection.Projector;
+                _parameterToExpressionMap[resultSelector.Parameters[1]] = elementSubquery;
                 resultExpr = this.Visit(resultSelector.Body);
                 _currentGroupElement = saveGroupElement;
             }
@@ -778,7 +778,7 @@ namespace IQToolkit.Entities.Translation
             Expression? argExpr = null;
             if (argument != null)
             {
-                _map[argument.Parameters[0]] = projection.Projector;
+                _parameterToExpressionMap[argument.Parameters[0]] = projection.Projector;
                 argExpr = this.Visit(argument.Body);
             }
             else if (!hasPredicateArg || useAlternateArg)
@@ -810,7 +810,7 @@ namespace IQToolkit.Entities.Translation
                 // would be legal to add to the columns in the select expression that has the corresponding group-by clause.
                 if (argument != null)
                 {
-                    _map[argument.Parameters[0]] = groupInfo.Element;
+                    _parameterToExpressionMap[argument.Parameters[0]] = groupInfo.Element;
                     argExpr = this.Visit(argument.Body);
                 }
                 else if (!hasPredicateArg || useAlternateArg)
@@ -909,7 +909,7 @@ namespace IQToolkit.Entities.Translation
 
             if (predicate != null)
             {
-                _map[predicate.Parameters[0]] = projection.Projector;
+                _parameterToExpressionMap[predicate.Parameters[0]] = projection.Projector;
                 where = this.Visit(predicate.Body);
             }
 
@@ -1071,26 +1071,26 @@ namespace IQToolkit.Entities.Translation
 
         private Expression BindInsert(IEntityTable upd, Expression instance, LambdaExpression? selector)
         {
-            MappedEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
-            return this.Visit(_mapper.GetInsertExpression(entity, instance, selector, _linguist, _police));
+            _mapper.Mapping.TryGetEntity(instance.Type, upd.EntityId, out var entity);
+            return this.Visit(_mapper.GetInsertExpression(entity!, instance, selector, _linguist, _police));
         }
 
         private Expression BindUpdate(IEntityTable upd, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
         {
-            MappedEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
-            return this.Visit(_mapper.GetUpdateExpression(entity, instance, updateCheck, resultSelector, null, _linguist, _police));
+            _mapper.Mapping.TryGetEntity(instance.Type, upd.EntityId, out var entity);
+            return this.Visit(_mapper.GetUpdateExpression(entity!, instance, updateCheck, resultSelector, null, _linguist, _police));
         }
 
         private Expression BindInsertOrUpdate(IEntityTable upd, Expression instance, LambdaExpression? updateCheck, LambdaExpression? resultSelector)
         {
-            MappedEntity entity = _mapper.Mapping.GetEntity(instance.Type, upd.EntityId);
-            return this.Visit(_mapper.GetInsertOrUpdateExpression(entity, instance, updateCheck, resultSelector, _linguist, _police));
+            _mapper.Mapping.TryGetEntity(instance.Type, upd.EntityId, out var entity);
+            return this.Visit(_mapper.GetInsertOrUpdateExpression(entity!, instance, updateCheck, resultSelector, _linguist, _police));
         }
 
         private Expression BindDelete(IEntityTable upd, Expression? instance, LambdaExpression? deleteCheck)
         {
-            MappedEntity entity = _mapper.Mapping.GetEntity(upd.EntityType, upd.EntityId);
-            return this.Visit(_mapper.GetDeleteExpression(entity, instance, deleteCheck, _linguist, _police));
+            _mapper.Mapping.TryGetEntity(upd.EntityType, upd.EntityId, out var entity);
+            return this.Visit(_mapper.GetDeleteExpression(entity!, instance, deleteCheck, _linguist, _police));
         }
 
         private Expression BindBatch(IEntityTable upd, Expression instances, LambdaExpression operation, Expression batchSize, Expression stream)
@@ -1119,18 +1119,15 @@ namespace IQToolkit.Entities.Translation
                 {
                     if (c.Value is IEntityTable table)
                     {
-                        var entity = table is IHaveMappingEntity me
-                            ? me.Entity 
-                            : _mapper.Mapping.GetEntity(table.ElementType, table.EntityId);
-
-                        return this.RewriteSequence(_mapper.GetQueryExpression(entity, _linguist, _police));
+                       _mapper.Mapping.TryGetEntity(table.ElementType, table.EntityId, out var entity);
+                        return this.RewriteSequence(_mapper.GetQueryExpression(entity!, _linguist, _police));
                     }
-                    else if (query.Expression.NodeType == ExpressionType.Constant)
-                    {
-                        // assume this is also a table via some other implementation of IQueryable
-                        var entity = _mapper.Mapping.GetEntity(query.ElementType);
-                        return this.RewriteSequence(_mapper.GetQueryExpression(entity, _linguist, _police));
-                    }
+                    //else if (query.Expression is ConstantExpression)
+                    //{
+                    //    // assume this is also a table via some other implementation of IQueryable
+                    //    _mapper.Mapping.TryGetEntity(query.ElementType, null, out var entity);
+                    //    return this.RewriteSequence(_mapper.GetQueryExpression(entity!, _linguist, _police));
+                    //}
                     else
                     {
                         var pev = PartialEvaluator.Eval(query.Expression, _linguist.Language.CanBeEvaluatedLocally);
@@ -1141,14 +1138,11 @@ namespace IQToolkit.Entities.Translation
             return c;
         }
 
-        protected override Expression VisitParameter(ParameterExpression p)
+        protected override Expression VisitParameter(ParameterExpression parameter)
         {
-            Expression e;
-            if (_map.TryGetValue(p, out e))
-            {
-                return e;
-            }
-            return p;
+            return _parameterToExpressionMap.TryGetValue(parameter, out var expression)
+                ? expression
+                : parameter;
         }
 
         protected override Expression VisitInvocation(InvocationExpression iv)
@@ -1157,7 +1151,7 @@ namespace IQToolkit.Entities.Translation
             {
                 for (int i = 0, n = lambda.Parameters.Count; i < n; i++)
                 {
-                    _map[lambda.Parameters[i]] = iv.Arguments[i];
+                    _parameterToExpressionMap[lambda.Parameters[i]] = iv.Arguments[i];
                 }
                 return this.Visit(lambda.Body);
             }
@@ -1166,12 +1160,13 @@ namespace IQToolkit.Entities.Translation
 
         protected override Expression VisitMember(MemberExpression m)
         {
-            if (m.Expression.NodeType == ExpressionType.Parameter
-                && !_map.ContainsKey((ParameterExpression)m.Expression)
+            if (m.Expression is ParameterExpression pex
+                && !_parameterToExpressionMap.ContainsKey(pex)
                 && this.IsQuery(m))
             {
-                var entity = _mapper.Mapping.GetEntity(m.Member);
-                return this.RewriteSequence(_mapper.GetQueryExpression(entity, _linguist, _police));
+                // this probably does not work always with XML mapping
+                _mapper.Mapping.TryGetEntity(m.Member, out var entity);
+                return this.RewriteSequence(_mapper.GetQueryExpression(entity!, _linguist, _police));
             }
 
             var source = this.Visit(m.Expression);

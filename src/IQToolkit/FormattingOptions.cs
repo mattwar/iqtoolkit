@@ -8,22 +8,22 @@ namespace IQToolkit
     /// </summary>
     public static class FormattingOptions
     {
-        public static readonly QueryOption<bool> IsOdbcOption = 
-            new QueryOption<bool>(nameof(IsOdbcOption), false);
+        public static readonly Option<bool> IsOdbcOption = 
+            new Option<bool>(nameof(IsOdbcOption), false);
 
-        public static readonly QueryOption<string> IndentationOption =
-            new QueryOption<string>(nameof(IndentationOption), "  ");
+        public static readonly Option<string> IndentationOption =
+            new Option<string>(nameof(IndentationOption), "  ");
 
-        public static bool IsOdbc(this QueryOptions options) =>
+        public static bool IsOdbc(this Options options) =>
             options.GetOption(IsOdbcOption);
 
-        public static QueryOptions WithIsOdbc(this QueryOptions options, bool isOdbc) =>
+        public static Options WithIsOdbc(this Options options, bool isOdbc) =>
             options.WithOption(IsOdbcOption, isOdbc);
 
-        public static string Indentation(this QueryOptions options) =>
+        public static string Indentation(this Options options) =>
             options.GetOption(IndentationOption);
 
-        public static QueryOptions WithIndentation(this QueryOptions options, string indentation) =>
+        public static Options WithIndentation(this Options options, string indentation) =>
             options.WithOption(IndentationOption, indentation);
     }
 }

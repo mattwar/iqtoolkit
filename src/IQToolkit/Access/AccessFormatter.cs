@@ -26,7 +26,7 @@ namespace IQToolkit.Access
         public static readonly AccessFormatter Singleton =
             new AccessFormatter();
 
-        public FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        public FormattedQuery Format(SqlExpression expression, Options? options = null)
         {
             var writer = new StringWriter();
             var parameterRefs = new List<Expression>();
@@ -45,7 +45,7 @@ namespace IQToolkit.Access
         public class AccessFormatterVisitor : AnsiSql.AnsiSqlFormatter.SqlFormatterVisitor
         {
             public AccessFormatterVisitor(
-                QueryOptions? options, 
+                Options? options, 
                 TextWriter writer,
                 List<Expression> parameterReferences,
                 List<Diagnostic> diagnostics)

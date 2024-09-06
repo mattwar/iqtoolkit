@@ -22,7 +22,7 @@ namespace IQToolkit.Odbc
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
             : base(
                   executor,
                   language,
@@ -30,7 +30,7 @@ namespace IQToolkit.Odbc
                   policy,
                   log,
                   cache,
-                  (options ?? QueryOptions.Default).WithIsOdbc(true))
+                  (options ?? Options.Default).WithIsOdbc(true))
         {
         }
 
@@ -69,7 +69,7 @@ namespace IQToolkit.Odbc
         public new OdbcEntityProvider WithCache(QueryCache? cache) =>
             (OdbcEntityProvider)With(cache: cache);
 
-        public new OdbcEntityProvider WithOptions(QueryOptions options) =>
+        public new OdbcEntityProvider WithOptions(Options options) =>
             (OdbcEntityProvider)With(options: options);
 
         protected override EntityProvider Construct(
@@ -79,7 +79,7 @@ namespace IQToolkit.Odbc
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
         {
             return new OdbcEntityProvider(
                 (OdbcQueryExecutor)executor, 

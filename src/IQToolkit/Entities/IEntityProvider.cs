@@ -60,9 +60,9 @@ namespace IQToolkit.Entities
         public QueryCache? Cache { get; }
 
         /// <summary>
-        /// The <see cref="QueryOptions"/>.
+        /// The <see cref="IQToolkit.Options"/>.
         /// </summary>
-        public QueryOptions Options { get; }
+        public Options Options { get; }
 
         /// <summary>
         /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Language"/> property assigned.
@@ -92,7 +92,7 @@ namespace IQToolkit.Entities
         /// <summary>
         /// Returns a new <see cref="IEntityProvider"/> with the <see cref="Options"/> property assigned.
         /// </summary>
-        public IEntityProvider WithOptions(QueryOptions options);
+        public IEntityProvider WithOptions(Options options);
 
         /// <summary>
         /// True if the expression can be evaluated locally (client-side)

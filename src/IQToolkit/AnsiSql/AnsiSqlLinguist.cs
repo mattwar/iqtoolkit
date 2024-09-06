@@ -18,7 +18,7 @@ namespace IQToolkit.AnsiSql
         {
         }
 
-        public override FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        public override FormattedQuery Format(SqlExpression expression, Options? options = null)
         {
             return AnsiSqlFormatter.Default.Format(expression, options);
         }

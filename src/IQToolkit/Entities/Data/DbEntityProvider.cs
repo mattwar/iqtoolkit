@@ -19,7 +19,7 @@ namespace IQToolkit.Entities.Data
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
             : base(
                   executor,
                   language,
@@ -66,7 +66,7 @@ namespace IQToolkit.Entities.Data
         public new DbEntityProvider WithCache(QueryCache? cache) =>
             (DbEntityProvider)With(cache: cache);
 
-        public new DbEntityProvider WithOptions(QueryOptions options) =>
+        public new DbEntityProvider WithOptions(Options options) =>
             (DbEntityProvider)With(options: options);
 
         protected override EntityProvider Construct(
@@ -76,7 +76,7 @@ namespace IQToolkit.Entities.Data
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
         {
             return new DbEntityProvider(
                 (DbQueryExecutor)executor,

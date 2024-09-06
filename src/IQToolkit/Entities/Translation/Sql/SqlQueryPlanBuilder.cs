@@ -54,7 +54,7 @@ namespace IQToolkit.Entities.Translation
         {
             private readonly LanguageTranslator _linguist;
             private readonly QueryPolicy _policy;
-            private readonly QueryOptions _options;
+            private readonly Options _options;
             private readonly ParameterExpression _executorParameter;
             private readonly List<Diagnostic> _diagnostics;
             private Scope? _scope;
@@ -68,7 +68,7 @@ namespace IQToolkit.Entities.Translation
             public Builder(
                 LanguageTranslator linguist,
                 QueryPolicy policy,
-                QueryOptions options,
+                Options options,
                 ParameterExpression executor,
                 List<Diagnostic> diagnostics
                 )

@@ -23,6 +23,11 @@ namespace IQToolkit.Entities.Mapping
         public abstract Type Type { get; }
 
         /// <summary>
+        /// The context member name associated with this entity mapping.
+        /// </summary>
+        public abstract string? Context { get; }
+
+        /// <summary>
         /// The type of the entity that is constructed at runtime.
         /// This may be the same or different from the Type property
         /// allowing the entity type to be an interface or abstract class.
@@ -58,6 +63,11 @@ namespace IQToolkit.Entities.Mapping
         /// All the columns that the entity maps to.
         /// </summary>
         public abstract IReadOnlyList<MappedColumn> Columns { get; }
+
+        /// <summary>
+        /// Any diagnostics determined when resolving this entity.
+        /// </summary>
+        public abstract IReadOnlyList<Diagnostic> Diagnostics { get; }
 
         /// <summary>
         /// Gets the mapped member by its member name.

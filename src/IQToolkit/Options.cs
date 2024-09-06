@@ -5,16 +5,16 @@ using System.Collections.Immutable;
 
 namespace IQToolkit
 {
-    public class QueryOptions
+    public class Options
     {
         private readonly ImmutableDictionary<int, object?> _valueMap;
 
-        private QueryOptions(ImmutableDictionary<int, object?> valueMap)
+        private Options(ImmutableDictionary<int, object?> valueMap)
         {
             _valueMap = valueMap;
         }
 
-        public TValue GetOption<TValue>(QueryOption<TValue> option)
+        public TValue GetOption<TValue>(Option<TValue> option)
         {
             return _valueMap.TryGetValue(option.Id, out var value)
                 && value is TValue tValue
@@ -22,16 +22,16 @@ namespace IQToolkit
                 : option.Default;
         }
 
-        public QueryOptions WithOption<TValue>(QueryOption<TValue> option, TValue value)
+        public Options WithOption<TValue>(Option<TValue> option, TValue value)
         {
-            return new QueryOptions(_valueMap.SetItem(option.Id, value));
+            return new Options(_valueMap.SetItem(option.Id, value));
         }
 
-        public static readonly QueryOptions Default =
-            new QueryOptions(ImmutableDictionary<int, object?>.Empty);
+        public static readonly Options Default =
+            new Options(ImmutableDictionary<int, object?>.Empty);
     }
 
-    public class QueryOption<TValue>
+    public class Option<TValue>
     {
         internal int Id { get; }
 
@@ -40,7 +40,7 @@ namespace IQToolkit
 
         private static int _nextId;
 
-        public QueryOption(string name, TValue defaultValue)
+        public Option(string name, TValue defaultValue)
         {
             this.Id = ++_nextId;
             this.Name = name;

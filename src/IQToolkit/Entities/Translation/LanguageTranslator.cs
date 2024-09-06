@@ -32,7 +32,7 @@ namespace IQToolkit.Entities.Translation
         /// <summary>
         /// Format the <see cref="SqlExpression"/> as query language text.
         /// </summary>
-        public abstract FormattedQuery Format(SqlExpression expression, QueryOptions? options = null);
+        public abstract FormattedQuery Format(SqlExpression expression, Options? options = null);
 
         /// <summary>
         /// Determine which sub-expressions must be parameters

@@ -22,7 +22,7 @@ namespace IQToolkit.OleDb
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
             : base(
                   executor,
                   language,
@@ -69,7 +69,7 @@ namespace IQToolkit.OleDb
         public new OleDbEntityProvider WithCache(QueryCache? cache) =>
             (OleDbEntityProvider)With(cache: cache);
 
-        public new OleDbEntityProvider WithOptions(QueryOptions options) =>
+        public new OleDbEntityProvider WithOptions(Options options) =>
             (OleDbEntityProvider)With(options: options);
 
         protected override EntityProvider Construct(
@@ -79,7 +79,7 @@ namespace IQToolkit.OleDb
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
         {
             return new OleDbEntityProvider(
                 (OleDbQueryExecutor)executor, 

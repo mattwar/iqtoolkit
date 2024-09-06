@@ -49,9 +49,8 @@ namespace IQToolkit.Entities.Sessions
         /// If unspecified, the provider will infer the id from the element type.</param>
         public ISessionTable GetTable(Type entityType, string? entityId = null)
         {
-            return this.GetTable(
-                _sessionProvider.Mapping.GetEntity(entityType, entityId)
-                );
+            _sessionProvider.Mapping.TryGetEntity(entityType, entityId, out var entity);
+            return this.GetTable(entity!);
         }
 
         /// <summary>
@@ -162,7 +161,7 @@ namespace IQToolkit.Entities.Sessions
             public QueryPolicy Policy => _provider.Policy;
             public TextWriter? Log => _provider.Log;
             public QueryCache? Cache => _provider.Cache;
-            public QueryOptions Options => _provider.Options;
+            public Options Options => _provider.Options;
 
             #region IEntityProvider
             IEntityProvider IEntityProvider.WithLanguage(QueryLanguage language) =>
@@ -180,7 +179,7 @@ namespace IQToolkit.Entities.Sessions
             IEntityProvider IEntityProvider.WithCache(QueryCache? cache) =>
                 new SessionProvider(_session, _provider.WithCache(cache));
 
-            IEntityProvider IEntityProvider.WithOptions(QueryOptions options) =>
+            IEntityProvider IEntityProvider.WithOptions(Options options) =>
                 new SessionProvider(_session, _provider.WithOptions(options: options));
             #endregion
 

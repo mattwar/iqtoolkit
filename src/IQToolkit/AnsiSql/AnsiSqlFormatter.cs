@@ -26,7 +26,7 @@ namespace IQToolkit.AnsiSql
         public static readonly AnsiSqlFormatter Default =
             new AnsiSqlFormatter();
 
-        public FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        public FormattedQuery Format(SqlExpression expression, Options? options = null)
         {
             var textWriter = new StringWriter();
             var parameters = new List<Expression>();
@@ -47,7 +47,7 @@ namespace IQToolkit.AnsiSql
         /// </summary>
         public class SqlFormatterVisitor : SqlVoidExpressionVisitor
         {
-            private readonly QueryOptions _options;
+            private readonly Options _options;
             private readonly QueryLanguage? _language;
             private readonly List<Expression> _parameterReferences;
             private readonly List<Diagnostic> _diagnostics;
@@ -55,13 +55,13 @@ namespace IQToolkit.AnsiSql
             private readonly IndentWriter _writer;
 
             public SqlFormatterVisitor(
-                QueryOptions? options,
+                Options? options,
                 QueryLanguage? language,
                 TextWriter writer,
                 List<Expression> parameterReferences,
                 List<Diagnostic> diagnostics)
             {
-                _options = options ?? QueryOptions.Default;
+                _options = options ?? Options.Default;
                 _language = language;
                 _parameterReferences = parameterReferences;
                 _diagnostics = diagnostics;
@@ -69,7 +69,7 @@ namespace IQToolkit.AnsiSql
                 _writer = new IndentWriter(writer, _options.Indentation());
             }
 
-            protected QueryOptions Options => _options;
+            protected Options Options => _options;
             protected QueryLanguage? Language => _language;
 
             protected bool HideColumnAliases { get; set; }

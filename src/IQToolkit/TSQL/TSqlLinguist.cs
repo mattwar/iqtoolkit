@@ -56,7 +56,7 @@ namespace IQToolkit.TSql
             get { return true; }
         }
 
-        public override FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        public override FormattedQuery Format(SqlExpression expression, Options? options = null)
         {
             return TSqlFormatter.Singleton.Format(expression, options);
         }

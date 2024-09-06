@@ -40,7 +40,7 @@ namespace IQToolkit.Access
             return result;
         }
 
-        public override FormattedQuery Format(SqlExpression expression, QueryOptions? options = null)
+        public override FormattedQuery Format(SqlExpression expression, Options? options = null)
         {
             return AccessFormatter.Singleton.Format(expression, options);
         }

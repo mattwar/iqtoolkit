@@ -48,9 +48,9 @@ namespace IQToolkit.Entities
         public QueryCache? Cache { get; }
 
         /// <summary>
-        /// The <see cref="QueryOptions"/> used.
+        /// The <see cref="IQToolkit.Options"/> used.
         /// </summary>
-        public QueryOptions Options { get; }
+        public Options Options { get; }
 
         private readonly Dictionary<MappedEntity, IUpdatableEntityTable> _entityToEntityTableMap;
 
@@ -61,7 +61,7 @@ namespace IQToolkit.Entities
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
         {
             this.Language = language ?? AnsiSql.AnsiSqlLanguage.Singleton;
             this.Mapping = mapping ?? new AttributeMapping();
@@ -69,7 +69,7 @@ namespace IQToolkit.Entities
             this.Executor = executor;
             this.Log = log;
             this.Cache = cache;
-            this.Options = options ?? QueryOptions.Default;
+            this.Options = options ?? Options.Default;
 
             _entityToEntityTableMap = new Dictionary<MappedEntity, IUpdatableEntityTable>();
         }
@@ -111,9 +111,9 @@ namespace IQToolkit.Entities
             With(cache: cache);
 
         /// <summary>
-        /// Creates a new <see cref="EntityProvider"/> with the <see cref="Option"/> property assigned.
+        /// Creates a new <see cref="EntityProvider"/> with the <see cref="IQToolkit.Options"/> property assigned.
         /// </summary>
-        public EntityProvider WithOptions(QueryOptions options) =>
+        public EntityProvider WithOptions(Options options) =>
             With(options: options);
 
         #region IEntityProvider
@@ -132,7 +132,7 @@ namespace IQToolkit.Entities
         IEntityProvider IEntityProvider.WithCache(QueryCache? cache) =>
             With(cache: cache);
 
-        IEntityProvider IEntityProvider.WithOptions(QueryOptions options) =>
+        IEntityProvider IEntityProvider.WithOptions(Options options) =>
             With(options: options);
         #endregion
 
@@ -143,7 +143,7 @@ namespace IQToolkit.Entities
             QueryPolicy? policy,
             TextWriter? log,
             QueryCache? cache,
-            QueryOptions? options)
+            Options? options)
         {
             return new EntityProvider(executor, language, mapping, policy, log, cache, options);
         }
@@ -155,7 +155,7 @@ namespace IQToolkit.Entities
             QueryExecutor? executor = null,
             Optional<TextWriter?> log = default,
             Optional<QueryCache?> cache = default,
-            QueryOptions? options = null)
+            Options? options = null)
         {
             var newLanguage = language ?? this.Language;
             var newMapping = mapping ?? this.Mapping;
@@ -241,7 +241,8 @@ namespace IQToolkit.Entities
         /// If not specified the name of the entity type is used.</param>
         public virtual IUpdatableEntityTable GetTable(Type entityType, string? entityId = null)
         {
-            return this.GetTable(this.Mapping.GetEntity(entityType, entityId));
+            this.Mapping.TryGetEntity(entityType, entityId, out var entity);
+            return this.GetTable(entity!);
         }
 
         /// <summary>

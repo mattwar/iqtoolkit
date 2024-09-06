@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace IQToolkit.Entities
 {
     using Mapping;
@@ -15,28 +17,23 @@ namespace IQToolkit.Entities
     public abstract class EntityMapping
     {
         /// <summary>
-        /// An optional type that has members for entity tables.
-        /// </summary>
-        public abstract Type? ContextType { get; }
-
-        /// <summary>
-        /// The fields and properties of the context type that refer to entity tables.
-        /// </summary>
-        public abstract IReadOnlyList<MemberInfo> ContextMembers { get; }
-
-        /// <summary>
-        /// Get the <see cref="MappedEntity"/> for the context member that refers to a table of entities.
-        /// </summary>
-        public abstract MappedEntity GetEntity(MemberInfo contextMember);
-
-        /// <summary>
         /// Get the <see cref="MappedEntity"/> the entity for the entity type and id.
         /// </summary>
-        public abstract MappedEntity GetEntity(Type entityType, string? entityId = null);
+        public abstract bool TryGetEntity(
+            Type entityType, 
+            string? entityId, 
+            [NotNullWhen(true)] out MappedEntity? entity);
 
         /// <summary>
-        /// Gets all the known mapped entities.
+        /// Get the <see cref="MappedEntity"/> for the context member that refers to an entity table or query.
         /// </summary>
-        public abstract IReadOnlyList<MappedEntity> GetEntities();
+        public abstract bool TryGetEntity(
+            MemberInfo contextMember, 
+            [NotNullWhen(true)] out MappedEntity? entity);
+
+        /// <summary>
+        /// Gets all the known entities.
+        /// </summary>
+        public abstract IEnumerable<MappedEntity> GetEntities();
     }
 }

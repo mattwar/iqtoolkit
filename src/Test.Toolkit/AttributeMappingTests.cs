@@ -414,9 +414,8 @@ namespace Test.Toolkit
             // walk through mapping info to prove that mapping is fully constructed
             // without throwing exceptions
 
-            foreach (var member in mapping.ContextMembers)
+            foreach (var entity in mapping.GetEntities())
             {
-                var entity = mapping.GetEntity(member);
                 WalkEntity(entity);
             }
 
@@ -491,8 +490,7 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
                     var memNames = SplitNames(memberNames);
                     Assert.AreEqual(memNames.Length, entity.Members.Count, "members count");
@@ -541,12 +539,13 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
                     Assert.IsTrue(entity.TryGetColumn(columnName, tableName, out var column), "column");
+
                     if (columnType != null)
                         Assert.AreEqual(columnType, column.Type);
+
                     Assert.AreEqual(isPrimaryKey, column.IsPrimaryKey, "IsPrimaryKey");
                     Assert.AreEqual(isReadOnly, column.IsReadOnly, "IsReadOnly");
                     Assert.AreEqual(isComputed, column.IsComputed, "IsComputed");
@@ -576,8 +575,7 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
                     Assert.IsTrue(entity.TryGetTable(tableName, out var table), "table");
 
@@ -644,10 +642,9 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
-                    Assert.IsTrue(entity.TryGetMember(memberName, out var member));
+                    Assert.IsTrue(entity.TryGetMember(memberName, out var member), "member");
                     var columnMember = member as ColumnMember;
                     Assert.IsNotNull(columnMember, "column member");
 
@@ -675,10 +672,9 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
-                    Assert.IsTrue(entity.TryGetMember(memberName, out var member));
+                    Assert.IsTrue(entity.TryGetMember(memberName, out var member), "member");
                     var compoundMember = member as CompoundMember;
                     Assert.IsNotNull(compoundMember, "compound member");
 
@@ -714,8 +710,7 @@ namespace Test.Toolkit
                 contextType,
                 mapping =>
                 {
-                    var entity = mapping.GetEntity(entityType, entityId);
-                    Assert.IsNotNull(entity, "entity");
+                    Assert.IsTrue(mapping.TryGetEntity(entityType, entityId, out var entity), "entity");
 
                     Assert.IsTrue(entity.TryGetMember(memberName, out var member), "member");
                     var associationMember = member as AssociationMember;

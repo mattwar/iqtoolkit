@@ -582,7 +582,7 @@ Like with inserting, updating can sometimes cause more changes to the row and en
 Computed columns can get recomputed based on the other changes I made.
 
 So just like with the `Insert` method, I can supply a lambda expression that specifies the value I want the database to return back given the
-entity after the update has occured.
+entity after the update has occurred.
 
 ```CSharp
 var cust = GetCustomer();
